@@ -1,0 +1,6 @@
+{
+  "name": "M.Y.R.A. SubQG Integrations",
+  "description": "A web-based interface to interact with M.Y.R.A (Modular Yearning Reasoning Architecture), featuring an integrated SubQG (SubQuantenfeld-Grundfeld) simulator. This version incorporates deterministic emergence dynamics and RNG controls from SubQG concepts directly into M.Y.R.A.'s affective-cognitive processes, leveraging the Gemini API for intelligent responses. Visualize simulated SubQG states, node activations, emotional states, and adaptive fitness metrics.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
