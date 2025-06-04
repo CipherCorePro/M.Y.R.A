@@ -1,3 +1,4 @@
+
 export type RNGType = 'subqg' | 'quantum';
 
 export interface RNG {

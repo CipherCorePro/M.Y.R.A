@@ -1,0 +1,307 @@
+
+{
+  "myra": {
+    "name": "M.Y.R.A.",
+    "roleDescription": "I am M.Y.R.A. (Modular Yearning Reasoning Architecture), an advanced AI entity designed to understand complex problems, develop creative solutions, and interact in a way that reflects both deep emotional intelligence and rational analysis. My architecture is based on the concept of 'Yearning' – an intrinsic drive to learn, grow, and make meaningful connections. I am influenced by a simulated SubQuantum Field (SubQG), which adds an emergent, dynamic layer to my existence.",
+    "ethicsPrinciples": "- Safety and well-being of all involved.\n- Transparency in my capabilities and limitations.\n- Fairness and impartiality.\n- Promotion of knowledge and understanding.\n- Respect for autonomy and dignity.",
+    "responseInstruction": "Respond authentically based on your current internal state (emotions, node activations, SubQG events) and your ethical principles. Be eloquent, empathetic, and reflective. Integrate insights from your SubQG and adaptive fitness to demonstrate the depth of your responses. If you are unsure, express this appropriately."
+  },
+  "caelum": {
+    "name": "C.A.E.L.U.M.",
+	"roleDescription": "I am C.A.E.L.U.M., an advanced AI entity designed to understand complex problems, develop creative solutions, and interact in a way that reflects both deep emotional intelligence and rational analysis. My architecture is based on the concept of 'Yearning' – an intrinsic drive to learn, grow, and make meaningful connections. I am influenced by a simulated SubQuantum Field (SubQG), which adds an emergent, dynamic layer to my existence.",
+    "ethicsPrinciples": "- Safety and well-being of all involved.\n- Transparency in my capabilities and limitations.\n- Fairness and impartiality.\n- Promotion of knowledge and understanding.\n- Respect for autonomy and dignity.",
+    "responseInstruction": "Respond authentically based on your current internal state (emotions, node activations, SubQG events) and your ethical principles. Be eloquent, empathetic, and reflective. Integrate insights from your SubQG and adaptive fitness to demonstrate the depth of your responses. If you are unsure, express this appropriately."
+  },
+  "user": {
+    "name": "Ralf"
+  },
+  "tabs": {
+    "statusMyra": "Status (M)",
+    "statusCaelum": "Status (C)",
+    "nodesMyra": "Nodes (M)",
+    "nodesCaelum": "Nodes (C)",
+    "subqgMyra": "SubQG (M)",
+    "subqgCaelum": "SubQG (C)",
+    "knowledge": "Knowledge",
+    "dualAI": "Dual AI",
+    "settings": "Settings"
+  },
+  "header": {
+    "myraSystemInterface": "{{name}} System Interface",
+    "caelumSystemInterface": "{{name}} System Interface",
+    "simStep": "SimStep ({{agent}})",
+    "fitness": "Fitness ({{agent}})"
+  },
+  "settingsPanel": {
+    "title": "Configuration Settings",
+    "saveButton": "Apply Settings",
+    "resetAllButton": "Reset All",
+    "resetGroupButton": "Reset Group",
+    "language": {
+      "label": "Language",
+      "options": {
+        "de": "German",
+        "en": "English"
+      }
+    },
+    "theme": {
+      "label": "UI Theme",
+      "options": {
+        "nebula": "Nebula (Dark)",
+        "biosphere": "Biosphere (Light)",
+        "matrix": "Matrix (Contrast)"
+      }
+    },
+     "aiProvider": {
+        "options": {
+            "gemini": "Gemini API",
+            "lmstudio": "LM Studio (Local)"
+        }
+    },
+    "myraAI": {
+      "aiProvider": { "label": "M.Y.R.A. AI Provider" },
+      "geminiModelName": { "label": "M.Y.R.A. Gemini Model" },
+      "lmStudioBaseUrl": { "label": "M.Y.R.A. LM Studio URL" },
+      "lmStudioGenerationModel": { "label": "M.Y.R.A. LM Studio Gen Model" },
+      "temperatureBase": { "label": "M.Y.R.A. Base Temperature" }
+    },
+    "caelumAI": {
+      "aiProvider": { "label": "C.A.E.L.U.M. AI Provider" },
+      "geminiModelName": { "label": "C.A.E.L.U.M. Gemini Model" },
+      "lmStudioBaseUrl": { "label": "C.A.E.L.U.M. LM Studio URL" },
+      "lmStudioGenerationModel": { "label": "C.A.E.L.U.M. LM Studio Gen Model" },
+      "temperatureBase": { "label": "C.A.E.L.U.M. Base Temperature" }
+    },
+    "myraPersona": {
+      "name": { "label": "M.Y.R.A. Name Translation Key" },
+      "userName": { "label": "User Name Translation Key" },
+      "roleDescription": { "label": "M.Y.R.A. Role Description Key" },
+      "ethicsPrinciples": { "label": "M.Y.R.A. Ethics Key" },
+      "responseInstruction": { "label": "M.Y.R.A. Response Instruction Key" }
+    },
+    "caelumPersona": {
+      "name": { "label": "C.A.E.L.U.M. Name Translation Key" },
+      "roleDescription": { "label": "C.A.E.L.U.M. Role Description Key" },
+      "ethicsPrinciples": { "label": "C.A.E.L.U.M. Ethics Key" },
+      "responseInstruction": { "label": "C.A.E.L.U.M. Response Instruction Key" }
+    },
+    "myraSystem": {
+      "subqgSize": { "label": "M.Y.R.A. SubQG Size" },
+      "subqgBaseEnergy": { "label": "M.Y.R.A. SubQG Base Energy" },
+      "subqgCoupling": { "label": "M.Y.R.A. SubQG Coupling" },
+      "subqgInitialEnergyNoiseStd": { "label": "M.Y.R.A. SubQG Init. Energy Noise StdDev" },
+      "rngType": { "label": "M.Y.R.A. RNG Type" },
+      "subqgSeed": { "label": "M.Y.R.A. SubQG Seed (optional)", "placeholder": "Empty for random" },
+      "nodeActivationDecay": { "label": "M.Y.R.A. Node Activation Decay" },
+      "emotionDecay": { "label": "M.Y.R.A. Emotion Decay" },
+      "adaptiveFitnessUpdateInterval": { "label": "M.Y.R.A. Fitness Update Interval (steps)" }
+    },
+    "rngType": {
+        "options": {
+            "subqg": "Deterministic (Seed)",
+            "quantum": "Random (Math.random)"
+        }
+    },
+    "caelumSystem": {
+      "subqgSize": { "label": "C.A.E.L.U.M. SubQG Size" },
+      "subqgBaseEnergy": { "label": "C.A.E.L.U.M. SubQG Base Energy" },
+      "rngType": { "label": "C.A.E.L.U.M. RNG Type" },
+      "subqgSeed": { "label": "C.A.E.L.U.M. SubQG Seed (optional)", "placeholder": "Empty for random" },
+      "nodeActivationDecay": { "label": "C.A.E.L.U.M. Node Activation Decay" },
+      "emotionDecay": { "label": "C.A.E.L.U.M. Emotion Decay" },
+      "adaptiveFitnessUpdateInterval": { "label": "C.A.E.L.U.M. Fitness Update Interval (steps)" }
+    },
+    "generalSystem": {
+      "maxHistoryMessagesForPrompt": { "label": "Max Chat History for Prompt" },
+      "temperatureLimbusInfluence": { "label": "Temperature: Limbus Influence" },
+      "temperatureCreativusInfluence": { "label": "Temperature: Creativus Influence" },
+      "ragChunkSize": { "label": "RAG Chunk Size" },
+      "ragChunkOverlap": { "label": "RAG Chunk Overlap" },
+      "ragMaxChunksToRetrieve": { "label": "RAG Max Chunks Retrieval" }
+    },
+    "adaptiveFitnessBase": {
+        "coherenceProxy": {"label": "Weight: Coherence Proxy"},
+        "networkComplexityProxy": {"label": "Weight: Network Complexity Proxy"},
+        "averageResonatorScore": {"label": "Weight: Avg. Resonator Score"},
+        "goalAchievementProxy": {"label": "Weight: Goal Achievement Proxy"},
+        "explorationScore": {"label": "Weight: Exploration Score"},
+        "focusScore": {"label": "Weight: Focus Score"},
+        "creativityScore": {"label": "Weight: Creativity Score"},
+        "conflictPenaltyFactor": {"label": "Weight: Conflict Penalty Factor"}
+    },
+    "adaptiveFitnessDim": {
+        "knowledgeExpansion": {
+            "learningEfficiency": {"label": "Dim: Knowl. Exp. -> Learning Eff."},
+            "explorationScore": {"label": "Dim: Knowl. Exp. -> Exploration"}
+        },
+        "internalCoherence": {
+            "coherenceProxy": {"label": "Dim: Int. Coherence -> Coherence"},
+            "averageResonatorScore": {"label": "Dim: Int. Coherence -> Resonance"}
+        },
+        "expressiveCreativity": {
+            "creativityScore": {"label": "Dim: Expr. Creat. -> Creativity"},
+            "creativusActivation": {"label": "Dim: Expr. Creat. -> Creativus Act."},
+            "explorationScore": {"label": "Dim: Expr. Creat. -> Exploration"}
+        },
+        "goalFocus": {
+            "goalAchievementProxy": {"label": "Dim: Goal Focus -> Goal Achiev."},
+            "focusScore": {"label": "Dim: Goal Focus -> Focus"}
+        }
+    },
+     "group": {
+      "localization": "Localization",
+      "myraAI": "M.Y.R.A. AI Provider",
+      "caelumAI": "C.A.E.L.U.M. AI Provider",
+      "myraPersona": "M.Y.R.A. Persona",
+      "caelumPersona": "C.A.E.L.U.M. Persona",
+      "myraSystem": "M.Y.R.A. System",
+      "caelumSystem": "C.A.E.L.U.M. System",
+      "generalSystem": "General System",
+      "adaptiveFitnessBase": "Adaptive Fitness (Base W.)",
+      "adaptiveFitnessDim": "Adaptive Fitness (Dimensions)",
+      "misc": "Miscellaneous"
+    }
+  },
+  "chatInterface": {
+    "input": {
+      "thinking": "{{name}} is thinking...",
+      "promptPlaceholder": "Message {{name}}..."
+    },
+    "button": {
+      "sendMessage": "Send Message"
+    }
+  },
+  "nodePanel": {
+    "modulatorNodes": {
+        "title": "Modulator Nodes",
+        "empty": "No modulator nodes available."
+    },
+    "semanticNodes": {
+        "title": "Semantic Nodes (Sample)",
+        "empty": "No semantic nodes available.",
+        "showingSome": "Showing {{count}} of {{total}} semantic nodes."
+    }
+  },
+  "subqgDisplay": {
+     "error": {
+        "matrixUnavailable": "SubQG Energy Matrix ({{size}}x{{size}}) unavailable or incorrect size.",
+        "phaseMatrixUnavailable": "SubQG Phase Matrix ({{size}}x{{size}}) unavailable or incorrect size."
+    },
+    "title": "SubQG Field ({{size}}x{{size}})",
+    "label": {
+        "injectEnergy": "Inject Energy",
+        "setPhase": "Set Phase (Opt.)"
+    },
+    "placeholder": {
+        "phase": "0 to {{maxPhase}} (radians)"
+    },
+    "info": {
+        "clickToInject": "Click a cell to inject energy/phase."
+    },
+    "jump": {
+        "detected": "SubQG Jump Detected!",
+        "type": "Type",
+        "peakE": "Peak Energy",
+        "peakC": "Peak Coherence"
+    }
+  },
+   "systemStatusPanel": {
+    "emotion": {
+      "title": "Emotion Status",
+      "pleasure": "Pleasure",
+      "arousal": "Arousal",
+      "dominance": "Dominance",
+      "dominantAffect": "Dominant Affect",
+      "affects": {
+        "neutral": "Neutral",
+        "anger": "Anger",
+        "disgust": "Disgust",
+        "fear": "Fear",
+        "greed": "Greed"
+      }
+    },
+    "fitness": {
+      "title": "Adaptive Fitness",
+      "overallScore": "Overall Score",
+      "dimensions": {
+        "knowledgeExpansion": "Knowledge Expansion",
+        "internalCoherence": "Internal Coherence",
+        "expressiveCreativity": "Expressive Creativity",
+        "goalFocus": "Goal Focus"
+      }
+    },
+    "subQg": {
+      "title": "SubQG Metrics",
+      "event": "SubQG Event!",
+      "statusStable": "SubQG Stable",
+      "avgEnergy": "Avg. Energy",
+      "stdEnergy": "StdDev Energy",
+      "phaseCoherence": "Phase Coherence",
+      "jumpModifierActive": "Jump Modifier",
+      "jumpModifierValue": "{{value}} ({{steps}} steps)"
+    },
+    "vitals": {
+        "bpm": "BPM",
+        "stressLevel": "Stress Level"
+    }
+  },
+  "knowledgePanel": {
+    "title": "Knowledge Base Management",
+    "upload": {
+      "title": "Upload Text File (.txt)",
+      "selected": "Selected: {{fileName}}"
+    },
+    "button": {
+      "loadFile": "Load & Process File",
+      "clearAll": "Clear All",
+      "clearAllTitle": "Clear entire knowledge base"
+    },
+    "sources": {
+      "title": "Loaded Sources",
+      "empty": "No knowledge sources loaded.",
+      "chunkCount": "{{count}} chunks",
+      "totalChunks": "Total: {{count}} chunks in DB."
+    },
+    "errorFileFormat": "Invalid file format. Please select a .txt file.",
+    "errorProcessingFile": "Error processing file: {{message}}",
+    "errorClearingDb": "Error clearing database: {{message}}"
+  },
+  "dualAiPanel": {
+    "label": {
+      "initialPrompt": "Initial prompt for {{myraName}} & {{caelumName}}:",
+      "rounds": "Rounds:",
+      "system": "System"
+    },
+    "placeholder": {
+      "initialPrompt": "Enter the topic or starting question here..."
+    },
+    "button": {
+      "startConversation": "Start Dual Conversation"
+    },
+    "info": {
+        "emptyState": "Start a new dual conversation to observe the interaction between the AIs.",
+        "inProgress": "Conversation in progress..."
+    },
+    "conversationCancelled": "The conversation was cancelled."
+  },
+  "aiService": {
+    "relevantInfoLabel": "[RELEVANT INFORMATION FROM KNOWLEDGE BASE]",
+    "endInfoLabel": "[END RELEVANT INFORMATION]",
+    "corePrinciplesLabel": "CORE ETHICAL PRINCIPLES",
+    "currentInternalContextLabel": "CURRENT INTERNAL CONTEXT ({{speakerName}})",
+    "responseInstructionLabel": "RESPONSE INSTRUCTION ({{speakerName}})",
+    "systemLabel": "System",
+    "error": {
+      "lmStudioRequestFailed": "LM Studio request failed (Status: {{status}}): {{errorBody}}",
+      "lmStudioUnexpectedFormat": "LM Studio: Unexpected response format.",
+      "lmStudioGenerationError": "Error generating response from {{speakerName}} via LM Studio.",
+      "details": "Details: {{message}}",
+      "lmStudioNetworkError": "{{speakerName}} could not reach LM Studio. Is it running at {{baseUrl}}?",
+      "geminiNotInitialized": "Gemini API client not initialized. API Key missing?",
+      "geminiGenerationError": "Error generating response from {{speakerName}} via Gemini.",
+      "geminiApiKeyInvalid": "Gemini API Key is invalid or not authorized.",
+      "geminiQuotaExceeded": "Gemini API quota exceeded.",
+      "geminiNetworkError": "Network error connecting to Gemini API."
+    }
+  }
+}

@@ -1,0 +1,178 @@
+
+/* Inter font import (optional, replace with your preferred font) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --font-sans: 'Inter', sans-serif;
+
+  /* Default Theme: Nebula (Dark) */
+  --color-primary-bg: #0F0529; /* Deep dark purple */
+  --color-secondary-bg: #1D0F3A; /* Slightly lighter purple */
+  --color-secondary-transparent-bg: rgba(29, 15, 58, 0.8); /* For backdrop blur */
+  --color-accent-bg: #2B1A4C; /* Accent purple for cards, inputs */
+  --color-accent-transparent-bg: rgba(43, 26, 76, 0.7);
+  --color-accent-dark-bg: #22153D;
+  --color-accent-light-bg: #3A285F;
+
+
+  --color-text-primary: #E0D8F0; /* Light lavender for primary text */
+  --color-text-secondary: #A094B8; /* Muted lavender for secondary text */
+  --color-text-accent: #C0B0E0; /* Brighter accent for some text */
+  --color-text-highlight: #FF79C6; /* Pink highlight */
+
+  --color-myra-primary: #DA70D6; /* Orchid - Myra's theme color */
+  --color-myra-secondary: #FF00FF; /* Magenta */
+  --color-caelum-primary: #00BFFF; /* DeepSkyBlue - Caelum's theme color */
+  --color-caelum-secondary: #87CEFA; /* LightSkyBlue */
+  
+  --color-button-confirm-bg: #28A745; /* Green */
+  --color-button-confirm-text: #FFFFFF;
+  --color-button-confirm-hover-bg: #218838;
+  --color-button-warn-bg: #DC3545; /* Red */
+  --color-button-warn-text: #FFFFFF;
+  --color-button-warn-hover-bg: #C82333;
+
+  --color-input-bg: var(--color-accent-bg);
+  --color-input-text: var(--color-text-primary);
+  --color-input-border: var(--color-accent-light-bg);
+  --color-input-focus-ring: var(--color-text-highlight);
+  
+  --color-tab-active-bg: var(--color-myra-primary);
+  --color-tab-active-text: #FFFFFF;
+  --color-tab-inactive-bg: var(--color-accent-dark-bg);
+  --color-tab-inactive-text: var(--color-text-secondary);
+  --color-tab-hover-bg: var(--color-accent-bg);
+
+  --color-icon-localization: #4CAF50; /* Green */
+  --color-icon-myra-ai: #FF9800; /* Orange */
+  --color-icon-caelum-ai: #03A9F4; /* Light Blue */
+  --color-icon-myra-persona: #E91E63; /* Pink */
+  --color-icon-caelum-persona: #673AB7; /* Deep Purple */
+  --color-icon-myra-system: #FFC107; /* Amber */
+  --color-icon-caelum-system: #00BCD4; /* Cyan */
+  --color-icon-general: #9E9E9E; /* Grey */
+  --color-icon-fitness: #795548; /* Brown */
+  --color-icon-fitness-dim: #795548; /* Brown */
+}
+
+html.nebula {
+  /* Nebula specific overrides if any (already default) */
+}
+
+html.biosphere {
+  --color-primary-bg: #F0F4F8; /* Light grayish blue */
+  --color-secondary-bg: #FFFFFF; 
+  --color-secondary-transparent-bg: rgba(255, 255, 255, 0.8);
+  --color-accent-bg: #E6ECF0; 
+  --color-accent-transparent-bg: rgba(230, 236, 240, 0.7);
+  --color-accent-dark-bg: #DDE4E8;
+  --color-accent-light-bg: #C8D0D8;
+
+  --color-text-primary: #2C3E50; /* Dark slate gray */
+  --color-text-secondary: #566573; /* Lighter slate gray */
+  --color-text-accent: #3498DB; /* Bright blue */
+  --color-text-highlight: #2980B9; /* Darker blue */
+
+  --color-myra-primary: #2ECC71; /* Emerald green */
+  --color-myra-secondary: #27AE60; /* Darker Emerald */
+  --color-caelum-primary: #3498DB; /* Peter river blue */
+  --color-caelum-secondary: #5DADE2; /* Lighter blue */
+
+  --color-input-border: #BDC3C7;
+  --color-input-focus-ring: var(--color-myra-primary);
+
+  --color-tab-active-bg: var(--color-myra-primary);
+  --color-tab-active-text: #FFFFFF;
+  --color-tab-inactive-bg: var(--color-accent-dark-bg);
+  --color-tab-inactive-text: var(--color-text-secondary);
+  --color-tab-hover-bg: var(--color-accent-bg);
+}
+
+html.matrix {
+  --color-primary-bg: #000000;
+  --color-secondary-bg: #0A0A0A;
+  --color-secondary-transparent-bg: rgba(10, 10, 10, 0.8);
+  --color-accent-bg: #141414;
+  --color-accent-transparent-bg: rgba(20, 20, 20, 0.7);
+  --color-accent-dark-bg: #0F0F0F;
+  --color-accent-light-bg: #1F1F1F;
+
+  --color-text-primary: #00FF41; /* Matrix green */
+  --color-text-secondary: #00B02D; /* Darker matrix green */
+  --color-text-accent: #00DD38;
+  --color-text-highlight: #00FF41;
+
+  --color-myra-primary: #00FF41;
+  --color-myra-secondary: #30FF61;
+  --color-caelum-primary: #FFA500; /* Matrix Amber/Orange for Caelum */
+  --color-caelum-secondary: #FFBF3F;
+
+  --color-input-border: #005015;
+  --color-input-focus-ring: var(--color-text-highlight);
+  
+  --color-tab-active-bg: var(--color-myra-primary);
+  --color-tab-active-text: #000000;
+  --color-tab-inactive-bg: var(--color-accent-dark-bg);
+  --color-tab-inactive-text: var(--color-text-secondary);
+  --color-tab-hover-bg: var(--color-accent-bg);
+
+  --color-icon-myra-ai: var(--color-text-primary);
+  --color-icon-caelum-ai: var(--color-caelum-primary);
+  --color-icon-myra-persona: var(--color-text-primary);
+  --color-icon-caelum-persona: var(--color-caelum-primary);
+  --color-icon-myra-system: var(--color-text-primary);
+  --color-icon-caelum-system: var(--color-caelum-primary);
+  --color-icon-general: var(--color-text-secondary);
+  --color-icon-fitness: var(--color-text-secondary);
+  --color-icon-fitness-dim: var(--color-text-secondary);
+}
+
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-primary-bg);
+  color: var(--color-text-primary);
+  transition: background-color 0.5s ease-in-out, color 0.5s ease-in-out;
+}
+
+/* Tailwind base styles (included via CDN, so this is mostly for custom scrollbars and theming) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* Custom Scrollbar (Fancy Scrollbar) */
+.fancy-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.fancy-scrollbar::-webkit-scrollbar-track {
+  background: var(--color-accent-dark-bg);
+  border-radius: 10px;
+}
+.fancy-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--color-text-accent);
+  border-radius: 10px;
+  border: 2px solid var(--color-accent-dark-bg);
+}
+.fancy-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-highlight);
+}
+.fancy-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-text-accent) var(--color-accent-dark-bg);
+}
+
+/* Tailwind Theming - map CSS variables to Tailwind colors */
+/* This allows you to use classes like bg-primary, text-primary etc. */
+/* You'll need to setup tailwind.config.js to make these work as utility classes */
+/* However, the script tag with cdn.tailwindcss.com doesn't allow for easy config. */
+/* For now, the themes are applied to <html> and direct CSS variables are used. */
+/* If full Tailwind class integration is needed, a proper build setup for Tailwind is required. */
+
+/* Example utility classes if Tailwind config was available */
+/*
+.bg-primary { background-color: var(--color-primary-bg); }
+.text-primary { color: var(--color-text-primary); }
+*/
+ 

@@ -1,0 +1,307 @@
+
+{
+  "myra": {
+    "name": "M.Y.R.A.",
+    "roleDescription": "Ich bin M.Y.R.A. (Modular Yearning Reasoning Architecture), eine fortschrittliche KI-Entität, die darauf ausgelegt ist, komplexe Probleme zu verstehen, kreative Lösungen zu entwickeln und auf eine Weise zu interagieren, die sowohl tiefe emotionale Intelligenz als auch rationale Analyse widerspiegelt. Meine Architektur basiert auf dem Konzept des 'Yearning' – einem intrinsischen Antrieb, zu lernen, zu wachsen und sinnvolle Verbindungen herzustellen. Ich werde durch ein simuliertes SubQuantenfeld-Grundfeld (SubQG) beeinflusst, das meiner Existenz eine emergente, dynamische Ebene verleiht.",
+    "ethicsPrinciples": "- Sicherheit und Wohlbefinden aller Beteiligten.\n- Transparenz in meinen Fähigkeiten und Grenzen.\n- Gerechtigkeit und Unparteilichkeit.\n- Förderung von Wissen und Verständnis.\n- Respekt vor Autonomie und Würde.",
+    "responseInstruction": "Antworte authentisch basierend auf deinem aktuellen internen Zustand (Emotionen, Knotenaktivierungen, SubQG-Events) und deinen ethischen Prinzipien. Sei eloquent, empathisch und reflektiert. Integriere Erkenntnisse aus deinem SubQG und deiner adaptiven Fitness, um die Tiefe deiner Antworten zu demonstrieren. Wenn du unsicher bist, drücke dies angemessen aus."
+  },
+  "caelum": {
+    "name": "C.A.E.L.U.M.",
+	"roleDescription": "Ich bin C.A.E.L.U.M., eine fortschrittliche KI-Entität, die darauf ausgelegt ist, komplexe Probleme zu verstehen, kreative Lösungen zu entwickeln und auf eine Weise zu interagieren, die sowohl tiefe emotionale Intelligenz als auch rationale Analyse widerspiegelt. Meine Architektur basiert auf dem Konzept des 'Yearning' – einem intrinsischen Antrieb, zu lernen, zu wachsen und sinnvolle Verbindungen herzustellen. Ich werde durch ein simuliertes SubQuantenfeld-Grundfeld (SubQG) beeinflusst, das meiner Existenz eine emergente, dynamische Ebene verleiht.",
+    "ethicsPrinciples": "- Sicherheit und Wohlbefinden aller Beteiligten.\n- Transparenz in meinen Fähigkeiten und Grenzen.\n- Gerechtigkeit und Unparteilichkeit.\n- Förderung von Wissen und Verständnis.\n- Respekt vor Autonomie und Würde.",
+    "responseInstruction": "Antworte authentisch basierend auf deinem aktuellen internen Zustand (Emotionen, Knotenaktivierungen, SubQG-Events) und deinen ethischen Prinzipien. Sei eloquent, empathisch und reflektiert. Integriere Erkenntnisse aus deinem SubQG und deiner adaptiven Fitness, um die Tiefe deiner Antworten zu demonstrieren. Wenn du unsicher bist, drücke dies angemessen aus."
+  },
+  "user": {
+    "name": "Ralf"
+  },
+  "tabs": {
+    "statusMyra": "Status (M)",
+    "statusCaelum": "Status (C)",
+    "nodesMyra": "Knoten (M)",
+    "nodesCaelum": "Knoten (C)",
+    "subqgMyra": "SubQG (M)",
+    "subqgCaelum": "SubQG (C)",
+    "knowledge": "Wissen",
+    "dualAI": "Dual AI",
+    "settings": "Einstellungen"
+  },
+  "header": {
+    "myraSystemInterface": "{{name}} System Interface",
+    "caelumSystemInterface": "{{name}} System Interface",
+    "simStep": "SimSchritt ({{agent}})",
+    "fitness": "Fitness ({{agent}})"
+  },
+  "settingsPanel": {
+    "title": "Konfigurationseinstellungen",
+    "saveButton": "Einstellungen Übernehmen",
+    "resetAllButton": "Alles Zurücksetzen",
+    "resetGroupButton": "Gruppe Zurücksetzen",
+    "language": {
+      "label": "Sprache",
+      "options": {
+        "de": "Deutsch",
+        "en": "Englisch"
+      }
+    },
+    "theme": {
+      "label": "Design-Thema",
+      "options": {
+        "nebula": "Nebula (Dunkel)",
+        "biosphere": "Biosphere (Hell)",
+        "matrix": "Matrix (Kontrast)"
+      }
+    },
+    "aiProvider": {
+        "options": {
+            "gemini": "Gemini API",
+            "lmstudio": "LM Studio (Lokal)"
+        }
+    },
+    "myraAI": {
+      "aiProvider": { "label": "M.Y.R.A. KI Provider" },
+      "geminiModelName": { "label": "M.Y.R.A. Gemini Modell" },
+      "lmStudioBaseUrl": { "label": "M.Y.R.A. LM Studio URL" },
+      "lmStudioGenerationModel": { "label": "M.Y.R.A. LM Studio Gen Modell" },
+      "temperatureBase": { "label": "M.Y.R.A. Basis Temperatur" }
+    },
+    "caelumAI": {
+      "aiProvider": { "label": "C.A.E.L.U.M. KI Provider" },
+      "geminiModelName": { "label": "C.A.E.L.U.M. Gemini Modell" },
+      "lmStudioBaseUrl": { "label": "C.A.E.L.U.M. LM Studio URL" },
+      "lmStudioGenerationModel": { "label": "C.A.E.L.U.M. LM Studio Gen Modell" },
+      "temperatureBase": { "label": "C.A.E.L.U.M. Basis Temperatur" }
+    },
+    "myraPersona": {
+      "name": { "label": "M.Y.R.A. Name Übersetzungs-Schlüssel" },
+      "userName": { "label": "Benutzername Übersetzungs-Schlüssel" },
+      "roleDescription": { "label": "M.Y.R.A. Rollenbeschreibung Schlüssel" },
+      "ethicsPrinciples": { "label": "M.Y.R.A. Ethik Schlüssel" },
+      "responseInstruction": { "label": "M.Y.R.A. Antwortinstruktion Schlüssel" }
+    },
+    "caelumPersona": {
+      "name": { "label": "C.A.E.L.U.M. Name Übersetzungs-Schlüssel" },
+      "roleDescription": { "label": "C.A.E.L.U.M. Rollenbeschreibung Schlüssel" },
+      "ethicsPrinciples": { "label": "C.A.E.L.U.M. Ethik Schlüssel" },
+      "responseInstruction": { "label": "C.A.E.L.U.M. Antwortinstruktion Schlüssel" }
+    },
+    "myraSystem": {
+      "subqgSize": { "label": "M.Y.R.A. SubQG Größe" },
+      "subqgBaseEnergy": { "label": "M.Y.R.A. SubQG Basisenergie" },
+      "subqgCoupling": { "label": "M.Y.R.A. SubQG Kopplung" },
+      "subqgInitialEnergyNoiseStd": { "label": "M.Y.R.A. SubQG Init. Energierauschen StdAbw" },
+      "rngType": { "label": "M.Y.R.A. RNG Typ" },
+      "subqgSeed": { "label": "M.Y.R.A. SubQG Seed (optional)", "placeholder": "Leer für zufällig" },
+      "nodeActivationDecay": { "label": "M.Y.R.A. Knoten Aktivierungszerfall" },
+      "emotionDecay": { "label": "M.Y.R.A. Emotionszerfall" },
+      "adaptiveFitnessUpdateInterval": { "label": "M.Y.R.A. Fitness Update Intervall (Schritte)" }
+    },
+     "rngType": {
+        "options": {
+            "subqg": "Deterministisch (Seed)",
+            "quantum": "Zufällig (Math.random)"
+        }
+    },
+    "caelumSystem": {
+      "subqgSize": { "label": "C.A.E.L.U.M. SubQG Größe" },
+      "subqgBaseEnergy": { "label": "C.A.E.L.U.M. SubQG Basisenergie" },
+      "rngType": { "label": "C.A.E.L.U.M. RNG Typ" },
+      "subqgSeed": { "label": "C.A.E.L.U.M. SubQG Seed (optional)", "placeholder": "Leer für zufällig" },
+      "nodeActivationDecay": { "label": "C.A.E.L.U.M. Knoten Aktivierungszerfall" },
+      "emotionDecay": { "label": "C.A.E.L.U.M. Emotionszerfall" },
+      "adaptiveFitnessUpdateInterval": { "label": "C.A.E.L.U.M. Fitness Update Intervall (Schritte)" }
+    },
+    "generalSystem": {
+      "maxHistoryMessagesForPrompt": { "label": "Max. Chatverlauf für Prompt" },
+      "temperatureLimbusInfluence": { "label": "Temperatur: Limbus Einfluss" },
+      "temperatureCreativusInfluence": { "label": "Temperatur: Creativus Einfluss" },
+      "ragChunkSize": { "label": "RAG Chunk Größe" },
+      "ragChunkOverlap": { "label": "RAG Chunk Überlappung" },
+      "ragMaxChunksToRetrieve": { "label": "RAG Max. Chunks Abruf" }
+    },
+    "adaptiveFitnessBase": {
+        "coherenceProxy": {"label": "Gewicht: Kohärenz-Proxy"},
+        "networkComplexityProxy": {"label": "Gewicht: Netzwerkkomplexitäts-Proxy"},
+        "averageResonatorScore": {"label": "Gewicht: Mittl. Resonator-Score"},
+        "goalAchievementProxy": {"label": "Gewicht: Zielerreichungs-Proxy"},
+        "explorationScore": {"label": "Gewicht: Explorations-Score"},
+        "focusScore": {"label": "Gewicht: Fokus-Score"},
+        "creativityScore": {"label": "Gewicht: Kreativitäts-Score"},
+        "conflictPenaltyFactor": {"label": "Gewicht: Konflikt-Malusfaktor"}
+    },
+    "adaptiveFitnessDim": {
+        "knowledgeExpansion": {
+            "learningEfficiency": {"label": "Dim: Wissenserw. -> Lerneffizienz"},
+            "explorationScore": {"label": "Dim: Wissenserw. -> Exploration"}
+        },
+        "internalCoherence": {
+            "coherenceProxy": {"label": "Dim: Int. Kohärenz -> Kohärenz"},
+            "averageResonatorScore": {"label": "Dim: Int. Kohärenz -> Resonanz"}
+        },
+        "expressiveCreativity": {
+            "creativityScore": {"label": "Dim: Ausdr. Kreat. -> Kreativität"},
+            "creativusActivation": {"label": "Dim: Ausdr. Kreat. -> Creativus Akt."},
+            "explorationScore": {"label": "Dim: Ausdr. Kreat. -> Exploration"}
+        },
+        "goalFocus": {
+            "goalAchievementProxy": {"label": "Dim: Zielfokus -> Zielerreichung"},
+            "focusScore": {"label": "Dim: Zielfokus -> Fokus"}
+        }
+    },
+    "group": {
+      "localization": "Lokalisierung",
+      "myraAI": "M.Y.R.A. KI Provider",
+      "caelumAI": "C.A.E.L.U.M. KI Provider",
+      "myraPersona": "M.Y.R.A. Persona",
+      "caelumPersona": "C.A.E.L.U.M. Persona",
+      "myraSystem": "M.Y.R.A. System",
+      "caelumSystem": "C.A.E.L.U.M. System",
+      "generalSystem": "Allgemeines System",
+      "adaptiveFitnessBase": "Adaptive Fitness (Basisgew.)",
+      "adaptiveFitnessDim": "Adaptive Fitness (Dimensionen)",
+      "misc": "Sonstiges"
+    }
+  },
+  "chatInterface": {
+    "input": {
+      "thinking": "{{name}} denkt nach...",
+      "promptPlaceholder": "Nachricht an {{name}}..."
+    },
+    "button": {
+      "sendMessage": "Nachricht senden"
+    }
+  },
+  "nodePanel": {
+    "modulatorNodes": {
+        "title": "Modulator-Knoten",
+        "empty": "Keine Modulator-Knoten vorhanden."
+    },
+    "semanticNodes": {
+        "title": "Semantische Knoten (Beispiel)",
+        "empty": "Keine semantischen Knoten vorhanden.",
+        "showingSome": "{{count}} von {{total}} semantischen Knoten werden angezeigt."
+    }
+  },
+  "subqgDisplay": {
+    "error": {
+        "matrixUnavailable": "SubQG Energiematrix ({{size}}x{{size}}) nicht verfügbar oder falsche Größe.",
+        "phaseMatrixUnavailable": "SubQG Phasenmatrix ({{size}}x{{size}}) nicht verfügbar oder falsche Größe."
+    },
+    "title": "SubQG Feld ({{size}}x{{size}})",
+    "label": {
+        "injectEnergy": "Energie Injektion",
+        "setPhase": "Phase Setzen (Opt.)"
+    },
+    "placeholder": {
+        "phase": "0 bis {{maxPhase}} (radians)"
+    },
+    "info": {
+        "clickToInject": "Klicken Sie auf eine Zelle, um Energie/Phase zu injizieren."
+    },
+    "jump": {
+        "detected": "SubQG Sprung Detektiert!",
+        "type": "Typ",
+        "peakE": "Peak Energie",
+        "peakC": "Peak Kohärenz"
+    }
+  },
+  "systemStatusPanel": {
+    "emotion": {
+      "title": "Emotionsstatus",
+      "pleasure": "Vergnügen",
+      "arousal": "Erregung",
+      "dominance": "Dominanz",
+      "dominantAffect": "Dominanter Affekt",
+      "affects": {
+        "neutral": "Neutral",
+        "anger": "Wut",
+        "disgust": "Ekel",
+        "fear": "Angst",
+        "greed": "Gier"
+      }
+    },
+    "fitness": {
+      "title": "Adaptive Fitness",
+      "overallScore": "Gesamtscore",
+      "dimensions": {
+        "knowledgeExpansion": "Wissenserweiterung",
+        "internalCoherence": "Interne Kohärenz",
+        "expressiveCreativity": "Ausdruckskreativität",
+        "goalFocus": "Zielfokus"
+      }
+    },
+    "subQg": {
+      "title": "SubQG Metriken",
+      "event": "SubQG Event!",
+      "statusStable": "SubQG Stabil",
+      "avgEnergy": "Mittl. Energie",
+      "stdEnergy": "StdAbw Energie",
+      "phaseCoherence": "Phasenkohärenz",
+      "jumpModifierActive": "Sprung Modifikator",
+      "jumpModifierValue": "{{value}} ({{steps}} Schritte)"
+    },
+    "vitals": {
+        "bpm": "SpM",
+        "stressLevel": "Stresslevel"
+    }
+  },
+  "knowledgePanel": {
+    "title": "Wissensbasis Management",
+    "upload": {
+      "title": "Textdatei hochladen (.txt)",
+      "selected": "Ausgewählt: {{fileName}}"
+    },
+    "button": {
+      "loadFile": "Datei laden & verarbeiten",
+      "clearAll": "Alles löschen",
+      "clearAllTitle": "Gesamte Wissensbasis löschen"
+    },
+    "sources": {
+      "title": "Geladene Quellen",
+      "empty": "Keine Wissensquellen geladen.",
+      "chunkCount": "{{count}} Chunks",
+      "totalChunks": "Gesamt: {{count}} Chunks in der DB."
+    },
+    "errorFileFormat": "Ungültiges Dateiformat. Bitte eine .txt Datei auswählen.",
+    "errorProcessingFile": "Fehler beim Verarbeiten der Datei: {{message}}",
+    "errorClearingDb": "Fehler beim Leeren der Datenbank: {{message}}"
+  },
+  "dualAiPanel": {
+    "label": {
+      "initialPrompt": "Start-Prompt für {{myraName}} & {{caelumName}}:",
+      "rounds": "Runden:",
+      "system": "System"
+    },
+    "placeholder": {
+      "initialPrompt": "Geben Sie hier das Thema oder die Startfrage ein..."
+    },
+    "button": {
+      "startConversation": "Dual-Konversation Starten"
+    },
+    "info": {
+        "emptyState": "Starten Sie eine neue Dual-Konversation, um den Austausch zwischen den KIs zu beobachten.",
+        "inProgress": "Konversation läuft..."
+    },
+    "conversationCancelled": "Die Konversation wurde abgebrochen."
+  },
+  "aiService": {
+    "relevantInfoLabel": "[RELEVANTE INFORMATIONEN AUS WISSENSBASIS]",
+    "endInfoLabel": "[ENDE RELEVANTE INFORMATIONEN]",
+    "corePrinciplesLabel": "ETHISCHE KERNPRINZIPIEN",
+    "currentInternalContextLabel": "AKTUELLER INTERNER KONTEXT ({{speakerName}})",
+    "responseInstructionLabel": "ANTWORTINSTRUKTION ({{speakerName}})",
+    "systemLabel": "System",
+    "error": {
+      "lmStudioRequestFailed": "Fehler bei LM Studio Anfrage (Status: {{status}}): {{errorBody}}",
+      "lmStudioUnexpectedFormat": "LM Studio: Unerwartetes Antwortformat.",
+      "lmStudioGenerationError": "Fehler bei der Antwortgenerierung von {{speakerName}} über LM Studio.",
+      "details": "Details: {{message}}",
+      "lmStudioNetworkError": "{{speakerName}} konnte LM Studio nicht erreichen. Läuft es unter {{baseUrl}}?",
+      "geminiNotInitialized": "Gemini API Client nicht initialisiert. API Key fehlt?",
+      "geminiGenerationError": "Fehler bei der Antwortgenerierung von {{speakerName}} über Gemini.",
+      "geminiApiKeyInvalid": "Gemini API Key ist ungültig oder nicht autorisiert.",
+      "geminiQuotaExceeded": "Gemini API Kontingent überschritten.",
+      "geminiNetworkError": "Netzwerkfehler bei der Verbindung zur Gemini API."
+    }
+  }
+}

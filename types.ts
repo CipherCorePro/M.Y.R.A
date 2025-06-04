@@ -1,13 +1,29 @@
-
-
 import type { RNGType } from './utils/rng'; // Import RNGType
 
 export { RNGType }; // Re-export RNGType for convenience
 
+export type Language = 'en' | 'de';
+export type Theme = 'nebula' | 'biosphere' | 'matrix';
+
+export interface TranslationSet {
+  [key: string]: string | TranslationSet;
+}
+
+export interface Translations {
+  en: TranslationSet;
+  de: TranslationSet;
+}
+
+export interface InternationalizedPersona {
+  name: string;
+  roleDescription: string;
+  ethicsPrinciples: string;
+  responseInstruction: string;
+}
+
 export interface AdaptiveFitnessMetricWeights {
   coherenceProxy: number;
-  // learningEfficiency: number; // For future more detailed implementation
-  networkComplexityProxy: number; // Simplified for now
+  networkComplexityProxy: number;
   averageResonatorScore: number;
   goalAchievementProxy: number;
   explorationScore: number;
@@ -23,7 +39,6 @@ export interface AdaptiveFitnessDimensionWeights {
   };
   internalCoherence: {
     coherenceProxy: number;
-    // inverseNetworkComplexity: number; // For future
     averageResonatorScore: number;
   };
   expressiveCreativity: {
@@ -39,22 +54,55 @@ export interface AdaptiveFitnessDimensionWeights {
 
 export interface AdaptiveFitnessConfig {
   baseMetricWeights: AdaptiveFitnessMetricWeights;
-  dimensionContribWeights: AdaptiveFitnessDimensionWeights; // How much each metric contributes to a dimension
-  // adaptiveFitnessUpdateInterval: number; // Already in MyraConfig
-  // Thresholds and adaptation factors can be added later
+  dimensionContribWeights: AdaptiveFitnessDimensionWeights;
 }
 
+export interface AIProviderConfig {
+  aiProvider: 'gemini' | 'lmstudio';
+  geminiModelName: string;
+  lmStudioBaseUrl: string;
+  lmStudioGenerationModel: string;
+  lmStudioEmbeddingModel: string;
+  temperatureBase: number;
+}
 
 export interface MyraConfig {
+  language: Language;
+  theme: Theme;
+
+  myraNameKey: string; // Key for translation
+  userNameKey: string; // Key for translation, though often user-provided
+  myraRoleDescriptionKey: string;
+  myraEthicsPrinciplesKey: string;
+  myraResponseInstructionKey: string;
+
+  caelumNameKey: string;
+  caelumRoleDescriptionKey: string;
+  caelumEthicsPrinciplesKey: string;
+  caelumResponseInstructionKey: string;
+  
+  // These will store the *translated* versions based on current language
+  // and are populated by useMyraState
   myraName: string;
   userName: string;
   myraRoleDescription: string;
   myraEthicsPrinciples: string;
   myraResponseInstruction: string;
+  
+  caelumName: string;
+  caelumRoleDescription: string;
+  caelumEthicsPrinciples: string;
+  caelumResponseInstruction: string;
+
+
+  myraAIProviderConfig: AIProviderConfig;
+  caelumAIProviderConfig: AIProviderConfig;
+
+  // M.Y.R.A. System Config
   subqgSize: number;
   subqgBaseEnergy: number;
   subqgCoupling: number;
-  subqgInitialEnergyNoiseStd: number; // This is the "Noise Level"
+  subqgInitialEnergyNoiseStd: number;
   subqgPhaseEnergyCouplingFactor: number;
   subqgJumpMinEnergyAtPeak: number;
   subqgJumpMinCoherenceAtPeak: number;
@@ -63,39 +111,57 @@ export interface MyraConfig {
   subqgJumpMaxStepsToTrackPeak: number;
   subqgJumpActiveDuration: number;
   subqgJumpQnsDirectModifierStrength: number;
-  // subqgEnergyDiffusionFactor: number; // Not currently implemented in simulateSubQgStep
-  subqgPhaseDiffusionFactor: number; // Added this missing parameter
-  
+  subqgPhaseDiffusionFactor: number;
   rngType: RNGType;
-  subqgSeed?: number; 
-
-  aiProvider: 'gemini' | 'lmstudio';
-  geminiModelName: string;
-  
-  lmStudioBaseUrl: string;
-  lmStudioGenerationModel: string;
-  lmStudioEmbeddingModel: string;
-
-  maxHistoryMessagesForPrompt: number;
+  subqgSeed?: number;
   nodeActivationDecay: number;
   emotionDecay: number;
   adaptiveFitnessUpdateInterval: number;
-  temperatureBase: number;
-  temperatureLimbusInfluence: number; 
+
+  // C.A.E.L.U.M. System Config
+  caelumSubqgSize: number;
+  caelumSubqgBaseEnergy: number;
+  caelumSubqgCoupling: number;
+  caelumSubqgInitialEnergyNoiseStd: number;
+  caelumSubqgPhaseEnergyCouplingFactor: number;
+  caelumSubqgJumpMinEnergyAtPeak: number;
+  caelumSubqgJumpMinCoherenceAtPeak: number;
+  caelumSubqgJumpCoherenceDropFactor: number;
+  caelumSubqgJumpEnergyDropFactorFromPeak: number;
+  caelumSubqgJumpMaxStepsToTrackPeak: number;
+  caelumSubqgJumpActiveDuration: number;
+  caelumSubqgJumpQnsDirectModifierStrength: number;
+  caelumSubqgPhaseDiffusionFactor: number;
+  caelumRngType: RNGType;
+  caelumSubqgSeed?: number;
+  caelumNodeActivationDecay: number;
+  caelumEmotionDecay: number;
+  caelumAdaptiveFitnessUpdateInterval: number;
+
+  maxHistoryMessagesForPrompt: number;
+  temperatureLimbusInfluence: number;
   temperatureCreativusInfluence: number;
 
-  // RAG and Knowledge Settings
   ragChunkSize: number;
   ragChunkOverlap: number;
   ragMaxChunksToRetrieve: number;
 
-  // Adaptive Fitness Configuration
   adaptiveFitnessConfig: AdaptiveFitnessConfig;
 }
+
+// For direct use in aiService, containing the resolved strings
+export interface ResolvedSpeakerPersonaConfig {
+  name: string;
+  roleDescription: string;
+  ethicsPrinciples: string;
+  responseInstruction: string;
+}
+
 
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
+  speakerName?: string;
   content: string;
   timestamp: number;
 }
@@ -112,13 +178,13 @@ export interface EmotionState {
 
 export interface NodeState {
   id: string;
-  label: string;
+  label: string; // This might become a translation key if node labels need i18n
   activation: number;
-  resonatorScore: number; 
-  focusScore: number; 
-  explorationScore: number; 
+  resonatorScore: number;
+  focusScore: number;
+  explorationScore: number;
   type: 'semantic' | 'limbus' | 'creativus' | 'criticus' | 'metacognitio' | 'social' | 'valuation' | 'conflict' | 'executive';
-  specificState?: any; 
+  specificState?: any;
 }
 
 export interface SubQgGlobalMetrics {
@@ -146,7 +212,6 @@ export interface AdaptiveFitnessState {
     expressiveCreativity: number;
     goalFocus: number;
   };
-  // Optionally, store individual metrics if needed for display
   metrics?: Partial<AdaptiveFitnessMetricWeights> & { [key: string]: number };
 }
 
@@ -168,8 +233,8 @@ export interface GeminiCandidate {
 }
 
 export interface GeminiGenerateContentResponse {
-  text: string; 
-  candidates?: GeminiCandidate[]; 
+  text: string;
+  candidates?: GeminiCandidate[];
   promptFeedback?: {
     blockReason?: string;
     safetyRatings?: GeminiSafetyRating[];
@@ -193,7 +258,7 @@ export interface LMStudioResponse {
   created: number;
   model: string;
   choices: LMStudioResponseChoice[];
-  usage?: { 
+  usage?: {
     prompt_tokens: number;
     completion_tokens: number;
     total_tokens: number;
@@ -208,30 +273,77 @@ export interface ApiKeyManager {
 
 export interface TextChunk {
   id: string;
-  source: string; // Filename or source identifier
-  index: number;  // Index of the chunk within its source
+  source: string;
+  index: number;
   text: string;
-  // Future extensions:
-  // activatedNodeLabels?: string[]; 
-  // embedding?: number[];
 }
 
-// Types for SettingsPanel config fields
 export interface ConfigFieldBase {
-  label: string;
+  labelKey: string; // Use translation key for label
   type: 'text' | 'number' | 'textarea' | 'select';
-  options?: { value: string; label: string }[];
+  options?: { value: string; labelKey: string }[]; // Options also use labelKeys
   step?: number;
   min?: number;
   max?: number;
   rows?: number;
   condition?: (config: MyraConfig) => boolean;
-  group: string;
-  placeholder?: string;
+  groupKey: string; // Group name also a translation key
+  placeholderKey?: string;
 }
 
-export interface MyraConfigField extends ConfigFieldBase {
-  key: keyof MyraConfig;
+type MyraSpecificSystemConfigKeys = Omit<MyraConfig,
+  'language' | 'theme' |
+  'adaptiveFitnessConfig' |
+  'myraAIProviderConfig' |
+  'caelumAIProviderConfig' |
+  // Persona keys (now suffixed with "Key")
+  'myraNameKey' | 'myraRoleDescriptionKey' | 'myraEthicsPrinciplesKey' | 'myraResponseInstructionKey' | 'userNameKey' |
+  'caelumNameKey' | 'caelumRoleDescriptionKey' | 'caelumEthicsPrinciplesKey' | 'caelumResponseInstructionKey' |
+  // Translated persona fields
+  'myraName' | 'myraRoleDescription' | 'myraEthicsPrinciples' | 'myraResponseInstruction' | 'userName' |
+  'caelumName' | 'caelumRoleDescription' | 'caelumEthicsPrinciples' | 'caelumResponseInstruction' |
+  // Exclude Caelum System Config
+  'caelumSubqgSize' | 'caelumSubqgBaseEnergy' | 'caelumSubqgCoupling' | 'caelumSubqgInitialEnergyNoiseStd' |
+  'caelumSubqgPhaseEnergyCouplingFactor' | 'caelumSubqgJumpMinEnergyAtPeak' | 'caelumSubqgJumpMinCoherenceAtPeak' |
+  'caelumSubqgJumpCoherenceDropFactor' | 'caelumSubqgJumpEnergyDropFactorFromPeak' | 'caelumSubqgJumpMaxStepsToTrackPeak' |
+  'caelumSubqgJumpActiveDuration' | 'caelumSubqgJumpQnsDirectModifierStrength' | 'caelumSubqgPhaseDiffusionFactor' |
+  'caelumRngType' | 'caelumSubqgSeed' | 'caelumNodeActivationDecay' | 'caelumEmotionDecay' |
+  'caelumAdaptiveFitnessUpdateInterval'
+>;
+
+export interface MyraSystemConfigField extends ConfigFieldBase {
+  key: keyof MyraSpecificSystemConfigKeys;
+}
+
+export interface MyraPersonaConfigField extends ConfigFieldBase {
+    key: 'myraNameKey' | 'myraRoleDescriptionKey' | 'myraEthicsPrinciplesKey' | 'myraResponseInstructionKey' | 'userNameKey';
+}
+
+export interface CaelumPersonaConfigField extends ConfigFieldBase {
+    key: 'caelumNameKey' | 'caelumRoleDescriptionKey' | 'caelumEthicsPrinciplesKey' | 'caelumResponseInstructionKey';
+}
+
+export interface LocalizationConfigField extends ConfigFieldBase {
+    key: 'language' | 'theme';
+}
+
+
+export interface CaelumSystemConfigField extends ConfigFieldBase {
+  key: 'caelumSubqgSize' | 'caelumSubqgBaseEnergy' | 'caelumSubqgCoupling' | 'caelumSubqgInitialEnergyNoiseStd' |
+       'caelumSubqgPhaseEnergyCouplingFactor' | 'caelumSubqgJumpMinEnergyAtPeak' | 'caelumSubqgJumpMinCoherenceAtPeak' |
+       'caelumSubqgJumpCoherenceDropFactor' | 'caelumSubqgJumpEnergyDropFactorFromPeak' | 'caelumSubqgJumpMaxStepsToTrackPeak' |
+       'caelumSubqgJumpActiveDuration' | 'caelumSubqgJumpQnsDirectModifierStrength' | 'caelumSubqgPhaseDiffusionFactor' |
+       'caelumRngType' | 'caelumSubqgSeed' | 'caelumNodeActivationDecay' | 'caelumEmotionDecay' |
+       'caelumAdaptiveFitnessUpdateInterval';
+}
+
+export interface MyraAIProviderConfigField extends ConfigFieldBase {
+    key: keyof AIProviderConfig;
+    parentKey: 'myraAIProviderConfig';
+}
+export interface CaelumAIProviderConfigField extends ConfigFieldBase {
+    key: keyof AIProviderConfig;
+    parentKey: 'caelumAIProviderConfig';
 }
 
 export interface AdaptiveFitnessBaseWeightsField extends ConfigFieldBase {
@@ -240,8 +352,19 @@ export interface AdaptiveFitnessBaseWeightsField extends ConfigFieldBase {
   subKey: 'baseMetricWeights';
 }
 export interface AdaptiveFitnessDimensionSubField extends ConfigFieldBase {
-    key: string; 
+    key: string;
     parentKey: 'adaptiveFitnessConfig';
-    subKey: keyof MyraConfig['adaptiveFitnessConfig']['dimensionContribWeights']; 
-    subSubKey: 'dimensionContribWeights'; 
+    subKey: keyof MyraConfig['adaptiveFitnessConfig']['dimensionContribWeights'];
+    subSubKey: 'dimensionContribWeights';
 }
+
+export type ConfigField =
+  | MyraSystemConfigField
+  | MyraPersonaConfigField
+  | CaelumPersonaConfigField
+  | CaelumSystemConfigField
+  | MyraAIProviderConfigField
+  | CaelumAIProviderConfigField
+  | AdaptiveFitnessBaseWeightsField
+  | AdaptiveFitnessDimensionSubField
+  | LocalizationConfigField; // Added

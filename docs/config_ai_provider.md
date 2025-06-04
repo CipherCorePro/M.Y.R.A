@@ -1,48 +1,82 @@
-# M.Y.R.A. Konfiguration: AI Provider
+# M.Y.R.A. & C.A.E.L.U.M. Konfiguration: AI Provider
 
-Diese Datei erläutert die Konfigurationsparameter im Zusammenhang mit der Auswahl und Konfiguration des KI-Providers (Large Language Model), der von M.Y.R.A. für die Generierung von Antworten verwendet wird. Diese Einstellungen finden Sie im `SettingsPanel` unter der Gruppe "AI Configuration" und sind Teil des `MyraConfig`-Objekts.
+Diese Datei erläutert die Konfigurationsparameter im Zusammenhang mit der Auswahl und Konfiguration des KI-Providers (Large Language Model), der von M.Y.R.A. und C.A.E.L.U.M. für die Generierung von Antworten verwendet wird. Diese Einstellungen finden Sie im `SettingsPanel` unter den Gruppen "M.Y.R.A. AI Configuration" und "C.A.E.L.U.M. AI Configuration" und sind Teil des `MyraConfig`-Objekts unter `myraAIProviderConfig` bzw. `caelumAIProviderConfig`.
 
-## Parameter
+## M.Y.R.A. AI Provider (`myraAIProviderConfig`)
 
-### `aiProvider`
+### `myraAIProviderConfig.aiProvider`
 
-*   **Bedeutung:** Legt fest, welcher KI-Dienst für die Generierung von Antworten verwendet wird.
-*   **Mögliche Werte:**
-    *   `'gemini'`: Verwendet die Google Gemini API. Erfordert einen gültigen Gemini API-Schlüssel.
-    *   `'lmstudio'`: Verwendet eine lokal laufende Instanz von [LM Studio](https://lmstudio.ai/). Erfordert, dass LM Studio korrekt eingerichtet ist und ein Modell bedient.
+*   **Bedeutung:** Legt fest, welcher KI-Dienst für M.Y.R.A. verwendet wird.
+*   **Mögliche Werte:** `'gemini'`, `'lmstudio'`.
 *   **Standardwert:** `'gemini'`
-*   **Interaktionen:** Die Auswahl hier bestimmt, welche der folgenden Parameter relevant sind.
 
-### `geminiModelName`
+### `myraAIProviderConfig.geminiModelName`
 
-*   **Bedeutung:** Der spezifische Modellname, der für Anfragen an die Gemini API verwendet werden soll (z.B. `'gemini-2.5-flash-preview-04-17'`, `'gemini-1.5-pro-latest'`).
-*   **Bedingung:** Nur relevant, wenn `aiProvider` auf `'gemini'` gesetzt ist.
-*   **Wertebereich:** Ein gültiger Modellname, wie in der Gemini API Dokumentation spezifiziert.
+*   **Bedeutung:** Gemini-Modellname für M.Y.R.A. (z.B. `'gemini-2.5-flash-preview-04-17'`).
+*   **Bedingung:** Wenn `myraAIProviderConfig.aiProvider` = `'gemini'`.
 *   **Standardwert:** `'gemini-2.5-flash-preview-04-17'`
-*   **Interaktionen:** Die Wahl des Modells kann die Qualität, Geschwindigkeit und Kosten der Antworten beeinflussen. Verschiedene Modelle haben unterschiedliche Stärken und Token-Limits.
 
-### `lmStudioBaseUrl`
+### `myraAIProviderConfig.lmStudioBaseUrl`
 
-*   **Bedeutung:** Die Basis-URL des LM Studio API-Endpunkts. Standardmäßig läuft LM Studio unter `http://localhost:1234/v1`.
-*   **Bedingung:** Nur relevant, wenn `aiProvider` auf `'lmstudio'` gesetzt ist.
-*   **Wertebereich:** Eine gültige URL.
+*   **Bedeutung:** Basis-URL des LM Studio API-Endpunkts für M.Y.R.A.
+*   **Bedingung:** Wenn `myraAIProviderConfig.aiProvider` = `'lmstudio'`.
 *   **Standardwert:** `'http://localhost:1234/v1'`
-*   **Interaktionen:** Muss mit der Adresse und dem Port übereinstimmen, unter dem Ihr LM Studio Server erreichbar ist.
 
-### `lmStudioGenerationModel`
+### `myraAIProviderConfig.lmStudioGenerationModel`
 
-*   **Bedeutung:** Der Modell-Identifikator (wie in LM Studio angezeigt, z.B. `Publisher/Repository/ModellDatei` oder ein einfacher Name, wenn von LM Studio so bereitgestellt), der für die Textgenerierung verwendet werden soll.
-*   **Bedingung:** Nur relevant, wenn `aiProvider` auf `'lmstudio'` gesetzt ist.
-*   **Wertebereich:** Ein auf Ihrem LM Studio Server geladenes und verfügbares Modell.
-*   **Standardwert:** `'google/gemma-3-1b'` (Beispiel, Sie müssen ein Modell in LM Studio geladen haben)
-*   **Interaktionen:** Das gewählte Modell bestimmt die Fähigkeiten und den Stil der von LM Studio generierten Antworten.
+*   **Bedeutung:** LM Studio Modell-Identifikator für M.Y.R.A.
+*   **Bedingung:** Wenn `myraAIProviderConfig.aiProvider` = `'lmstudio'`.
+*   **Standardwert:** `'google/gemma-3-1b'`
 
-### `lmStudioEmbeddingModel`
+### `myraAIProviderConfig.lmStudioEmbeddingModel`
 
-*   **Bedeutung:** Der Modell-Identifikator für Embedding-Aufgaben in LM Studio. **Hinweis:** Die aktuelle Implementierung in `aiService.ts` verwendet diesen Parameter noch nicht aktiv für Embedding-Aufgaben, wenn LM Studio als Provider gewählt ist. Embeddings sind typischerweise für RAG-Systeme relevant, die auf semantischer Ähnlichkeitssuche basieren, was hier noch nicht vollumfänglich für LM Studio implementiert ist.
-*   **Bedingung:** Potenziell relevant, wenn `aiProvider` auf `'lmstudio'` gesetzt ist und erweiterte RAG-Funktionen mit lokalen Embeddings implementiert würden.
-*   **Wertebereich:** Ein auf Ihrem LM Studio Server geladenes und für Embeddings geeignetes Modell.
-*   **Standardwert:** `'text-embedding-nomic-embed-text-v1.5'` (Beispiel)
+*   **Bedeutung:** LM Studio Modell für Embeddings (aktuell nicht aktiv für Antwortgenerierung genutzt).
+*   **Standardwert:** `'text-embedding-nomic-embed-text-v1.5'`
+
+### `myraAIProviderConfig.temperatureBase`
+
+*   **Bedeutung:** Basistemperatur für M.Y.R.A.s KI-Antwortgenerierung.
+*   **Wertebereich:** Typischerweise 0.0 bis 2.0.
+*   **Standardwert:** `0.7`
+*   **Interaktionen:** Wird dynamisch durch `temperatureLimbusInfluence` und `temperatureCreativusInfluence` basierend auf M.Y.R.A.s internem Zustand modifiziert.
+
+## C.A.E.L.U.M. AI Provider (`caelumAIProviderConfig`)
+
+### `caelumAIProviderConfig.aiProvider`
+
+*   **Bedeutung:** Legt fest, welcher KI-Dienst für C.A.E.L.U.M. verwendet wird.
+*   **Mögliche Werte:** `'gemini'`, `'lmstudio'`.
+*   **Standardwert:** `'gemini'`
+
+### `caelumAIProviderConfig.geminiModelName`
+
+*   **Bedeutung:** Gemini-Modellname für C.A.E.L.U.M.
+*   **Bedingung:** Wenn `caelumAIProviderConfig.aiProvider` = `'gemini'`.
+*   **Standardwert:** `'gemini-2.5-flash-preview-04-17'` (kann für analytischere Antworten ggf. angepasst werden)
+
+### `caelumAIProviderConfig.lmStudioBaseUrl`
+
+*   **Bedeutung:** Basis-URL des LM Studio API-Endpunkts für C.A.E.L.U.M.
+*   **Bedingung:** Wenn `caelumAIProviderConfig.aiProvider` = `'lmstudio'`.
+*   **Standardwert:** `'http://localhost:1234/v1'`
+
+### `caelumAIProviderConfig.lmStudioGenerationModel`
+
+*   **Bedeutung:** LM Studio Modell-Identifikator für C.A.E.L.U.M.
+*   **Bedingung:** Wenn `caelumAIProviderConfig.aiProvider` = `'lmstudio'`.
+*   **Standardwert:** `'NousResearch/Nous-Hermes-2-Mistral-7B-DPO'` (Beispiel für ein potenziell analytischeres Modell)
+
+### `caelumAIProviderConfig.lmStudioEmbeddingModel`
+
+*   **Bedeutung:** LM Studio Modell für Embeddings (aktuell nicht aktiv für Antwortgenerierung genutzt).
+*   **Standardwert:** `'text-embedding-nomic-embed-text-v1.5'`
+
+### `caelumAIProviderConfig.temperatureBase`
+
+*   **Bedeutung:** Basistemperatur für C.A.E.L.U.M.s KI-Antwortgenerierung.
+*   **Wertebereich:** Typischerweise 0.0 bis 2.0.
+*   **Standardwert:** `0.5` (oft niedriger für präzisere, analytischere Antworten)
+*   **Interaktionen:** Wird dynamisch durch `temperatureLimbusInfluence` und `temperatureCreativusInfluence` basierend auf C.A.E.L.U.M.s internem Zustand modifiziert.
 
 ---
 

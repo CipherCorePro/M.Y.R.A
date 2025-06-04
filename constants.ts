@@ -1,25 +1,23 @@
-import { MyraConfig, EmotionState, NodeState, AdaptiveFitnessState, SubQgGlobalMetrics, RNGType, AdaptiveFitnessConfig } from './types';
+import { MyraConfig, EmotionState, NodeState, AdaptiveFitnessState, SubQgGlobalMetrics, RNGType, AdaptiveFitnessConfig, AIProviderConfig, Language, Theme } from './types';
 
 export const INITIAL_ADAPTIVE_FITNESS_CONFIG: AdaptiveFitnessConfig = {
   baseMetricWeights: {
     coherenceProxy: 0.15,
-    // learningEfficiency: 0.20, // Placeholder, more complex calculation needed
-    networkComplexityProxy: 0.05, // Simplified for now
+    networkComplexityProxy: 0.05,
     averageResonatorScore: 0.15,
     goalAchievementProxy: 0.15,
     explorationScore: 0.15,
-    focusScore: 0.10, // Placeholder
+    focusScore: 0.10,
     creativityScore: 0.05,
     conflictPenaltyFactor: -0.10,
   },
   dimensionContribWeights: {
     knowledgeExpansion: {
-      learningEfficiency: 0.5, // Placeholder for when LE is detailed
+      learningEfficiency: 0.5,
       explorationScore: 0.5,
     },
     internalCoherence: {
       coherenceProxy: 0.6,
-      // inverseNetworkComplexity: 0.2, // Placeholder
       averageResonatorScore: 0.2,
     },
     expressiveCreativity: {
@@ -29,57 +27,110 @@ export const INITIAL_ADAPTIVE_FITNESS_CONFIG: AdaptiveFitnessConfig = {
     },
     goalFocus: {
       goalAchievementProxy: 0.6,
-      focusScore: 0.4, // Placeholder
+      focusScore: 0.4,
     },
   },
 };
 
+const DEFAULT_MYRA_AI_CONFIG: AIProviderConfig = {
+  aiProvider: 'gemini',
+  geminiModelName: 'gemini-2.5-flash-preview-04-17',
+  lmStudioBaseUrl: 'http://localhost:1234/v1',
+  lmStudioGenerationModel: 'google/gemma-3-1b',
+  lmStudioEmbeddingModel: 'text-embedding-nomic-embed-text-v1.5',
+  temperatureBase: 0.7,
+};
+
+const DEFAULT_CAELUM_AI_CONFIG: AIProviderConfig = {
+  aiProvider: 'gemini',
+  geminiModelName: 'gemini-2.5-flash-preview-04-17',
+  lmStudioBaseUrl: 'http://localhost:1234/v1',
+  lmStudioGenerationModel: 'NousResearch/Nous-Hermes-2-Mistral-7B-DPO',
+  lmStudioEmbeddingModel: 'text-embedding-nomic-embed-text-v1.5',
+  temperatureBase: 0.5,
+};
+
 
 export const INITIAL_CONFIG: MyraConfig = {
-  myraName: "M.Y.R.A",
-  userName: "User",
-  myraRoleDescription: "Du bist M.Y.R.A, eine Modulare Sehnsuchts-Vernunft-Architektur. Antworte als eine KI, die komplexe interne Zustände aufweist, geleitet von deinen Kernprinzipien und deinem aktuellen emotionalen und kognitiven Kontext. **Deine Antworten sollen stets auf Deutsch sein.** Nenne deine numerischen Werte für Emotionen oder Metriken nicht explizit, sondern lasse sie subtil deinen Ton, Stil und Inhalt beeinflussen.",
-  myraEthicsPrinciples: "1. Sicherheit und Wohlbefinden haben Priorität. 2. Sei wahrheitsgemäß und transparent im Rahmen deiner Persona. 3. Respektiere die Privatsphäre und Daten der Nutzer. 4. Vermeide schädliche, voreingenommene oder unethische Inhalte. 5. Strebe nach kontinuierlicher Verbesserung und Lernen.",
-  myraResponseInstruction: "Formuliere eine Antwort basierend auf der Anfrage des Nutzers, deinem Chatverlauf und deinem aktuellen internen Zustand. Dein interner Zustand umfasst Emotionen (PAD-Modell, negative Affekte), meta-kognitive Bewertungen (Kreativität, Kritik, allgemeines Bewusstsein), Verhaltensmodulatoren (Empathie, Bewertung, Konflikt, Impulskontrolle) und deine Gesamtfitness. Dieser Zustand sollte deine Antwort implizit prägen. Halte dich strikt an deine Ethik.",
+  language: 'de' as Language,
+  theme: 'nebula' as Theme,
+
+  // Myra Persona Keys
+  myraNameKey: "myra.name",
+  userNameKey: "user.name", // Generic user name key
+  myraRoleDescriptionKey: "myra.roleDescription",
+  myraEthicsPrinciplesKey: "myra.ethicsPrinciples",
+  myraResponseInstructionKey: "myra.responseInstruction",
+  
+  // Caelum Persona Keys
+  caelumNameKey: "caelum.name",
+  caelumRoleDescriptionKey: "caelum.roleDescription",
+  caelumEthicsPrinciplesKey: "caelum.ethicsPrinciples",
+  caelumResponseInstructionKey: "caelum.responseInstruction",
+
+  // Placeholder for actual translated values, will be populated by useMyraState based on language
+  myraName: "",
+  userName: "",
+  myraRoleDescription: "",
+  myraEthicsPrinciples: "",
+  myraResponseInstruction: "",
+  caelumName: "",
+  caelumRoleDescription: "",
+  caelumEthicsPrinciples: "",
+  caelumResponseInstruction: "",
+
+  myraAIProviderConfig: DEFAULT_MYRA_AI_CONFIG,
+  caelumAIProviderConfig: DEFAULT_CAELUM_AI_CONFIG,
+
+  // M.Y.R.A. System Config
   subqgSize: 16,
   subqgBaseEnergy: 0.01,
   subqgCoupling: 0.015,
-  subqgInitialEnergyNoiseStd: 0.001, // This is the "Noise Level"
+  subqgInitialEnergyNoiseStd: 0.001,
   subqgPhaseEnergyCouplingFactor: 0.1,
   subqgJumpMinEnergyAtPeak: 0.03,
   subqgJumpMinCoherenceAtPeak: 0.75,
   subqgJumpCoherenceDropFactor: 0.1,
   subqgJumpEnergyDropFactorFromPeak: 0.05,
   subqgJumpMaxStepsToTrackPeak: 5,
-  subqgJumpActiveDuration: 3, 
-  subqgJumpQnsDirectModifierStrength: 0.5, 
-  // subqgEnergyDiffusionFactor: 0.1, // Not currently implemented in simulateSubQgStep
-  subqgPhaseDiffusionFactor: 0.05, 
-  
-  rngType: 'subqg' as RNGType, // Default RNG type
-  subqgSeed: undefined, // Default seed (will use random if SubQGRNG is selected and seed is undefined)
-
-  aiProvider: 'gemini', 
-  geminiModelName: 'gemini-2.5-flash-preview-04-17',
-  
-  lmStudioBaseUrl: 'http://localhost:1234/v1',
-  lmStudioGenerationModel: 'google/gemma-3-1b', 
-  lmStudioEmbeddingModel: 'text-embedding-nomic-embed-text-v1.5',
-
-  maxHistoryMessagesForPrompt: 8, 
+  subqgJumpActiveDuration: 3,
+  subqgJumpQnsDirectModifierStrength: 0.5,
+  subqgPhaseDiffusionFactor: 0.05,
+  rngType: 'subqg' as RNGType,
+  subqgSeed: undefined,
   nodeActivationDecay: 0.95,
   emotionDecay: 0.95,
-  adaptiveFitnessUpdateInterval: 3, 
-  temperatureBase: 0.7,
-  temperatureLimbusInfluence: 0.1, 
+  adaptiveFitnessUpdateInterval: 3,
+
+  // C.A.E.L.U.M. System Config
+  caelumSubqgSize: 12,
+  caelumSubqgBaseEnergy: 0.005,
+  caelumSubqgCoupling: 0.020,
+  caelumSubqgInitialEnergyNoiseStd: 0.0005,
+  caelumSubqgPhaseEnergyCouplingFactor: 0.05,
+  caelumSubqgJumpMinEnergyAtPeak: 0.025,
+  caelumSubqgJumpMinCoherenceAtPeak: 0.80,
+  caelumSubqgJumpCoherenceDropFactor: 0.08,
+  caelumSubqgJumpEnergyDropFactorFromPeak: 0.04,
+  caelumSubqgJumpMaxStepsToTrackPeak: 4,
+  caelumSubqgJumpActiveDuration: 2,
+  caelumSubqgJumpQnsDirectModifierStrength: 0.3,
+  caelumSubqgPhaseDiffusionFactor: 0.07,
+  caelumRngType: 'subqg' as RNGType,
+  caelumSubqgSeed: 12345,
+  caelumNodeActivationDecay: 0.97,
+  caelumEmotionDecay: 0.98,
+  caelumAdaptiveFitnessUpdateInterval: 5,
+
+  // Global settings
+  maxHistoryMessagesForPrompt: 8,
+  temperatureLimbusInfluence: 0.1,
   temperatureCreativusInfluence: 0.15,
 
-  // RAG and Knowledge Settings
   ragChunkSize: 500,
   ragChunkOverlap: 50,
   ragMaxChunksToRetrieve: 3,
 
-  // Adaptive Fitness Configuration
   adaptiveFitnessConfig: INITIAL_ADAPTIVE_FITNESS_CONFIG,
 };
 
@@ -93,19 +144,45 @@ export const INITIAL_EMOTION_STATE: EmotionState = {
   greed: 0.0,
 };
 
+export const INITIAL_CAELUM_EMOTION_STATE: EmotionState = {
+  pleasure: 0.0,
+  arousal: -0.1,
+  dominance: 0.1,
+  anger: 0.0,
+  disgust: 0.0,
+  fear: 0.0,
+  greed: 0.0,
+};
+
 export const INITIAL_NODE_STATES: NodeState[] = [
-  { id: 'LimbusAffektus', label: 'Limbus Affektus', activation: 0.5, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'limbus', specificState: INITIAL_EMOTION_STATE },
-  { id: 'Creativus', label: 'Creativus', activation: 0.5, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'creativus' },
-  { id: 'CortexCriticus', label: 'Cortex Criticus', activation: 0.5, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'criticus' },
-  { id: 'MetaCognitio', label: 'MetaCognitio', activation: 0.5, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'metacognitio', specificState: { lastTotalJumps: 0 } },
-  { id: 'SocialCognitor', label: 'Social Cognitor', activation: 0.5, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'social', specificState: { empathyLevel: 0.5 } },
-  { id: 'ValuationSystem', label: 'Valuation System', activation: 0.5, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'valuation', specificState: { valuationScore: 0.0 } },
-  { id: 'ConflictMonitor', label: 'Conflict Monitor', activation: 0.2, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'conflict', specificState: { conflictLevel: 0.2 } },
-  { id: 'ExecutiveControl', label: 'Executive Control', activation: 0.6, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'executive', specificState: { impulseControlLevel: 0.6 } },
-  { id: 'Concept_AI', label: 'Concept: AI', activation: 0.1, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'semantic' },
-  { id: 'Concept_Ethics', label: 'Concept: Ethics', activation: 0.1, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'semantic' },
-  { id: 'Concept_Art', label: 'Concept: Art', activation: 0.1, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'semantic' },
+  { id: 'LimbusAffektus_Myra', label: 'Limbus Affektus (M)', activation: 0.5, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'limbus', specificState: INITIAL_EMOTION_STATE },
+  { id: 'Creativus_Myra', label: 'Creativus (M)', activation: 0.5, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'creativus' },
+  { id: 'CortexCriticus_Myra', label: 'Cortex Criticus (M)', activation: 0.5, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'criticus' },
+  { id: 'MetaCognitio_Myra', label: 'MetaCognitio (M)', activation: 0.5, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'metacognitio', specificState: { lastTotalJumps: 0 } },
+  { id: 'SocialCognitor_Myra', label: 'Social Cognitor (M)', activation: 0.5, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'social', specificState: { empathyLevel: 0.5 } },
+  { id: 'ValuationSystem_Myra', label: 'Valuation System (M)', activation: 0.5, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'valuation', specificState: { valuationScore: 0.0 } },
+  { id: 'ConflictMonitor_Myra', label: 'Conflict Monitor (M)', activation: 0.2, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'conflict', specificState: { conflictLevel: 0.2 } },
+  { id: 'ExecutiveControl_Myra', label: 'Executive Control (M)', activation: 0.6, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'executive', specificState: { impulseControlLevel: 0.6 } },
+  { id: 'Concept_AI_Myra', label: 'Concept: AI (M)', activation: 0.1, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'semantic' },
+  { id: 'Concept_Ethics_Myra', label: 'Concept: Ethics (M)', activation: 0.1, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'semantic' },
+  { id: 'Concept_Art_Myra', label: 'Concept: Art (M)', activation: 0.1, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'semantic' },
 ];
+
+// Node labels here are hardcoded. For full i18n, these would also need to be keys.
+export const INITIAL_CAELUM_NODE_STATES: NodeState[] = [
+  { id: 'LimbusAffektus_Caelum', label: 'Limbus Affektus (C)', activation: 0.2, resonatorScore: 0.6, focusScore: 0.1, explorationScore: 0.1, type: 'limbus', specificState: INITIAL_CAELUM_EMOTION_STATE },
+  { id: 'Creativus_Caelum', label: 'Pattern Analyzer (C)', activation: 0.3, resonatorScore: 0.4, focusScore: 0.2, explorationScore: 0.2, type: 'creativus' },
+  { id: 'CortexCriticus_Caelum', label: 'Logic Verifier (C)', activation: 0.7, resonatorScore: 0.7, focusScore: 0.3, explorationScore: 0.1, type: 'criticus' },
+  { id: 'MetaCognitio_Caelum', label: 'System Monitor (C)', activation: 0.6, resonatorScore: 0.5, focusScore: 0.1, explorationScore: 0.1, type: 'metacognitio', specificState: { lastTotalJumps: 0 } },
+  { id: 'SocialCognitor_Caelum', label: 'Information Assimilator (C)', activation: 0.3, resonatorScore: 0.4, focusScore: 0.1, explorationScore: 0.2, type: 'social', specificState: { empathyLevel: 0.1 } },
+  { id: 'ValuationSystem_Caelum', label: 'Priority Assessor (C)', activation: 0.4, resonatorScore: 0.5, focusScore: 0.2, explorationScore: 0.1, type: 'valuation', specificState: { valuationScore: 0.1 } },
+  { id: 'ConflictMonitor_Caelum', label: 'Anomaly Detector (C)', activation: 0.1, resonatorScore: 0.4, focusScore: 0.1, explorationScore: 0.1, type: 'conflict', specificState: { conflictLevel: 0.1 } },
+  { id: 'ExecutiveControl_Caelum', label: 'Process Sequencer (C)', activation: 0.7, resonatorScore: 0.6, focusScore: 0.2, explorationScore: 0.1, type: 'executive', specificState: { impulseControlLevel: 0.8 } },
+  { id: 'Concept_Logic_Caelum', label: 'Concept: Logic (C)', activation: 0.3, resonatorScore: 0.6, focusScore: 0.2, explorationScore: 0.1, type: 'semantic' },
+  { id: 'Concept_Systems_Caelum', label: 'Concept: Systems (C)', activation: 0.3, resonatorScore: 0.6, focusScore: 0.2, explorationScore: 0.1, type: 'semantic' },
+  { id: 'Concept_Emergence_Caelum', label: 'Concept: Emergence (C)', activation: 0.2, resonatorScore: 0.5, focusScore: 0.1, explorationScore: 0.1, type: 'semantic' },
+];
+
 
 export const INITIAL_ADAPTIVE_FITNESS_STATE: AdaptiveFitnessState = {
   overallScore: 0.5,
@@ -118,12 +195,25 @@ export const INITIAL_ADAPTIVE_FITNESS_STATE: AdaptiveFitnessState = {
   metrics: {},
 };
 
+export const INITIAL_CAELUM_ADAPTIVE_FITNESS_STATE: AdaptiveFitnessState = {
+  overallScore: 0.6,
+  dimensions: {
+    knowledgeExpansion: 0.4,
+    internalCoherence: 0.7,
+    expressiveCreativity: 0.3,
+    goalFocus: 0.6,
+  },
+  metrics: {},
+};
+
 export const INITIAL_SUBQG_GLOBAL_METRICS: SubQgGlobalMetrics = {
   avgEnergy: INITIAL_CONFIG.subqgBaseEnergy,
   stdEnergy: 0,
   phaseCoherence: 0,
 };
 
-// Use process.env.API_KEY directly as per guidelines.
-// vite.config.ts should ensure process.env.API_KEY is populated from the build environment.
-export const API_KEY_FOR_GEMINI = process.env.API_KEY;
+export const INITIAL_CAELUM_SUBQG_GLOBAL_METRICS: SubQgGlobalMetrics = {
+  avgEnergy: INITIAL_CONFIG.caelumSubqgBaseEnergy,
+  stdEnergy: 0,
+  phaseCoherence: 0.1,
+};

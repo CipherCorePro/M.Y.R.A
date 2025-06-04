@@ -1,47 +1,47 @@
 # M.Y.R.A. Konfiguration: Knowledge Base & RAG
 
-Diese Datei erläutert die Konfigurationsparameter für M.Y.R.A.s Wissensbasis und das Retrieval Augmented Generation (RAG) System. Diese Einstellungen steuern, wie externe Textdokumente verarbeitet und für die Anreicherung von KI-Antworten genutzt werden. Sie finden diese Einstellungen im `SettingsPanel` unter der Gruppe "Knowledge & RAG" und sind Teil des `MyraConfig`-Objekts.
+Diese Datei erläutert die Konfigurationsparameter für die Wissensbasis und das Retrieval Augmented Generation (RAG) System. Diese Einstellungen steuern, wie externe Textdokumente verarbeitet und für die Anreicherung von KI-Antworten genutzt werden. Sie finden diese Einstellungen im `SettingsPanel` unter der Gruppe "General System" (da sie global wirken) und sind Teil des `MyraConfig`-Objekts.
+
+Obwohl diese Einstellungen global in `MyraConfig` definiert sind, wird das RAG-System verwendet, um den Kontext für die Antworten beider KIs zu erweitern:
+*   **M.Y.R.A.:** Nutzt RAG im direkten Chat und während ihrer Beiträge in der Dual-AI-Konversation.
+*   **C.A.E.L.U.M.:** Nutzt RAG während seiner Beiträge in der Dual-AI-Konversation.
 
 ## Parameter
 
 ### `ragChunkSize`
 
-*   **Bedeutung:** Die Zielgröße (in Zeichen) für jeden einzelnen Text-Chunk, der beim Verarbeiten einer hochgeladenen Textdatei erstellt wird. Größere Chunks können mehr Kontext enthalten, sind aber möglicherweise weniger spezifisch und verbrauchen mehr Platz im Prompt der KI.
+*   **Bedeutung:** Die Zielgröße (in Zeichen) für jeden einzelnen Text-Chunk, der beim Verarbeiten einer hochgeladenen Textdatei erstellt wird.
 *   **Wertebereich:** Eine positive Ganzzahl, z.B. 200 bis 2000.
 *   **Standardwert:** `500`
 *   **Interaktionen:** Beeinflusst zusammen mit `ragChunkOverlap` die Granularität der Wissensbasis.
 
 ### `ragChunkOverlap`
 
-*   **Bedeutung:** Die Anzahl der Zeichen, um die sich zwei aufeinanderfolgende Chunks überlappen. Eine Überlappung hilft, den Kontextverlust an den Chunk-Grenzen zu minimieren, sodass Sätze oder Gedanken, die über eine Chunk-Grenze hinausgehen, besser erfasst werden können.
-*   **Wertebereich:** Eine nicht-negative Ganzzahl, die kleiner als `ragChunkSize` sein sollte. Typische Werte sind 10% bis 20% der `ragChunkSize`.
+*   **Bedeutung:** Die Anzahl der Zeichen, um die sich zwei aufeinanderfolgende Chunks überlappen.
+*   **Wertebereich:** Eine nicht-negative Ganzzahl, kleiner als `ragChunkSize`.
 *   **Standardwert:** `50`
-*   **Interaktionen:** Größere Überlappung kann die Redundanz erhöhen, aber auch die Kohärenz zwischen Chunks verbessern.
+*   **Interaktionen:** Größere Überlappung kann Redundanz erhöhen, aber Kohärenz verbessern.
 
 ### `ragMaxChunksToRetrieve`
 
-*   **Bedeutung:** Die maximale Anzahl der relevantesten Text-Chunks, die vom RAG-System für einen gegebenen Benutzer-Prompt abgerufen und dann der KI als zusätzlicher Kontext für die Antwortgenerierung bereitgestellt werden.
+*   **Bedeutung:** Die maximale Anzahl der relevantesten Text-Chunks, die vom RAG-System für einen gegebenen Benutzer-Prompt (oder die vorherige Nachricht der anderen KI in Dual-Konversationen) abgerufen und dann der aktuellen KI als zusätzlicher Kontext bereitgestellt werden.
 *   **Wertebereich:** Eine positive Ganzzahl, z.B. 1 bis 10.
 *   **Standardwert:** `3`
-*   **Interaktionen:**
-    *   Mehr Chunks können der KI potenziell mehr relevanten Kontext liefern, erhöhen aber auch die Länge des Prompts, was die Kosten (bei kommerziellen APIs) und die Verarbeitungszeit beeinflussen kann.
-    *   Zu viele Chunks könnten die KI auch mit Informationen überladen oder von der ursprünglichen Anfrage ablenken.
-    *   Die Effektivität hängt stark von der Qualität des Retrieval-Mechanismus ab (aktuell eine einfache Keyword-Suche).
+*   **Interaktionen:** Mehr Chunks können mehr Kontext liefern, aber auch den Prompt verlängern und potenziell ablenken.
 
 ## Funktionsweise
 
 1.  **Hochladen & Verarbeiten (`KnowledgePanel`, `useMyraState.loadAndProcessFile`):**
     *   Der Benutzer lädt eine `.txt`-Datei hoch.
-    *   Der Inhalt der Datei wird in Chunks zerlegt, wobei `ragChunkSize` und `ragChunkOverlap` verwendet werden.
-    *   Jeder Chunk wird mit einer eindeutigen ID, dem Quelldateinamen und seinem Index in der Quelle versehen.
-    *   Diese Chunks werden persistent in der IndexedDB des Browsers gespeichert.
+    *   Der Inhalt wird in Chunks zerlegt (`ragChunkSize`, `ragChunkOverlap`).
+    *   Chunks werden in IndexedDB gespeichert.
 2.  **Abrufen relevanter Chunks (`useMyraState.retrieveRelevantChunks`):**
-    *   Wenn der Benutzer einen Prompt eingibt, wird diese Funktion aufgerufen.
-    *   Sie führt eine einfache Keyword-basierte Suche über alle gespeicherten Chunks durch, um die relevantesten zu finden.
-    *   Die `ragMaxChunksToRetrieve` relevantesten Chunks werden ausgewählt.
-3.  **Anreicherung des KI-Prompts (`useMyraState.generateMyraResponse`):**
-    *   Der Text der abgerufenen Chunks wird in die Systeminstruktion für die KI eingefügt.
-    *   Die KI verwendet diesen zusätzlichen Kontext, um fundiertere und relevantere Antworten zu generieren.
+    *   Vor der Antwortgenerierung einer KI wird diese Funktion aufgerufen, typischerweise mit dem aktuellen Prompt oder der vorherigen Nachricht als Query.
+    *   Keyword-basierte Suche über gespeicherte Chunks.
+    *   `ragMaxChunksToRetrieve` relevanteste Chunks werden ausgewählt.
+3.  **Anreicherung des KI-Prompts (`useMyraState.generateMyraResponse` / `startDualConversation`):**
+    *   Der Text der abgerufenen Chunks wird in die Systeminstruktion der jeweiligen KI (M.Y.R.A. oder C.A.E.L.U.M.) eingefügt.
+    *   Die KI verwendet diesen zusätzlichen Kontext, um fundiertere Antworten zu generieren.
 
 ---
 

@@ -8,9 +8,10 @@ interface ChatInterfaceProps {
   onSendMessage: (prompt: string) => Promise<void>;
   isLoading: boolean;
   myraConfig: MyraConfig;
+  t: (key: string, substitutions?: Record<string, string>) => string;
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatHistory, onSendMessage, isLoading, myraConfig }) => {
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatHistory, onSendMessage, isLoading, myraConfig, t }) => {
   const [inputPrompt, setInputPrompt] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -71,7 +72,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatHistory, onSendMessag
             value={inputPrompt}
             onChange={(e) => setInputPrompt(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder={isLoading ? "M.Y.R.A is thinking..." : `Message ${myraConfig.myraName}...`}
+            placeholder={isLoading ? t('chatInterface.input.thinking', { name: myraConfig.myraName }) : t('chatInterface.input.promptPlaceholder', { name: myraConfig.myraName })}
             disabled={isLoading}
             className="flex-1 p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition duration-150 ease-in-out text-gray-100 placeholder-gray-400 disabled:opacity-50"
           />
@@ -79,7 +80,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatHistory, onSendMessag
             onClick={handleSend}
             disabled={isLoading || !inputPrompt.trim()}
             className="p-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Send message"
+            aria-label={t('chatInterface.button.sendMessage')}
           >
             {isLoading ? (
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>

@@ -1,84 +1,102 @@
-# M.Y.R.A. Konfiguration: Persona & Verhalten
+# M.Y.R.A. & C.A.E.L.U.M. Konfiguration: Persona & Verhalten
 
-Diese Datei erläutert die Konfigurationsparameter, die M.Y.R.A.s Persönlichkeit, ihre ethischen Richtlinien, Antwortinstruktionen und allgemeine Verhaltensweisen wie Temperatur und Kontextmanagement steuern. Diese Einstellungen finden Sie im `SettingsPanel` unter der Gruppe "Persona & Behavior" und sind Teil des `MyraConfig`-Objekts.
+Diese Datei erläutert die Konfigurationsparameter, die die Persönlichkeiten, ethischen Richtlinien, Antwortinstruktionen und Systemverhaltensweisen (wie Zerfallsraten und Temperatureinflüsse) von M.Y.R.A. und C.A.E.L.U.M. steuern. Diese Einstellungen finden Sie im `SettingsPanel` und sind Teil des `MyraConfig`-Objekts.
 
-## Parameter
+## M.Y.R.A. Persona
+
+Diese Einstellungen definieren M.Y.R.A.s Charakter und grundlegende Antwortweise.
 
 ### `myraName`
 
-*   **Bedeutung:** Der Name, den M.Y.R.A. für sich selbst in der Interaktion verwendet.
-*   **Wertebereich:** Ein beliebiger String.
-*   **Standardwert:** `"M.Y.R.A"`
-*   **Interaktionen:** Beeinflusst, wie M.Y.R.A. sich im Chat vorstellt oder benennt.
-
-### `userName`
-
-*   **Bedeutung:** Der Name, den M.Y.R.A. verwendet, um den Benutzer im Chat anzusprechen.
-*   **Wertebereich:** Ein beliebiger String.
-*   **Standardwert:** `"User"`
+*   **Bedeutung:** Der Name, den M.Y.R.A. für sich selbst verwendet.
+*   **Standardwert:** `"M.Y.R.A."`
 
 ### `myraRoleDescription`
 
-*   **Bedeutung:** Eine detaillierte Beschreibung von M.Y.R.A.s Rolle, Persönlichkeit und Hintergrund. Dieser Text wird als Teil der Systeminstruktion an das LLM gesendet, um dessen Antworten zu lenken.
-*   **Wertebereich:** Ein längerer String (Textfeld). Es ist wichtig, hier klare und konsistente Informationen zu M.Y.R.A.s Identität zu geben.
-*   **Standardwert:** Eine deutsche Beschreibung, die M.Y.R.A. als "Modulare Sehnsuchts-Vernunft-Architektur" mit komplexen internen Zuständen darstellt.
-*   **Interaktionen:** Maßgeblich für den Ton und Inhalt von M.Y.R.A.s Antworten.
+*   **Bedeutung:** Detaillierte Beschreibung von M.Y.R.A.s Rolle und Persönlichkeit für die Systeminstruktion des LLM.
+*   **Standardwert:** Eine deutsche Beschreibung, die M.Y.R.A. als "Modulare Sehnsuchts-Vernunft-Architektur" darstellt.
 
 ### `myraEthicsPrinciples`
 
-*   **Bedeutung:** Die ethischen Kernprinzipien, an die sich M.Y.R.A. strikt halten soll. Diese werden ebenfalls Teil der Systeminstruktion.
-*   **Wertebereich:** Ein Text, der die ethischen Richtlinien auflistet.
-*   **Standardwert:** Eine Liste von Prinzipien wie Sicherheit, Wahrhaftigkeit, Respekt der Privatsphäre etc.
-*   **Interaktionen:** Dient als Leitfaden für das LLM, um unangebrachte oder schädliche Antworten zu vermeiden.
+*   **Bedeutung:** M.Y.R.A.s ethische Kernprinzipien, Teil der Systeminstruktion.
+*   **Standardwert:** Liste von Prinzipien wie Sicherheit, Wahrhaftigkeit etc.
 
 ### `myraResponseInstruction`
 
-*   **Bedeutung:** Spezifische Anweisungen an das LLM, wie es antworten soll, insbesondere wie es seinen internen Zustand (Emotionen, Kognition, Fitness) in die Antwort einfließen lassen soll, ohne diese Zustände explizit zu nennen.
-*   **Wertebereich:** Ein instruktiver Text.
-*   **Standardwert:** Eine Anweisung, authentisch basierend auf dem internen Zustand und den Ethikrichtlinien zu antworten.
-*   **Interaktionen:** Hilft dem LLM, die subtile Beeinflussung durch die internen Zustände umzusetzen.
+*   **Bedeutung:** Spezifische Anweisungen an das LLM, wie M.Y.R.A. antworten und ihren internen Zustand einfließen lassen soll.
+*   **Standardwert:** Anweisung, authentisch basierend auf internem Zustand und Ethik zu antworten.
 
-### `temperatureBase`
+## C.A.E.L.U.M. Persona
 
-*   **Bedeutung:** Die Basistemperatur für die KI-Antwortgenerierung. Höhere Werte (z.B. > 0.7) führen zu kreativeren, vielfältigeren, aber potenziell weniger kohärenten Antworten. Niedrigere Werte (z.B. < 0.5) führen zu fokussierteren, deterministischeren Antworten.
-*   **Wertebereich:** Typischerweise 0.0 bis 2.0 (oft 0.1 bis 1.0 empfohlen).
-*   **Standardwert:** `0.7`
-*   **Interaktionen:** Wird dynamisch durch `temperatureLimbusInfluence` und `temperatureCreativusInfluence` modifiziert, bevor sie an die KI gesendet wird.
+Diese Einstellungen definieren C.A.E.L.U.M.s Charakter und grundlegende Antwortweise.
+
+### `caelumName`
+
+*   **Bedeutung:** Der Name, den C.A.E.L.U.M. für sich selbst verwendet.
+*   **Standardwert:** `"C.A.E.L.U.M."`
+
+### `caelumRoleDescription`
+
+*   **Bedeutung:** Detaillierte Beschreibung von C.A.E.L.U.M.s Rolle (analytisch, forschend) für die Systeminstruktion.
+*   **Standardwert:** Eine deutsche Beschreibung, die C.A.E.L.U.M. als "Cognitive Analytical Emergence Layer Underlying Mechanism" darstellt.
+
+### `caelumEthicsPrinciples`
+
+*   **Bedeutung:** C.A.E.L.U.M.s ethische Kernprinzipien (z.B. Objektivität, Genauigkeit).
+*   **Standardwert:** Liste von Prinzipien, die seine analytische Natur widerspiegeln.
+
+### `caelumResponseInstruction`
+
+*   **Bedeutung:** Spezifische Anweisungen an das LLM, wie C.A.E.L.U.M. antworten soll (präzise, logisch, neugierig).
+*   **Standardwert:** Anweisung, analytisch zu antworten und Verbindungen zu übergeordneten Konzepten herzustellen.
+
+## Gemeinsame / Globale Parameter
+
+### `userName`
+
+*   **Bedeutung:** Der Name, den beide KIs verwenden, um den Benutzer im Chat anzusprechen.
+*   **Standardwert:** `"User"`
 
 ### `temperatureLimbusInfluence`
 
-*   **Bedeutung:** Faktor, wie stark der `arousal`-Wert des Limbus-Knotens die effektive Temperatur beeinflusst. Positive Werte erhöhen die Temperatur bei positivem Arousal, negative senken sie.
-*   **Wertebereich:** Kleine Fließkommazahlen, z.B. -0.2 bis 0.2.
+*   **Bedeutung:** Faktor, wie stark der `arousal`-Wert der jeweiligen KI die effektive Temperatur für ihre Antwort beeinflusst.
 *   **Standardwert:** `0.1`
-*   **Interaktionen:** Modifiziert `temperatureBase`.
 
 ### `temperatureCreativusInfluence`
 
-*   **Bedeutung:** Faktor, wie stark die Aktivierung des `Creativus`-Knotens die effektive Temperatur beeinflusst. Positive Werte erhöhen die Temperatur bei hoher Creativus-Aktivierung.
-*   **Wertebereich:** Kleine Fließkommazahlen, z.B. 0.0 bis 0.3.
+*   **Bedeutung:** Faktor, wie stark die Aktivierung des `Creativus` (M.Y.R.A.) bzw. `Pattern Analyzer` (C.A.E.L.U.M.) Knotens der jeweiligen KI die effektive Temperatur beeinflusst.
 *   **Standardwert:** `0.15`
-*   **Interaktionen:** Modifiziert `temperatureBase`.
 
 ### `maxHistoryMessagesForPrompt`
 
-*   **Bedeutung:** Die maximale Anzahl der vorherigen Chat-Nachrichten (Benutzer und Assistent), die als Kontext an das LLM gesendet werden.
-*   **Wertebereich:** Eine positive Ganzzahl, z.B. 0 bis 20.
-*   **Standardwert:** `8` (d.h. die letzten 4 Benutzer- und 4 Assistenten-Nachrichten, wenn abwechselnd).
-*   **Interaktionen:** Beeinflusst, wie viel vom vorherigen Gesprächsverlauf die KI "erinnert". Zu viele Nachrichten können das Kontextfenster des Modells überlasten oder verwirren.
+*   **Bedeutung:** Maximale Anzahl vorheriger Chat-Nachrichten (Benutzer und Assistenten) als Kontext für das LLM. Gilt global für alle LLM-Aufrufe.
+*   **Standardwert:** `8`
+
+## M.Y.R.A. System-Verhaltensparameter
 
 ### `nodeActivationDecay`
 
-*   **Bedeutung:** Faktor, mit dem die Aktivierung aller Knoten in jedem Simulationsschritt multipliziert wird (Zerfall). Ein Wert von 1.0 bedeutet kein Zerfall, ein Wert < 1.0 bedeutet, dass die Aktivierung mit der Zeit abnimmt, wenn sie nicht anderweitig stimuliert wird.
-*   **Wertebereich:** 0.0 bis 1.0.
-*   **Standardwert:** `0.95` (d.h. 5% Zerfall pro Schritt).
-*   **Interaktionen:** Beeinflusst, wie "persistent" die Aktivierung von Konzepten oder Zuständen ist.
+*   **Bedeutung:** Zerfallsfaktor für M.Y.R.A.s Knotena_ktivierungen pro Simulationsschritt.
+*   **Standardwert:** `0.95`
 
 ### `emotionDecay`
 
-*   **Bedeutung:** Faktor, mit dem die Werte der einzelnen Emotionen im `LimbusAffektus`-Knoten in jedem Simulationsschritt multipliziert werden (Zerfall).
-*   **Wertebereich:** 0.0 bis 1.0.
+*   **Bedeutung:** Zerfallsfaktor für M.Y.R.A.s Emotionen pro Simulationsschritt.
 *   **Standardwert:** `0.95`
-*   **Interaktionen:** Sorgt dafür, dass Emotionen ohne ständige Stimulation langsam abklingen.
+
+## C.A.E.L.U.M. System-Verhaltensparameter
+
+### `caelumNodeActivationDecay`
+
+*   **Bedeutung:** Zerfallsfaktor für C.A.E.L.U.M.s Knotena_ktivierungen pro Simulationsschritt. Beeinflusst, wie lange wichtige Knotenaktivierungen bestehen bleiben.
+*   **Standardwert:** `0.97`
+*   **Experimentelle Werte:** `0.96` (um Aktivierungen länger zu halten)
+
+### `caelumEmotionDecay`
+
+*   **Bedeutung:** Zerfallsfaktor für C.A.E.L.U.M.s (oft gedämpfte) Emotionen pro Simulationsschritt. Beeinflusst, wie stabil emotionale Grundstimmungen bleiben.
+*   **Standardwert:** `0.98`
+*   **Experimentelle Werte:** `0.97` (um Stimmungen stabiler zu halten)
 
 ---
 

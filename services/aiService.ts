@@ -1,19 +1,19 @@
+
 import { GoogleGenAI, GenerateContentResponse as SDKGenerateContentResponse, Content } from "@google/genai";
 import { 
   MyraConfig, ChatMessage, 
   GeminiGenerateContentResponse, GeminiCandidate, GeminiSafetyRating,
-  LMStudioChatMessage, LMStudioResponse
+  LMStudioChatMessage, LMStudioResponse, ResolvedSpeakerPersonaConfig, AIProviderConfig
 } from '../types';
-import { INITIAL_CONFIG, API_KEY_FOR_GEMINI } from '../constants'; // API_KEY_FOR_GEMINI uses process.env.API_KEY
 
 const getGenAIInstance = (): GoogleGenAI | null => {
-  // API_KEY_FOR_GEMINI is process.env.API_KEY from constants.ts
-  if (!API_KEY_FOR_GEMINI) { 
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) { 
     console.warn("Gemini API Key (process.env.API_KEY) is not configured. Gemini provider will not work.");
     return null;
   }
   try {
-    return new GoogleGenAI({ apiKey: API_KEY_FOR_GEMINI });
+    return new GoogleGenAI({ apiKey });
   } catch (error) {
     console.error("Failed to initialize GoogleGenAI:", error);
     return null;
@@ -22,47 +22,69 @@ const getGenAIInstance = (): GoogleGenAI | null => {
 
 const transformGeminiSDKResponse = (sdkResponse: SDKGenerateContentResponse): GeminiGenerateContentResponse => {
   return {
-    text: sdkResponse.text, // Direct access as per new guidelines
-    candidates: sdkResponse.candidates as GeminiCandidate[] | undefined, // Cast based on your defined types
-    promptFeedback: sdkResponse.promptFeedback as { blockReason?: string; safetyRatings?: GeminiSafetyRating[]; } | undefined, // Cast
+    text: sdkResponse.text, 
+    candidates: sdkResponse.candidates as GeminiCandidate[] | undefined, 
+    promptFeedback: sdkResponse.promptFeedback as { blockReason?: string; safetyRatings?: GeminiSafetyRating[]; } | undefined,
   };
 };
 
 const callLmStudioApi = async (
   prompt: string,
-  config: MyraConfig,
-  history: ChatMessage[],
-  systemInstruction: string
+  globalMyraConfig: MyraConfig, 
+  speakerAIConfig: AIProviderConfig, 
+  history: ChatMessage[], // This history should NOT contain the current prompt's message
+  baseSystemInstruction: string, 
+  speakerPersonaConfig: ResolvedSpeakerPersonaConfig | undefined,
+  t: (key: string, substitutions?: Record<string, string>) => string
 ): Promise<GeminiGenerateContentResponse> => {
-  const messages: LMStudioChatMessage[] = [{ role: 'system', content: systemInstruction }];
-  history.slice(-config.maxHistoryMessagesForPrompt * 2).forEach(msg => {
-    if (msg.role === 'user') {
-      messages.push({ role: 'user', content: msg.content });
-    } else if (msg.role === 'assistant') {
-      messages.push({ role: 'assistant', content: msg.content });
-    }
+  
+  const effectiveSpeakerName = speakerPersonaConfig?.name || globalMyraConfig.myraName;
+  const effectiveRoleDescription = speakerPersonaConfig?.roleDescription || globalMyraConfig.myraRoleDescription;
+  const effectiveEthics = speakerPersonaConfig?.ethicsPrinciples || globalMyraConfig.myraEthicsPrinciples;
+  const effectiveResponseInstruction = speakerPersonaConfig?.responseInstruction || globalMyraConfig.myraResponseInstruction;
+
+  let fullSystemInstruction = `${effectiveRoleDescription}\n\n${t('aiService.corePrinciplesLabel')}:\n${effectiveEthics}\n\n`;
+  fullSystemInstruction += `${t('aiService.currentInternalContextLabel', { speakerName: effectiveSpeakerName })}:\n${baseSystemInstruction}\n`;
+  fullSystemInstruction += `\n${t('aiService.responseInstructionLabel', { speakerName: effectiveSpeakerName })}:\n${effectiveResponseInstruction}`;
+
+  const messages: LMStudioChatMessage[] = [{ role: 'system', content: fullSystemInstruction }];
+  
+  // Add history messages
+  history.slice(-globalMyraConfig.maxHistoryMessagesForPrompt * 2).forEach(msg => {
+    const role = msg.speakerName === effectiveSpeakerName ? 'assistant' : 'user';
+    const finalRole = msg.speakerName ? role : (msg.role === 'user' ? 'user' : 'assistant');
+    // For LM Studio, models often expect the prompt to be prefixed if it's conversational after a system prompt.
+    // Using the speakerName or a generic "User" label.
+    const prefix = msg.speakerName || (msg.role === 'user' ? globalMyraConfig.userName : t('aiService.systemLabel'));
+    messages.push({ role: finalRole, content: `${prefix}: ${msg.content}` });
   });
-  messages.push({ role: 'user', content: prompt });
+
+  // Add the current prompt from the perspective of the last speaker in history, or the user if history is empty.
+  const lastSpeakerInHistory = history.length > 0 
+    ? (history[history.length - 1].speakerName || (history[history.length - 1].role === 'user' ? globalMyraConfig.userName : t('aiService.systemLabel'))) 
+    : globalMyraConfig.userName;
+  messages.push({ role: 'user', content: `${lastSpeakerInHistory}: ${prompt}` }); 
+  // Note: Some LM Studio models might prefer the last prompt to not have a prefix if it's directly from the "user" role.
+  // This might need adjustment based on the specific model's chat template.
+  // For now, this maintains consistency with the previous approach.
 
   const payload = {
-    model: config.lmStudioGenerationModel,
+    model: speakerAIConfig.lmStudioGenerationModel,
     messages: messages,
-    temperature: config.temperatureBase,
+    temperature: speakerAIConfig.temperatureBase, 
   };
 
   try {
-    const response = await fetch(`${config.lmStudioBaseUrl}/chat/completions`, {
+    const response = await fetch(`${speakerAIConfig.lmStudioBaseUrl}/chat/completions`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
       const errorBody = await response.text();
       console.error(`LM Studio API Error: ${response.status} ${response.statusText}`, errorBody);
-      return { text: `Error: LM Studio API request failed (${response.status}). ${errorBody}` };
+      return { text: t('aiService.error.lmStudioRequestFailed', { status: String(response.status), errorBody }) };
     }
 
     const lmStudioData: LMStudioResponse = await response.json();
@@ -70,80 +92,79 @@ const callLmStudioApi = async (
       return { text: lmStudioData.choices[0].message.content.trim() };
     }
     console.error("LM Studio response format unexpected:", lmStudioData);
-    return { text: "Error: Unexpected response format from LM Studio." };
+    return { text: t('aiService.error.lmStudioUnexpectedFormat') };
 
   } catch (error: any) {
     console.error("Error calling LM Studio API:", error);
-    let errorMessage = "Error generating response from M.Y.R.A (LM Studio).";
-    if (error.message) {
-      errorMessage += ` Details: ${error.message}`;
-    }
-     if (error.message?.includes("fetch") || error.message?.includes("NetworkError")) {
-      errorMessage = "Network error connecting to LM Studio. Is it running and accessible?";
+    let errorMessage = t('aiService.error.lmStudioGenerationError', { speakerName: effectiveSpeakerName });
+    if (error.message) errorMessage += ` ${t('aiService.error.details', { message: error.message })}`;
+    if (error.message?.includes("fetch") || error.message?.includes("NetworkError")) {
+      errorMessage = t('aiService.error.lmStudioNetworkError', { speakerName: effectiveSpeakerName, baseUrl: speakerAIConfig.lmStudioBaseUrl });
     }
     return { text: errorMessage };
   }
 };
 
 export const callAiApi = async (
-  prompt: string,
-  config: MyraConfig,
-  history: ChatMessage[],
-  systemInstruction: string
+  prompt: string, // The content of the current message to respond to
+  globalMyraConfig: MyraConfig, 
+  speakerAIConfig: AIProviderConfig, 
+  history: ChatMessage[], // All prior messages, NOT including the current prompt's message
+  baseSystemInstruction: string, 
+  speakerPersonaConfig: ResolvedSpeakerPersonaConfig | undefined,
+  t: (key: string, substitutions?: Record<string, string>) => string
 ): Promise<GeminiGenerateContentResponse> => {
-  if (config.aiProvider === 'lmstudio') {
-    return callLmStudioApi(prompt, config, history, systemInstruction);
+  if (speakerAIConfig.aiProvider === 'lmstudio') {
+    return callLmStudioApi(prompt, globalMyraConfig, speakerAIConfig, history, baseSystemInstruction, speakerPersonaConfig, t);
   }
 
-  // Default to Gemini
   const ai = getGenAIInstance();
   if (!ai) {
-    return { text: "Error: Gemini API client not initialized. Check API Key." };
+    return { text: t('aiService.error.geminiNotInitialized') };
   }
   
-  const modelName = config.geminiModelName || INITIAL_CONFIG.geminiModelName;
+  const modelName = speakerAIConfig.geminiModelName;
   const contents: Content[] = [];
 
-  // Add system instruction at the beginning if it's not part of the config object for generateContent
-  // For Gemini, systemInstruction is part of the config object in generateContent call.
-  // Let's build history for Gemini `contents` format
+  const effectiveSpeakerName = speakerPersonaConfig?.name || globalMyraConfig.myraName;
+  const effectiveRoleDescription = speakerPersonaConfig?.roleDescription || globalMyraConfig.myraRoleDescription;
+  const effectiveEthics = speakerPersonaConfig?.ethicsPrinciples || globalMyraConfig.myraEthicsPrinciples;
+  const effectiveResponseInstruction = speakerPersonaConfig?.responseInstruction || globalMyraConfig.myraResponseInstruction;
+
+  let fullSystemInstruction = `${effectiveRoleDescription}\n\n${t('aiService.corePrinciplesLabel')}:\n${effectiveEthics}\n\n`;
+  fullSystemInstruction += `${t('aiService.currentInternalContextLabel', { speakerName: effectiveSpeakerName })}:\n${baseSystemInstruction}\n`;
+  fullSystemInstruction += `\n${t('aiService.responseInstructionLabel', { speakerName: effectiveSpeakerName })}:\n${effectiveResponseInstruction}`;
   
-  history.slice(-config.maxHistoryMessagesForPrompt * 2).forEach(msg => {
-    if (msg.role === 'user') {
-      contents.push({ role: 'user', parts: [{ text: msg.content }] });
-    } else if (msg.role === 'assistant') { // Gemini uses 'model' for assistant role
-      contents.push({ role: 'model', parts: [{ text: msg.content }] });
-    }
+  // Convert chat history to Gemini's format
+  // The `history` parameter contains messages *before* the current `prompt`.
+  history.slice(-globalMyraConfig.maxHistoryMessagesForPrompt * 2).forEach(chatMsg => {
+    // If chatMsg.speakerName is the current AI (effectiveSpeakerName), its role was 'model'.
+    // Otherwise, it was from the 'user' (either actual user or the other AI).
+    const geminiRole = chatMsg.speakerName === effectiveSpeakerName ? 'model' : 'user';
+    contents.push({ role: geminiRole, parts: [{ text: chatMsg.content }] });
   });
-  // Add the current user prompt
+
+  // Add the current prompt as a new user message for the AI to respond to.
   contents.push({ role: 'user', parts: [{ text: prompt }] });
 
   try {
-    // Using ai.models.generateContent directly
     const response: SDKGenerateContentResponse = await ai.models.generateContent({
       model: modelName,
-      contents: contents, // Pass the constructed history and prompt
+      contents: contents, 
       config: { 
-        temperature: config.temperatureBase,
-        systemInstruction: systemInstruction, // System instruction passed here
-        // topK, topP, etc. can be added here if needed from MyraConfig
+        temperature: speakerAIConfig.temperatureBase, 
+        systemInstruction: fullSystemInstruction, 
       },
     });
     return transformGeminiSDKResponse(response);
 
   } catch (error: any) {
-    console.error("Error calling Gemini API:", error);
-    let errorMessage = "Error generating response from M.Y.R.A (Gemini).";
-    if (error.message) {
-      errorMessage += ` Details: ${error.message}`;
-    }
-    if (error.toString().includes("API key not valid")) {
-      errorMessage = "API Key not valid for Gemini. Please check your configuration.";
-    } else if (error.toString().includes("quota")) {
-      errorMessage = "Gemini API quota exceeded. Please check your Gemini account.";
-    } else if (error.message?.includes("fetch") || error.message?.includes("NetworkError")) {
-      errorMessage = "Network error connecting to Gemini API. Please check your internet connection.";
-    }
+    console.error(`Error calling Gemini API for ${effectiveSpeakerName}:`, error);
+    let errorMessage = t('aiService.error.geminiGenerationError', { speakerName: effectiveSpeakerName });
+    if (error.message) errorMessage += ` ${t('aiService.error.details', { message: error.message })}`;
+    if (error.toString().includes("API key not valid")) errorMessage = t('aiService.error.geminiApiKeyInvalid');
+    else if (error.toString().includes("quota")) errorMessage = t('aiService.error.geminiQuotaExceeded');
+    else if (error.message?.includes("fetch") || error.message?.includes("NetworkError")) errorMessage = t('aiService.error.geminiNetworkError');
     return { text: errorMessage };
   }
 };
