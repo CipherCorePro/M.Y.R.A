@@ -36,7 +36,7 @@ const DualAiConversationPanel: React.FC<DualAiConversationPanelProps> = ({
   
   const getSpeakerIcon = (speakerName?: string) => {
     if (speakerName === myraConfig.myraName) return <SparklesIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 text-purple-400" />;
-    if (speakerName === myraConfig.caelumName) return <ChatBubbleLeftRightIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 text-sky-400" />;
+    if (speakerName === myraConfig.caelumName) return <ChatBubbleLeftRightIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 text-sky-400" />; // Changed to ChatBubbleLeftRightIcon for Caelum to differentiate
     return <UserCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 text-green-400" />;
   };
   
@@ -112,6 +112,22 @@ const DualAiConversationPanel: React.FC<DualAiConversationPanelProps> = ({
                 </span>
               </div>
               <p className={`text-sm sm:text-base whitespace-pre-wrap break-words ${msg.role === 'system' ? 'italic text-gray-300' : ''}`}>{msg.content}</p>
+              {msg.role === 'assistant' && msg.retrievedChunks && msg.retrievedChunks.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-gray-600/50">
+                  <details className="text-xs text-gray-400">
+                    <summary className="cursor-pointer hover:text-gray-200 select-none outline-none">
+                       {t('dualAiPanel.retrievedContext.title', { count: String(msg.retrievedChunks.length) })}
+                    </summary>
+                    <ul className="list-disc list-inside pl-2 mt-1 space-y-1 max-h-32 overflow-y-auto fancy-scrollbar">
+                      {msg.retrievedChunks.map((chunk, index) => (
+                        <li key={index} title={chunk.text} className="truncate">
+                          <span className="font-semibold text-gray-300">{chunk.source}:</span> {chunk.text.substring(0, 70) + (chunk.text.length > 70 ? "..." : "")}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                </div>
+              )}
               <div className="text-xs text-gray-400 mt-1 text-right">
                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>

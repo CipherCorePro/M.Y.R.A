@@ -82,7 +82,7 @@ type SpeechRecognitionErrorCode =
     | "no-speech" | "aborted" | "audio-capture" | "network"
     | "not-allowed" | "service-not-allowed" | "bad-grammar" | "language-not-supported";
 
-interface SpeechRecognitionErrorEvent extends Event { // Changed from ErrorEvent to Event as base
+interface SpeechRecognitionErrorEvent extends Event { 
     readonly error: SpeechRecognitionErrorCode;
     readonly message: string;
 }
@@ -113,6 +113,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatHistory, onSendMessag
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
   const [speechError, setSpeechError] = useState<string | null>(null);
   const [currentSpokenMessageId, setCurrentSpokenMessageId] = useState<string | null>(null);
+  
+  const isListeningRef = useRef(isListening);
+  useEffect(() => {
+    isListeningRef.current = isListening;
+  }, [isListening]);
 
   const activeAgentName = myraConfig.activeChatAgent === 'caelum' ? myraConfig.caelumName : myraConfig.myraName;
   const activeAgentIcon = myraConfig.activeChatAgent === 'caelum' 
@@ -130,15 +135,25 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatHistory, onSendMessag
   useEffect(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       console.warn("Speech Recognition API not supported in this browser.");
+      // Set error state if button is ever enabled somehow
+      if (!speechRecognitionRef.current) {
+         setSpeechError(t('chatInterface.button.speechNotSupported'));
+      }
       return;
     }
     const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognitionAPI) return;
+    if (!SpeechRecognitionAPI) {
+        console.warn("Speech Recognition API constructor not found.");
+        if (!speechRecognitionRef.current) {
+           setSpeechError(t('chatInterface.button.speechNotSupported'));
+        }
+        return;
+    }
 
     const recognition: SpeechRecognition = new SpeechRecognitionAPI();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = myraConfig.language;
+    // recognition.lang is set before start()
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interimTranscript = '';
@@ -151,12 +166,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatHistory, onSendMessag
         }
       }
       setInputPrompt(prev => prev + (finalTranscript.length > 0 ? (prev.length > 0 && !prev.endsWith(' ') ? ' ' : '') + finalTranscript : ''));
-      // Optionally display interim results if needed
     };
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      console.error("Speech recognition error", event.error);
-      setSpeechError(t('chatInterface.input.speechError'));
+      console.error("Speech recognition error:", event.error, event.message);
+      setSpeechError(t('chatInterface.input.speechError') + ` (Error: ${event.error})`);
       if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
         setSpeechError(t('chatInterface.button.speechPermissionDenied'));
       }
@@ -164,10 +178,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatHistory, onSendMessag
     };
     
     recognition.onend = () => {
-      // Only set isListening to false if it wasn't manually stopped
-      // or if continuous mode is not truly continuous and needs restart.
-      // For now, simple stop:
-      // setIsListening(false); 
+      // If isListening is still true, it means it wasn't a manual stop via the button
+      // This can happen if the service disconnects or times out.
+      if(isListeningRef.current) {
+          console.log("Speech recognition ended unexpectedly.");
+          setIsListening(false);
+      }
     };
 
     speechRecognitionRef.current = recognition;
@@ -177,44 +193,100 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatHistory, onSendMessag
         speechRecognitionRef.current.stop();
       }
     };
-  }, [myraConfig.language, t]);
+  }, [t]); // t is stable
 
   const toggleListening = () => {
-    if (!speechRecognitionRef.current) return;
-    if (isListening) {
+    console.log("toggleListening called. isListeningRef.current:", isListeningRef.current, "Ref exists:", !!speechRecognitionRef.current);
+    if (!speechRecognitionRef.current) {
+      console.warn("Speech recognition not initialized or not supported.");
+      setSpeechError(t('chatInterface.button.speechNotSupported'));
+      return;
+    }
+
+    if (isListeningRef.current) {
+      console.log("Stopping speech recognition.");
       speechRecognitionRef.current.stop();
       setIsListening(false);
     } else {
+      console.log("Attempting to start speech recognition.");
       setSpeechError(null);
-      navigator.mediaDevices.getUserMedia({ audio: true })
-        .then(() => {
-          speechRecognitionRef.current!.start();
-          setIsListening(true);
-        })
-        .catch(err => {
-          console.error("Microphone access denied:", err);
+      
+      navigator.permissions.query({ name: 'microphone' as PermissionName }).then(permissionStatus => {
+        console.log("Microphone permission status:", permissionStatus.state);
+        const startRecognition = () => {
+          if (speechRecognitionRef.current) {
+            console.log("Calling recognition.start() with lang:", myraConfig.language);
+            speechRecognitionRef.current.lang = myraConfig.language;
+            speechRecognitionRef.current.start();
+            setIsListening(true);
+          } else {
+             console.error("speechRecognitionRef.current is null before startRecognition call");
+          }
+        };
+
+        if (permissionStatus.state === 'granted') {
+          startRecognition();
+        } else if (permissionStatus.state === 'prompt') {
+          console.log("Requesting microphone permission via getUserMedia.");
+          navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(() => {
+              console.log("getUserMedia success, starting recognition.");
+              startRecognition();
+            })
+            .catch(err => {
+              console.error("Microphone access denied or error:", err);
+              setSpeechError(t('chatInterface.button.speechPermissionDenied'));
+              setIsListening(false);
+            });
+        } else if (permissionStatus.state === 'denied') {
+          console.error("Microphone permission was explicitly denied.");
           setSpeechError(t('chatInterface.button.speechPermissionDenied'));
           setIsListening(false);
-        });
+        }
+        
+        permissionStatus.onchange = () => {
+          console.log("Microphone permission status changed to:", permissionStatus.state);
+          if (permissionStatus.state !== 'granted' && isListeningRef.current) {
+            speechRecognitionRef.current?.stop();
+            setIsListening(false);
+            setSpeechError(t('chatInterface.button.speechPermissionDenied'));
+          }
+        };
+      }).catch(err => {
+          console.warn("Could not query microphone permission, trying getUserMedia directly:", err);
+          navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(() => {
+              if (speechRecognitionRef.current) {
+                console.log("getUserMedia success (fallback), starting recognition with lang:", myraConfig.language);
+                speechRecognitionRef.current.lang = myraConfig.language;
+                speechRecognitionRef.current.start();
+                setIsListening(true);
+              }
+            })
+            .catch(getUserMediaError => {
+              console.error("Microphone access denied or error (fallback):", getUserMediaError);
+              setSpeechError(t('chatInterface.button.speechPermissionDenied'));
+              setIsListening(false);
+            });
+      });
     }
   };
   
-  // Text-to-Speech (TTS)
   const handleSpeakMessage = (messageId: string, text: string) => {
+    // ... (TTS logic as before) ...
     if (!('speechSynthesis' in window)) {
       console.warn("Speech Synthesis API not supported.");
       return;
     }
-    if (currentSpokenMessageId === messageId) { // If already speaking this message, stop it
+    if (currentSpokenMessageId === messageId) { 
       window.speechSynthesis.cancel();
       setCurrentSpokenMessageId(null);
       return;
     }
-    window.speechSynthesis.cancel(); // Stop any previous utterance
+    window.speechSynthesis.cancel(); 
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = myraConfig.language;
-    // Optional: select a specific voice
     const voices = window.speechSynthesis.getVoices();
     const selectedVoice = voices.find(voice => voice.lang.startsWith(myraConfig.language));
     if (selectedVoice) {
@@ -229,7 +301,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatHistory, onSendMessag
     };
     window.speechSynthesis.speak(utterance);
   };
-  // Ensure voices are loaded for selection
+
   useEffect(() => {
     if ('speechSynthesis' in window && window.speechSynthesis.onvoiceschanged !== undefined) {
       window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
@@ -241,7 +313,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatHistory, onSendMessag
     if (inputPrompt.trim() && !isLoading) {
       onSendMessage(inputPrompt.trim());
       setInputPrompt('');
-      if(isListening && speechRecognitionRef.current) { // Stop listening after sending
+      if(isListeningRef.current && speechRecognitionRef.current) { 
         speechRecognitionRef.current.stop();
         setIsListening(false);
       }
@@ -279,6 +351,22 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatHistory, onSendMessag
                 </span>
               </div>
               <p className="text-sm sm:text-base whitespace-pre-wrap break-words">{msg.content}</p>
+              {msg.role === 'assistant' && msg.retrievedChunks && msg.retrievedChunks.length > 0 && (
+                <div className="mt-2 pt-2 border-t border-gray-600/50">
+                  <details className="text-xs text-gray-400">
+                    <summary className="cursor-pointer hover:text-gray-200 select-none outline-none">
+                      {t('chatInterface.retrievedContext.title', { count: String(msg.retrievedChunks.length) })}
+                    </summary>
+                    <ul className="list-disc list-inside pl-2 mt-1 space-y-1 max-h-32 overflow-y-auto fancy-scrollbar">
+                      {msg.retrievedChunks.map((chunk, index) => (
+                        <li key={index} title={chunk.text} className="truncate">
+                          <span className="font-semibold text-gray-300">{chunk.source}:</span> {chunk.text.substring(0, 70) + (chunk.text.length > 70 ? "..." : "")}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                </div>
+              )}
               <div className="text-xs text-gray-400 mt-1 text-right">
                 {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
@@ -303,7 +391,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatHistory, onSendMessag
         <div className="flex items-center space-x-2 sm:space-x-3">
           <button
             onClick={toggleListening}
-            disabled={!speechRecognitionRef.current}
+            disabled={!speechRecognitionRef.current} // Button disabled if API not supported/initialized
             className={`p-2 sm:p-3 rounded-lg transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed
                         ${isListening ? 'bg-red-600 hover:bg-red-700 text-white animate-pulse' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
             aria-label={isListening ? t('chatInterface.button.stopSpeech') : t('chatInterface.button.startSpeech')}

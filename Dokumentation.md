@@ -12,9 +12,8 @@
     *   [3.5 Emotion Timeline Panel](#35-emotion-timeline-panel)
     *   [3.6 Knowledge Panel](#36-knowledge-panel)
     *   [3.7 Dual AI Conversation Panel](#37-dual-ai-conversation-panel)
-    *   [3.8 Documentation Panel](#38-documentation-panel)
-    *   [3.9 Settings Panel](#39-settings-panel)
-    *   [3.10 Chat Interface (M.Y.R.A.)](#310-chat-interface-myra)
+    *   [3.8 Settings Panel](#38-settings-panel)
+    *   [3.9 Chat Interface (M.Y.R.A.)](#39-chat-interface-myra)
 4.  [Technische Architektur & Code Dokumentation](#4-technische-architektur--code-dokumentation)
     *   [4.1 Projektstruktur](#41-projektstruktur)
     *   [4.2 `index.html`](#42-indexhtml)
@@ -29,13 +28,12 @@
         *   [`ChatInterface.tsx`](#4101-chatinterfacetsx)
         *   [`DualAiConversationPanel.tsx`](#4102-dualaiconversationpaneltsx)
         *   [`EmotionTimelinePanel.tsx`](#4103-emotiontimelinepaneltsx)
-        *   [`DocumentationPanel.tsx`](#4104-documentationpaneltsx)
-        *   [`IconComponents.tsx`](#4105-iconcomponentstsx)
-        *   [`KnowledgePanel.tsx`](#4106-knowledgepaneltsx)
-        *   [`NodePanel.tsx`](#4107-nodepaneltsx)
-        *   [`SettingsPanel.tsx`](#4108-settingspaneltsx)
-        *   [`SubQGDisplay.tsx`](#4109-subqgdisplaytsx)
-        *   [`SystemStatusPanel.tsx`](#41010-systemstatuspaneltsx)
+        *   [`IconComponents.tsx`](#4104-iconcomponentstsx)
+        *   [`KnowledgePanel.tsx`](#4105-knowledgepaneltsx)
+        *   [`NodePanel.tsx`](#4106-nodepaneltsx)
+        *   [`SettingsPanel.tsx`](#4107-settingspaneltsx)
+        *   [`SubQGDisplay.tsx`](#4108-subqgdisplaytsx)
+        *   [`SystemStatusPanel.tsx`](#4109-systemstatuspaneltsx)
     *   [4.11 `services/aiService.ts`](#411-servicesaiservicets)
     *   [4.12 `utils/`](#412-utils)
         *   [`adaptiveFitnessManager.ts`](#4121-adaptivefitnessmanagerts)
@@ -48,15 +46,15 @@
     *   [5.3 Wissensverarbeitung (RAG & Automatische Dokumentenladung)](#53-wissensverarbeitung-rag--automatische-dokumentenladung)
     *   [5.4 Konfigurationsmanagement](#54-konfigurationsmanagement)
     *   [5.5 Emotionsverlauf-Tracking](#55-emotionsverlauf-tracking)
-    *   [5.6 Dokumentationsanzeige](#56-dokumentationsanzeige)
 6.  [Detaillierte Konfigurationsparameter](#6-detaillierte-konfigurationsparameter)
 7.  [Einrichtung und Start](#7-einrichtung-und-start)
+
 
 ---
 
 ## 1. Einleitung
 
-Dieses Dokument beschreibt die M.Y.R.A. (Modular Yearning Reasoning Architecture) Web-Anwendung mit SubQG-Integration. Die Anwendung bietet eine interaktive Oberfläche zur Simulation und Interaktion mit zwei KI-Entitäten, **M.Y.R.A.** und **C.A.E.L.U.M.**, deren kognitiv-affektive Prozesse jeweils durch ein eigenes, unabhängiges simuliertes SubQuantenfeld-Grundfeld (SubQG) beeinflusst werden. Sie nutzt die Gemini API (oder eine lokale LM Studio Instanz) für intelligente Antworten und visualisiert interne Zustände wie SubQG-Metriken, Knotenzustände, Emotionen (inklusive eines Zeitverlaufs-Trackers) und adaptive Fitness für beide Systeme. Ein integrierter Dokumentationsviewer ermöglicht den direkten Zugriff auf diese und andere relevante Dokumentationen innerhalb der App.
+Dieses Dokument beschreibt die M.Y.R.A. (Modular Yearning Reasoning Architecture) Web-Anwendung mit SubQG-Integration. Die Anwendung bietet eine interaktive Oberfläche zur Simulation und Interaktion mit zwei KI-Entitäten, **M.Y.R.A.** und **C.A.E.L.U.M.**, deren kognitiv-affektive Prozesse jeweils durch ein eigenes, unabhängiges simuliertes SubQuantenfeld-Grundfeld (SubQG) beeinflusst werden. Sie nutzt die Gemini API (oder eine lokale LM Studio Instanz) für intelligente Antworten und visualisiert interne Zustände wie SubQG-Metriken, Knotenzustände, Emotionen (inklusive eines Zeitverlaufs-Trackers) und adaptive Fitness für beide Systeme.
 
 Die Kernidee ist es, KI-Entitäten zu schaffen, deren Verhalten nicht nur auf trainierten Daten basiert, sondern auch durch dynamische, emergente interne Zustände geprägt wird, die von ihren jeweiligen komplexen Subsystemen (SubQGs) beeinflusst werden. Dieses Dokument dient als Leitfaden für Benutzer und Entwickler.
 
@@ -77,7 +75,7 @@ Die Kernidee ist es, KI-Entitäten zu schaffen, deren Verhalten nicht nur auf tr
 *   **Emotion State (PAD-Modell & spezifische Emotionen):** Der emotionale Zustand wird durch Pleasure (Vergnügen), Arousal (Erregung) und Dominance (Dominanz) sowie spezifischere Emotionen repräsentiert. Jede KI hat ihren eigenen emotionalen Zustand.
 *   **Emotionsverlauf-Tracker (PAD-Timeline):** Ein UI-Panel, das den zeitlichen Verlauf der PAD-Werte für M.Y.R.A. und C.A.E.L.U.M. visualisiert.
 *   **Adaptive Fitness:** Ein System zur Bewertung der "Gesundheit" und Leistung. Jede KI hat ihre eigene adaptive Fitness, die auf ihrem jeweiligen internen Zustand basiert.
-*   **RAG (Retrieval Augmented Generation):** Ein Ansatz, bei dem vor der Antwortgenerierung relevante Informationen aus einer Wissensdatenbank abgerufen werden. Unterstützt `.txt`, `.md`, `.xlsx` und `.docx` Dateien. Wird von M.Y.R.A. im direkten Chat und von beiden KIs in der Dual-AI-Konversation verwendet.
+*   **RAG (Retrieval Augmented Generation):** Ein Ansatz, bei dem vor der Antwortgenerierung relevante Informationen aus einer Wissensdatenbank abgerufen werden. Wird von M.Y.R.A. im direkten Chat und von beiden KIs in der Dual-AI-Konversation verwendet.
 *   **Text Chunk:** Ein Textabschnitt aus einem externen Dokument, gespeichert in der Wissensdatenbank.
 *   **SubQG Jump:** Eine signifikante, plötzliche Veränderung im jeweiligen SubQG einer KI.
 *   **Phasenkohärenz (Phase Coherence):** Maß für die Synchronität der Phasen im SubQG.
@@ -85,7 +83,6 @@ Die Kernidee ist es, KI-Entitäten zu schaffen, deren Verhalten nicht nur auf tr
 *   **LM Studio / Gemini API:** Externe KI-Dienste für Antwortgenerierung.
 *   **RNG (Random Number Generator):** Wird für stochastische Prozesse in den Simulationen verwendet. Jede KI kann ihren eigenen RNG-Typ und Seed haben.
 *   **Resizable Sidebar:** Die Seitenleiste auf Desktop-Ansichten kann in ihrer Breite manuell angepasst werden.
-*   **Documentation Viewer:** Ein UI-Panel zur Anzeige von Markdown-basierten Dokumentationsdateien direkt in der Anwendung, mit Sprachauswahl.
 
 ---
 
@@ -105,7 +102,6 @@ Die Benutzeroberfläche ist in drei Hauptbereiche unterteilt:
     *   **SubQG (C):** SubQG-Visualisierung und Interaktion für C.A.E.L.U.M.
     *   **Emotion Timeline:** Zeigt den zeitlichen Verlauf der PAD-Werte (Pleasure, Arousal, Dominance) für M.Y.R.A. und C.A.E.L.U.M. an.
     *   **Knowledge:** Verwaltung der Wissensbasis.
-    *   **Documentation:** Zeigt die integrierte Anwendungsdokumentation an.
     *   **Dual AI:** Start und Anzeige von Konversationen zwischen M.Y.R.A. und C.A.E.L.U.M.
     *   **Settings:** Globale und KI-spezifische Konfigurationseinstellungen.
 *   **Rechtes Panel (Main):** Zeigt das Chat Interface für die direkte Interaktion mit M.Y.R.A.
@@ -164,11 +160,11 @@ Zugänglich über den "Emotion Timeline"-Tab.
 
 Zugänglich über den "Knowledge"-Tab. Hier kann die Wissensbasis durch externe Dokumente erweitert werden. Die Funktionalität ist global und wird von beiden KIs genutzt.
 
-*   **Upload File (.txt, .md, .xlsx, .docx):** Button und Dateiauswahl zum Hochladen von Text-, Markdown-, Excel- oder Word-Dateien.
+*   **Upload Text File (.txt, .md):** Button und Dateiauswahl zum Hochladen von Text- oder Markdown-Dateien.
 *   **Load & Process File Button:** Verarbeitet die ausgewählte Datei und fügt sie der Wissensdatenbank hinzu.
 *   **Loaded Sources:** Liste der hochgeladenen Quelldateien mit der Anzahl der daraus generierten Chunks.
 *   **Clear All Button:** Löscht die gesamte Wissensdatenbank.
-*   **Automatische Ladung:** Beim Start der Anwendung werden `Dokumentation_de.md`/`_en.md` und alle `.md`-Dateien aus dem `docs`-Verzeichnis (mit entsprechendem Sprachsuffix) automatisch geladen.
+*   **Automatische Ladung:** Beim Start der Anwendung werden `Dokumentation.md` und alle `.md`-Dateien aus dem `docs`-Verzeichnis automatisch geladen.
 
 ### 3.7 Dual AI Conversation Panel
 
@@ -179,15 +175,7 @@ Zugänglich über den "Dual AI"-Tab. Ermöglicht es, eine Konversation zwischen 
 *   **Start Dual Conversation Button:** Startet den Dialog. M.Y.R.A. beginnt in der Regel.
 *   **Nachrichtenanzeige:** Zeigt den Gesprächsverlauf. Nachrichten vom Benutzer, M.Y.R.A. und C.A.E.L.U.M. werden unterschiedlich dargestellt. Jede Nachricht enthält den Sprechernamen, den Inhalt und einen Zeitstempel.
 
-### 3.8 Documentation Panel
-
-Zugänglich über den "Documentation"-Tab.
-
-*   **Dokumentenauswahl:** Ein Dropdown-Menü ermöglicht die Auswahl des anzuzeigenden Dokumentationsthemas (z.B. Hauptdokumentation, Konfigurationen).
-*   **Inhaltsanzeige:** Der Inhalt der ausgewählten Markdown-Datei wird gerendert und angezeigt. Die korrekte Sprachversion (Deutsch oder Englisch) wird basierend auf der globalen Spracheinstellung der App geladen.
-*   **Formatierung:** Markdown wird zu HTML konvertiert, inklusive Unterstützung für Tabellen, Codeblöcke mit Syntax-Highlighting usw.
-
-### 3.9 Settings Panel
+### 3.8 Settings Panel
 
 Zugänglich über den "Settings"-Tab. Ermöglicht die detaillierte Konfiguration. Ist in Gruppen unterteilt, die über eine seitliche Navigation ausgewählt werden können.
 
@@ -204,7 +192,7 @@ Zugänglich über den "Settings"-Tab. Ermöglicht die detaillierte Konfiguration
 *   **Apply Settings Button:** Speichert alle Änderungen und wendet sie an.
 *   **Reset Group / Reset All Buttons:** Ermöglichen das Zurücksetzen von Konfigurationsgruppen oder aller Einstellungen auf Standardwerte.
 
-### 3.10 Chat Interface (M.Y.R.A.)
+### 3.9 Chat Interface (M.Y.R.A.)
 
 Der Hauptbereich auf der rechten Seite bleibt das primäre Chat-Interface für direkte Konversationen mit M.Y.R.A.
 
@@ -218,15 +206,217 @@ Der Hauptbereich auf der rechten Seite bleibt das primäre Chat-Interface für d
 
 ### 4.1 Projektstruktur
 
+(Struktur bleibt wie zuvor beschrieben)
+
+### 4.2 `index.html`
+
+Enthält das Grundgerüst der HTML-Seite. Bindet Tailwind CSS, Heroicons und die JavaScript-Module ein. Definiert eine `importmap` für externe Bibliotheken wie React, ReactDOM, `@google/genai`, `uuid`, `chart.js` und `react-chartjs-2`. Setzt initiales Theme und Sprache aus `localStorage`.
+
+### 4.3 `metadata.json`
+
+(Beschreibung bleibt wie zuvor)
+
+### 4.4 `vite.config.ts`
+
+Konfiguriert Vite. Definiert Aliase (z.B. `@` für den Projekt-Root), setzt Umgebungsvariablen (wie `GEMINI_API_KEY` aus `.env`) und konfiguriert den Entwicklungsserver so, dass er im Netzwerk erreichbar ist (`server: { host: true }`).
+
+### 4.5 `index.tsx`
+
+Einstiegspunkt der React-Anwendung. Rendert die `App`-Komponente in das `div#root`-Element in `index.html`.
+
+### 4.6 `App.tsx`
+
+*   **Zweck:** Die Hauptkomponente der React-Anwendung. Verwaltet den aktiven Tab, die Sichtbarkeit der mobilen Seitenleiste, die Breite der Desktop-Seitenleiste und rendert die entsprechenden UI-Panels.
+*   **Logik:**
+    *   Verwendet den `useMyraState` Hook, um Zugriff auf den gesamten Anwendungszustand (M.Y.R.A. und C.A.E.L.U.M.) und die Update-Funktionen zu erhalten.
+    *   Verwaltet den `activeTab` Zustand, um zu bestimmen, welche Ansicht angezeigt wird.
+    *   Implementiert die Logik für die mobile Overlay-Seitenleiste (Öffnen/Schließen, Klick außerhalb).
+    *   Implementiert die Logik für die **verstellbare Desktop-Seitenleiste** (Drag-to-Resize), speichert die Breite im `localStorage`.
+    *   Rendert die Seitenleiste mit Navigations-Tabs für M.Y.R.A.-spezifische Ansichten (Status (M), Nodes (M), SubQG (M)), C.A.E.L.U.M.-spezifische Ansichten (Status (C), Nodes (C), SubQG (C)) und globale Ansichten (Emotion Timeline, Knowledge, Dual AI, Settings).
+    *   Rendert bedingt die Panels basierend auf dem `activeTab` und übergibt die entsprechenden Zustandsdaten und Callbacks.
+    *   Der Header zeigt Informationen (Simulationsschritt, Fitness) der KI an, die dem aktiven Tab entspricht, oder einen generischen Titel für globale Tabs.
+    *   Das rechte Hauptpanel ist dem `ChatInterface` für die direkte Interaktion mit M.Y.R.A. gewidmet.
+
+### 4.7 `constants.ts`
+
+*   **Zweck:** Definiert globale Konstanten und initiale Zustände.
+*   **Inhalt:**
+    *   `INITIAL_CONFIG`: Enthält die Standardkonfiguration für `MyraConfig`, einschließlich aller Parameter für M.Y.R.A. und C.A.E.L.U.M. (Persona, KI-Provider, SubQG-Systeme, adaptive Fitness, Emotionsverlauf-Länge etc.).
+    *   `INITIAL_EMOTION_STATE`, `INITIAL_NODE_STATES`, `INITIAL_ADAPTIVE_FITNESS_STATE`, `INITIAL_SUBQG_GLOBAL_METRICS`: Standardwerte für M.Y.R.A.s Kernzustände.
+    *   `INITIAL_CAELUM_EMOTION_STATE`, `INITIAL_CAELUM_NODE_STATES`, `INITIAL_CAELUM_ADAPTIVE_FITNESS_STATE`, `INITIAL_CAELUM_SUBQG_GLOBAL_METRICS`: Standardwerte für C.A.E.L.U.M.s Kernzustände.
+
+### 4.8 `types.ts`
+
+*   **Zweck:** Definiert alle wichtigen TypeScript-Typen und Interfaces für die Anwendung.
+*   **Wichtige Typen:**
+    *   `MyraConfig`: Umfassende Konfiguration, die separate Sektionen für M.Y.R.A.s und C.A.E.L.U.M.s Systemparameter, Persona-Einstellungen und KI-Provider-Konfigurationen enthält. Enthält auch `maxPadHistorySize`.
+    *   `ChatMessage`, `EmotionState`, `NodeState`, `AdaptiveFitnessState`, `SubQgGlobalMetrics`, `SubQgJumpInfo`: Kernzustandstypen.
+    *   `PADRecord`: Typ für Einträge im Emotionsverlauf (Pleasure, Arousal, Dominance, Timestamp, DominantAffect).
+    *   `ConfigField` und seine Subtypen: Für die dynamische Erstellung des SettingsPanel, erweitert um `CaelumPersonaEditableField`, `CaelumSystemConfigField`, `GeneralSystemConfigField`.
+
+### 4.9 `hooks/useMyraState.ts`
+
+*   **Zweck:** Der zentrale Hook für das State Management und die Kernlogik der Anwendung.
+*   **Kernfunktionen:**
+    *   **Zustandsverwaltung:** Verwaltet den Zustand für M.Y.R.A. und C.A.E.L.U.M. parallel. Dies beinhaltet:
+        *   Emotionen (`emotionState`, `emotionStateCaelum`) und deren Verläufe (`padHistoryMyra`, `padHistoryCaelum`).
+        *   Knotenzustände (`nodeStates`, `nodeStatesCaelum`)
+        *   Adaptive Fitness (`adaptiveFitness`, `adaptiveFitnessCaelum`)
+        *   SubQG Matrizen & Metriken (`subQgMatrix`, `subQgMatrixCaelum`, etc.)
+        *   RNG Instanzen (`rngRef`, `rngRefCaelum`)
+        *   Simulationsschritte (`simulationStep`, `simulationStepCaelum`)
+        *   Stresslevel (`myraStressLevel`, `caelumStressLevel`)
+    *   **Konfigurationsmanagement (`myraConfig`, `updateMyraConfig`):** Lädt/speichert Konfiguration, passt SubQG-Matrizen und RNGs bei Änderungen an. Sanitärisiert `maxPadHistorySize` beim Laden.
+    *   **Simulationsschleifen:**
+        *   `simulateNetworkStepMyra`: Führt einen Simulationsschritt für M.Y.R.A. durch. Fügt nach der Emotionsaktualisierung einen Eintrag zu `padHistoryMyra` hinzu.
+        *   `simulateNetworkStepCaelum`: Führt einen parallelen, unabhängigen Simulationsschritt für C.A.E.L.U.M. durch. Fügt nach der Emotionsaktualisierung einen Eintrag zu `padHistoryCaelum` hinzu.
+    *   **KI-Interaktion:**
+        *   `generateMyraResponse`: Generiert eine Antwort von M.Y.R.A. im Hauptchat.
+        *   `startDualConversation`: Initiiert und verwaltet eine Konversation zwischen M.Y.R.A. und C.A.E.L.U.M.
+    *   **Systeminstruktionen:**
+        *   `getMyraBaseSystemInstruction`, `getCaelumBaseSystemInstruction`: Erstellen die Systeminstruktionen basierend auf dem jeweiligen aktuellen Zustand.
+    *   **Wissensbasis (RAG):**
+        *   `loadDocumentationKnowledge`: Lädt beim Start automatisch `Dokumentation.md` und Dateien aus `docs/`.
+        *   `loadAndProcessFile`, `clearAllKnowledge`, `retrieveRelevantChunks`.
+    *   **SubQG-Interaktion:** `injectSubQgStimulus` (für M.Y.R.A.) und `injectSubQgStimulusCaelum` (für C.A.E.L.U.M.).
+    *   **Adaptive Fitness:** Initialisiert und verwendet zwei `AdaptiveFitnessManager`-Instanzen.
+    *   **Internationalisierung (`t` Funktion):** Stellt Übersetzungen bereit.
+
+### 4.10 `components/`
+
+#### 4.10.1 `ChatInterface.tsx`
+
+(Beschreibung bleibt wie zuvor)
+
+#### 4.10.2 `DualAiConversationPanel.tsx`
+
+(Beschreibung bleibt wie zuvor, verwendet jetzt spezifische Icons für M.Y.R.A. und C.A.E.L.U.M.)
+
+#### 4.10.3 `EmotionTimelinePanel.tsx`
+
+*   **Zweck:** Zeigt den zeitlichen Verlauf der PAD-Werte (Pleasure, Arousal, Dominance) für M.Y.R.A. und C.A.E.L.U.M. an.
+*   **Funktionalität:**
+    *   Verwendet `react-chartjs-2` und `chart.js` zur Darstellung von Liniendiagrammen.
+    *   Buttons zur Auswahl der anzuzeigenden KI (M.Y.R.A. oder C.A.E.L.U.M.).
+    *   Zeigt das Diagramm und eine textuelle Interpretation des aktuellsten PAD-Zustands der ausgewählten KI mithilfe von `interpretPAD` aus `uiHelpers.ts`.
+
+#### 4.10.4 `IconComponents.tsx`
+
+*   **Zweck:** Enthält Definitionen für verschiedene SVG-Icons. Enthält jetzt auch `PresentationChartLineIcon` und `EllipsisVerticalIcon`.
+
+#### 4.10.5 `KnowledgePanel.tsx`
+
+(Beschreibung bleibt wie zuvor, erwähnt die automatische Ladung von Dokumentationsdateien.)
+
+#### 4.10.6 `NodePanel.tsx`
+
+(Beschreibung bleibt wie zuvor)
+
+#### 4.10.7 `SettingsPanel.tsx`
+
+*   **Zweck:** UI zur Konfiguration aller Parameter in `MyraConfig`.
+*   **Funktionalität:** Stellt Eingabefelder für alle konfigurierbaren Werte bereit, gruppiert nach Funktionalität. Nutzt eine seitliche Navigation für die Gruppen. Die Gruppen umfassen jetzt spezifische Bereiche für M.Y.R.A. und C.A.E.L.U.M. (System, KI-Provider, Persona) sowie globale Bereiche.
+
+#### 4.10.8 `SubQGDisplay.tsx`
+
+(Beschreibung bleibt wie zuvor)
+
+#### 4.10.9 `SystemStatusPanel.tsx`
+
+(Beschreibung bleibt wie zuvor)
+
+### 4.11 `services/aiService.ts`
+
+*   **Zweck:** Kapselt die Logik für die Kommunikation mit den KI-APIs.
+*   **`callAiApi` Funktion:** Nimmt jetzt eine `speakerAIConfig` und eine `speakerPersonaConfig` entgegen, um spezifisch für M.Y.R.A. oder C.A.E.L.U.M. agieren zu können.
+
+### 4.12 `utils/`
+
+#### 4.12.1 `adaptiveFitnessManager.ts`
+
+*   **Zweck:** Klasse zur Berechnung der adaptiven Fitness.
+*   **Funktionalität:** Wird in `useMyraState` zweimal instanziiert: einmal für M.Y.R.A. und einmal für C.A.E.L.U.M., wobei beide Instanzen dieselben Gewichtungsregeln aus der `adaptiveFitnessConfig` anwenden, aber auf die jeweiligen, unterschiedlichen Systemzustände der KIs.
+
+#### 4.12.2 `db.ts`
+
+*   **Zweck:** Kapselt die Interaktionen mit IndexedDB. Enthält jetzt einen Index auf `source` im `textChunks` Store und die Funktion `clearChunksBySourceFromDB`.
+
+#### 4.12.3 `rng.ts`
+
+(Beschreibung bleibt wie zuvor)
+
+#### 4.12.4 `uiHelpers.ts`
+
+*   **Zweck:** Enthält Hilfsfunktionen für die UI.
+*   **Funktionen:**
+    *   `getDominantAffect`: Ermittelt den vorherrschenden benannten Affekt basierend auf dem `EmotionState`.
+    *   `interpretPAD`: Liefert eine textuelle Interpretation eines PAD-Zustands für die Emotions-Timeline.
+
+---
+
+## 5. Funktionale Tieftauche
+
+### 5.1 Simulationszyklen (M.Y.R.A. & C.A.E.L.U.M.)
+
+Die Anwendung führt zwei unabhängige, parallele Simulationsschleifen durch:
+
+*   **`simulateNetworkStepMyra()`:** Wird in regelmäßigen Abständen aufgerufen. Aktualisiert M.Y.R.A.s SubQG, Emotionen (inkl. Eintrag in `padHistoryMyra`), Knoten, Stress und Fitness.
+*   **`simulateNetworkStepCaelum()`:** Wird ebenfalls in regelmäßigen Abständen aufgerufen. Aktualisiert C.A.E.L.U.M.s SubQG, Emotionen (inkl. Eintrag in `padHistoryCaelum`), Knoten, Stress und Fitness.
+
+Diese Trennung gewährleistet, dass M.Y.R.A. und C.A.E.L.U.M. als eigenständige Entitäten operieren.
+
+### 5.2 KI-Antwortgenerierung
+
+*   **Direkter Chat (M.Y.R.A.):** `generateMyraResponse` in `useMyraState` ruft `callAiApi` mit M.Y.R.A.s spezifischer Konfiguration und Zustand auf.
+*   **Dual AI Conversation (`startDualConversation`):** Orchestriert den Dialog, indem iterativ `callAiApi` für M.Y.R.A. und dann für C.A.E.L.U.M. aufgerufen wird, jeweils mit deren spezifischen Konfigurationen und aktuellen Systemzuständen als Kontext. Beide nutzen RAG.
+
+### 5.3 Wissensverarbeitung (RAG & Automatische Dokumentenladung)
+
+*   **Automatische Ladung:** Beim Start der Anwendung lädt `loadDocumentationKnowledge` in `useMyraState` den Inhalt von `Dokumentation.md` und allen `.md`-Dateien im `public/docs`-Verzeichnis, zerlegt sie in Chunks und speichert sie in IndexedDB. Bereits vorhandene Chunks aus diesen Quellen werden zuvor gelöscht, um Aktualisierungen zu ermöglichen.
+*   **Manuelles Hochladen:** Über das `KnowledgePanel`.
+*   **Verarbeitung & Abruf:** Wie zuvor beschrieben, jetzt aber potenziell für beide KIs.
+
+### 5.4 Konfigurationsmanagement
+
+(Beschreibung bleibt im Wesentlichen wie zuvor, aber die Konfiguration in `MyraConfig` ist jetzt umfangreicher und enthält separate Sektionen für M.Y.R.A. und C.A.E.L.U.M.)
+
+### 5.5 Emotionsverlauf-Tracking
+
+*   In `useMyraState.ts` werden die PAD-Werte (Pleasure, Arousal, Dominance) zusammen mit einem Zeitstempel und dem dominanten Affekt nach jedem Simulationsschritt für M.Y.R.A. (`padHistoryMyra`) und C.A.E.L.U.M. (`padHistoryCaelum`) in Arrays gespeichert.
+*   Die Länge dieser Arrays ist durch `myraConfig.maxPadHistorySize` begrenzt.
+*   Das `EmotionTimelinePanel.tsx` visualisiert diese Daten mithilfe von `react-chartjs-2`.
+
+---
+
+## 6. Detaillierte Konfigurationsparameter
+
+Die detaillierte Beschreibung aller Konfigurationsparameter ist in separate Dateien im `docs/` Verzeichnis ausgelagert:
+
+*   [**AI Provider Configuration**](./docs/config_ai_provider.md) (beinhaltet jetzt M.Y.R.A. & C.A.E.L.U.M.)
+*   [**Persona & Behavior**](./docs/config_persona_behavior.md) (beinhaltet jetzt M.Y.R.A. & C.A.E.L.U.M.)
+*   [**SubQG Simulation**](./docs/config_subqg_simulation.md) (beinhaltet jetzt M.Y.R.A. & C.A.E.L.U.M.)
+*   [**Knowledge Base & RAG**](./docs/config_knowledge_rag.md) (erwähnt globale Natur und automatische Ladung)
+*   [**Adaptive Fitness**](./docs/config_adaptive_fitness.md) (erklärt geteilte Config, separate Anwendung)
+
+---
+
+## 7. Einrichtung und Start
+
+(Beschreibung bleibt wie zuvor)
+Legen Sie Ihre Dokumentationsdateien (`Dokumentation.md` und andere `.md`-Dateien im Ordner `docs/`) in das `public`-Verzeichnis Ihres Projekts, damit sie beim Start automatisch geladen werden können.
+Beispielpfade: `public/Dokumentation.md`, `public/docs/config_adaptive_fitness.md`.
+```
+
+## Projektstruktur
+
 *   **`public/`**
-    *   `Dokumentation_de.md` (Diese Datei in Deutsch)
-    *   `Dokumentation_en.md` (Diese Datei in Englisch)
-    *   `docs/` (enthält alle `config_*.md` Dateien, jeweils in `_de.md` und `_en.md` Versionen)
-        *   `config_adaptive_fitness_de.md` / `config_adaptive_fitness_en.md`
-        *   `config_ai_provider_de.md` / `config_ai_provider_en.md`
-        *   `config_knowledge_rag_de.md` / `config_knowledge_rag_en.md`
-        *   `config_persona_behavior_de.md` / `config_persona_behavior_en.md`
-        *   `config_subqg_simulation_de.md` / `config_subqg_simulation_en.md`
+    *   `Dokumentation.md` (Diese Datei)
+    *   `docs/`
+        *   `config_adaptive_fitness.md`
+        *   `config_ai_provider.md`
+        *   `config_knowledge_rag.md`
+        *   `config_persona_behavior.md`
+        *   `config_subqg_simulation.md`
     *   `styles/index.css`
 *   **`src/` (oder Projekt-Root für `.ts`, `.tsx` Dateien in dieser Struktur)**
     *   `App.tsx`
@@ -238,7 +428,6 @@ Der Hauptbereich auf der rechten Seite bleibt das primäre Chat-Interface für d
     *   `metadata.json`
     *   `components/`
         *   `ChatInterface.tsx`
-        *   `DocumentationPanel.tsx`
         *   `DualAiConversationPanel.tsx`
         *   `EmotionTimelinePanel.tsx`
         *   `IconComponents.tsx`
@@ -261,189 +450,4 @@ Der Hauptbereich auf der rechten Seite bleibt das primäre Chat-Interface für d
         *   `en.json`
     *   ... (andere Konfigurationsdateien wie `tsconfig.json`, `package.json` etc.)
 
-### 4.2 `index.html`
-
-Enthält das Grundgerüst der HTML-Seite. Bindet Tailwind CSS, Heroicons und die JavaScript-Module ein. Definiert eine `importmap` für externe Bibliotheken wie React, ReactDOM, `@google/genai`, `uuid`, `chart.js`, `react-chartjs-2`, `react-markdown`, `remark-gfm`, `react-syntax-highlighter`, `read-excel-file` und `mammoth`. Setzt initiales Theme und Sprache aus `localStorage`.
-
-### 4.3 `metadata.json`
-
-Metadaten der Anwendung, Name, Beschreibung, angeforderte Berechtigungen (z.B. Mikrofon für Spracheingabe).
-
-### 4.4 `vite.config.ts`
-
-Konfiguriert Vite. Definiert Aliase (z.B. `@` für den Projekt-Root), setzt Umgebungsvariablen (wie `GEMINI_API_KEY` aus `.env`) und konfiguriert den Entwicklungsserver so, dass er im Netzwerk erreichbar ist (`server: { host: true }`).
-
-### 4.5 `index.tsx`
-
-Einstiegspunkt der React-Anwendung. Rendert die `App`-Komponente in das `div#root`-Element in `index.html`.
-
-### 4.6 `App.tsx`
-
-*   **Zweck:** Die Hauptkomponente der React-Anwendung. Verwaltet den aktiven Tab, die Sichtbarkeit der mobilen Seitenleiste, die Breite der Desktop-Seitenleiste und rendert die entsprechenden UI-Panels.
-*   **Logik:**
-    *   Verwendet den `useMyraState` Hook, um Zugriff auf den gesamten Anwendungszustand (M.Y.R.A. und C.A.E.L.U.M.) und die Update-Funktionen zu erhalten.
-    *   Verwaltet den `activeTab` Zustand, um zu bestimmen, welche Ansicht angezeigt wird.
-    *   Implementiert die Logik für die mobile Overlay-Seitenleiste (Öffnen/Schließen, Klick außerhalb).
-    *   Implementiert die Logik für die **verstellbare Desktop-Seitenleiste** (Drag-to-Resize), speichert die Breite im `localStorage`.
-    *   Rendert die Seitenleiste mit Navigations-Tabs für M.Y.R.A.-spezifische Ansichten (Status (M), Nodes (M), SubQG (M)), C.A.E.L.U.M.-spezifische Ansichten (Status (C), Nodes (C), SubQG (C)) und globale Ansichten (Emotion Timeline, Knowledge, Documentation, Dual AI, Settings).
-    *   Rendert bedingt die Panels basierend auf dem `activeTab` und übergibt die entsprechenden Zustandsdaten und Callbacks.
-    *   Der Header zeigt Informationen (Simulationsschritt, Fitness) der KI an, die dem aktiven Tab entspricht, oder einen generischen Titel für globale Tabs.
-    *   Das rechte Hauptpanel ist dem `ChatInterface` für die direkte Interaktion mit der ausgewählten Haupt-KI gewidmet (`myraConfig.activeChatAgent`).
-
-### 4.7 `constants.ts`
-
-*   **Zweck:** Definiert globale Konstanten und initiale Zustände.
-*   **Inhalt:**
-    *   `INITIAL_CONFIG`: Enthält die Standardkonfiguration für `MyraConfig`, einschließlich aller Parameter für M.Y.R.A. und C.A.E.L.U.M. (Persona, KI-Provider, SubQG-Systeme, adaptive Fitness, Emotionsverlauf-Länge etc.).
-    *   `INITIAL_EMOTION_STATE`, `INITIAL_NODE_STATES`, `INITIAL_ADAPTIVE_FITNESS_STATE`, `INITIAL_SUBQG_GLOBAL_METRICS`: Standardwerte für M.Y.R.A.s Kernzustände.
-    *   `INITIAL_CAELUM_EMOTION_STATE`, `INITIAL_CAELUM_NODE_STATES`, `INITIAL_CAELUM_ADAPTIVE_FITNESS_STATE`, `INITIAL_CAELUM_SUBQG_GLOBAL_METRICS`: Standardwerte für C.A.E.L.U.M.s Kernzustände.
-
-### 4.8 `types.ts`
-
-*   **Zweck:** Definiert alle wichtigen TypeScript-Typen und Interfaces für die Anwendung.
-*   **Wichtige Typen:**
-    *   `MyraConfig`: Umfassende Konfiguration, die separate Sektionen für M.Y.R.A.s und C.A.E.L.U.M.s Systemparameter, Persona-Einstellungen und KI-Provider-Konfigurationen enthält. Enthält auch `maxPadHistorySize`.
-    *   `ChatMessage`, `EmotionState`, `NodeState`, `AdaptiveFitnessState`, `SubQgGlobalMetrics`, `SubQgJumpInfo`: Kernzustandstypen.
-    *   `PADRecord`: Typ für Einträge im Emotionsverlauf (Pleasure, Arousal, Dominance, Timestamp, DominantAffect).
-    *   `ConfigField` und seine Subtypen: Für die dynamische Erstellung des SettingsPanel, erweitert um `CaelumPersonaEditableField`, `CaelumSystemConfigField`, `GeneralSystemConfigField`.
-    *   `ActiveTab`: Definiert die möglichen aktiven Tabs, inklusive `'documentation'`.
-
-### 4.9 `hooks/useMyraState.ts`
-
-*   **Zweck:** Der zentrale Hook für das State Management und die Kernlogik der Anwendung.
-*   **Kernfunktionen:**
-    *   **Zustandsverwaltung:** Verwaltet den Zustand für M.Y.R.A. und C.A.E.L.U.M. parallel.
-    *   **Konfigurationsmanagement (`myraConfig`, `updateMyraConfig`).**
-    *   **Simulationsschleifen (`simulateNetworkStepMyra`, `simulateNetworkStepCaelum`).**
-    *   **KI-Interaktion (`generateActiveAgentChatResponse`, `startDualConversation`).** Die Funktion `generateActiveAgentChatResponse` sendet Nachrichten an die in `myraConfig.activeChatAgent` ausgewählte KI.
-    *   **Systeminstruktionen (`getMyraBaseSystemInstruction`, `getCaelumBaseSystemInstruction`).**
-    *   **Wissensbasis (RAG):**
-        *   `loadDocumentationKnowledge`: Lädt beim Start automatisch Dokumentationsdateien.
-        *   `loadAndProcessFile`: Verarbeitet jetzt auch `.xlsx` und `.docx` Dateien mit `read-excel-file` bzw. `mammoth`.
-        *   `clearAllKnowledge`, `retrieveRelevantChunks`.
-    *   **SubQG-Interaktion:** `injectSubQgStimulus` (für M.Y.R.A.) und `injectSubQgStimulusCaelum` (für C.A.E.L.U.M.).
-    *   **Adaptive Fitness:** Initialisiert und verwendet zwei `AdaptiveFitnessManager`-Instanzen.
-    *   **Internationalisierung (`t` Funktion):** Stellt Übersetzungen bereit.
-
-### 4.10 `components/`
-
-#### 4.10.1 `ChatInterface.tsx`
-
-Für die direkte Interaktion mit der aktiven Haupt-KI (M.Y.R.A. oder C.A.E.L.U.M., je nach `myraConfig.activeChatAgent`). Beinhaltet Speech-to-Text (STT) und Text-to-Speech (TTS) Funktionalität.
-
-#### 4.10.2 `DualAiConversationPanel.tsx`
-
-Ermöglicht Konversationen zwischen M.Y.R.A. und C.A.E.L.U.M.
-
-#### 4.10.3 `EmotionTimelinePanel.tsx`
-
-Zeigt den zeitlichen Verlauf der PAD-Werte für M.Y.R.A. und C.A.E.L.U.M. an.
-
-#### 4.10.4 `DocumentationPanel.tsx`
-
-*   **Zweck:** Zeigt Markdown-basierte Dokumentationsdateien an.
-*   **Funktionalität:** Lädt und rendert ausgewählte `.md`-Dateien basierend auf der aktuellen Spracheinstellung der App. Verwendet `react-markdown` und `react-syntax-highlighter`.
-
-#### 4.10.5 `IconComponents.tsx`
-
-Enthält SVG-Icons, inklusive `DocumentTextIcon` für den Dokumentations-Tab und Icons für STT/TTS.
-
-#### 4.10.6 `KnowledgePanel.tsx`
-
-Verwaltung der Wissensbasis (RAG). Das Datei-Eingabefeld akzeptiert nun `.txt`, `.md`, `.xlsx`, `.docx`.
-
-#### 4.10.7 `NodePanel.tsx`
-
-Visualisiert die Knoten von M.Y.R.A. oder C.A.E.L.U.M.
-
-#### 4.10.8 `SettingsPanel.tsx`
-
-UI zur Konfiguration aller Parameter in `MyraConfig`.
-
-#### 4.10.9 `SubQGDisplay.tsx`
-
-Visualisiert das SubQG von M.Y.R.A. oder C.A.E.L.U.M.
-
-#### 4.10.10 `SystemStatusPanel.tsx`
-
-Zeigt den Status (Emotionen, Fitness, SubQG) von M.Y.R.A. oder C.A.E.L.U.M. an.
-
-### 4.11 `services/aiService.ts`
-
-Kapselt die Logik für die Kommunikation mit den KI-APIs.
-
-### 4.12 `utils/`
-
-#### 4.12.1 `adaptiveFitnessManager.ts`
-
-Klasse zur Berechnung der adaptiven Fitness.
-
-#### 4.12.2 `db.ts`
-
-Kapselt die Interaktionen mit IndexedDB.
-
-#### 4.12.3 `rng.ts`
-
-Definiert die RNG-Implementierungen.
-
-#### 4.12.4 `uiHelpers.ts`
-
-Hilfsfunktionen für die UI, z.B. `getDominantAffect` und `interpretPAD`.
-
 ---
-
-## 5. Funktionale Tieftauche
-
-### 5.1 Simulationszyklen (M.Y.R.A. & C.A.E.L.U.M.)
-
-(Beschreibung bleibt gleich)
-
-### 5.2 KI-Antwortgenerierung
-
-(Beschreibung bleibt gleich, `generateActiveAgentChatResponse` jetzt für die aktive KI)
-
-### 5.3 Wissensverarbeitung (RAG & Automatische Dokumentenladung)
-
-*   **Automatische Ladung:** Beim Start der Anwendung lädt `loadDocumentationKnowledge` in `useMyraState` den Inhalt von Dokumentationsdateien.
-*   **Manuelles Hochladen:** Über das `KnowledgePanel` können jetzt `.txt`, `.md`, `.xlsx` und `.docx` Dateien hochgeladen werden. Deren Textinhalt wird extrahiert, in Chunks zerlegt und in IndexedDB gespeichert.
-*   **Verarbeitung & Abruf:** Relevante Chunks werden bei Bedarf abgerufen und der KI als Kontext bereitgestellt.
-
-### 5.4 Konfigurationsmanagement
-
-(Beschreibung bleibt gleich)
-
-### 5.5 Emotionsverlauf-Tracking
-
-(Beschreibung bleibt gleich)
-
-### 5.6 Dokumentationsanzeige
-
-(Beschreibung bleibt gleich)
-
----
-
-## 6. Detaillierte Konfigurationsparameter
-
-Die detaillierte Beschreibung aller Konfigurationsparameter ist in separate Dateien im `docs/` Verzeichnis ausgelagert (jeweils in Deutsch und Englisch verfügbar):
-
-*   [**AI Provider Configuration**](./docs/config_ai_provider_de.md)
-*   [**Persona & Behavior**](./docs/config_persona_behavior_de.md)
-*   [**SubQG Simulation**](./docs/config_subqg_simulation_de.md)
-*   [**Knowledge Base & RAG**](./docs/config_knowledge_rag_de.md) (enthält jetzt Informationen zu `read-excel-file` für `.xlsx`)
-*   [**Adaptive Fitness**](./docs/config_adaptive_fitness_de.md)
-
----
-
-## 7. Einrichtung und Start
-
-1.  **Abhängigkeiten installieren:** `npm install` (oder `yarn install`).
-2.  **API Key:** Erstellen Sie eine `.env`-Datei im Projekt-Root und fügen Sie Ihren Gemini API Key hinzu:
-    `GEMINI_API_KEY=YOUR_API_KEY_HERE`
-3.  **Entwicklungsserver starten:** `npm run dev` (oder `yarn dev`).
-4.  **Dokumentationsdateien:** Platzieren Sie Ihre Markdown-Dokumentationsdateien (jeweils als `*_de.md` und `*_en.md`) im `public`-Verzeichnis.
-    *   Hauptdokumentation: `public/Dokumentation_de.md` und `public/Dokumentation_en.md`.
-    *   Detailkonfigurationen: `public/docs/config_NAME_de.md` und `public/docs/config_NAME_en.md`.
-    Diese werden beim Start automatisch für die RAG-Funktion und den Documentation Viewer geladen.
-5.  **Zugriff:** Öffnen Sie die angezeigte lokale URL (z.B. `http://localhost:5173`) oder Netzwerk-URL in Ihrem Browser.
-
-Die Anwendung fordert beim ersten Start der Spracheingabe Mikrofonberechtigungen an.

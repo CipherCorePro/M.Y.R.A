@@ -1,3 +1,4 @@
+
 {
   "myra": {
     "name": "M.Y.R.A.",
@@ -212,7 +213,11 @@
       "stopSpeech": "Spracheingabe stoppen",
       "speakMessage": "Nachricht vorlesen",
       "stopSpeaking": "Vorlesen stoppen",
-      "speechPermissionDenied": "Mikrofonzugriff verweigert."
+      "speechPermissionDenied": "Mikrofonzugriff verweigert.",
+      "speechNotSupported": "Spracherkennung wird von diesem Browser nicht unterstützt."
+    },
+    "retrievedContext": {
+      "title": "Abgerufener Kontext ({{count}})"
     }
   },
   "nodePanel": {
@@ -294,7 +299,7 @@
   "knowledgePanel": {
     "title": "Wissensbasis Management",
     "upload": {
-      "title": "Textdatei hochladen (.txt, .md)",
+      "title": "Datei hochladen (.txt, .md, .xlsx, .docx)",
       "selected": "Ausgewählt: {{fileName}}"
     },
     "button": {
@@ -308,7 +313,7 @@
       "chunkCount": "{{count}} Chunks",
       "totalChunks": "Gesamt: {{count}} Chunks in der DB."
     },
-    "errorFileFormat": "Ungültiges Dateiformat. Bitte eine .txt oder .md Datei auswählen.",
+    "errorFileFormat": "Ungültiges Dateiformat. Bitte .txt, .md, .xlsx oder .docx Datei auswählen.",
     "errorProcessingFile": "Fehler beim Verarbeiten der Datei: {{message}}",
     "errorClearingDb": "Fehler beim Leeren der Datenbank: {{message}}"
   },
@@ -328,7 +333,10 @@
         "emptyState": "Starten Sie eine neue Dual-Konversation, um den Austausch zwischen den KIs zu beobachten.",
         "inProgress": "Konversation läuft..."
     },
-    "conversationCancelled": "Die Konversation wurde abgebrochen."
+    "conversationCancelled": "Die Konversation wurde abgebrochen.",
+    "retrievedContext": {
+      "title": "Abgerufener Kontext ({{count}})"
+    }
   },
   "aiService": {
     "relevantInfoLabel": "[RELEVANTE INFORMATIONEN AUS WISSENSBASIS]",

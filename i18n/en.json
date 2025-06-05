@@ -1,3 +1,4 @@
+
 {
   "myra": {
     "name": "M.Y.R.A.",
@@ -212,7 +213,11 @@
       "stopSpeech": "Stop voice input",
       "speakMessage": "Read message aloud",
       "stopSpeaking": "Stop reading",
-      "speechPermissionDenied": "Microphone access denied."
+      "speechPermissionDenied": "Microphone access denied.",
+      "speechNotSupported": "Speech recognition is not supported by this browser."
+    },
+    "retrievedContext": {
+      "title": "Retrieved Context ({{count}})"
     }
   },
   "nodePanel": {
@@ -294,7 +299,7 @@
   "knowledgePanel": {
     "title": "Knowledge Base Management",
     "upload": {
-      "title": "Upload Text File (.txt, .md)",
+      "title": "Upload File (.txt, .md, .xlsx, .docx)",
       "selected": "Selected: {{fileName}}"
     },
     "button": {
@@ -308,7 +313,7 @@
       "chunkCount": "{{count}} chunks",
       "totalChunks": "Total: {{count}} chunks in DB."
     },
-    "errorFileFormat": "Invalid file format. Please select a .txt or .md file.",
+    "errorFileFormat": "Invalid file format. Please select a .txt, .md, .xlsx, or .docx file.",
     "errorProcessingFile": "Error processing file: {{message}}",
     "errorClearingDb": "Error clearing database: {{message}}"
   },
@@ -328,7 +333,10 @@
         "emptyState": "Start a new dual conversation to observe the interaction between the AIs.",
         "inProgress": "Conversation in progress..."
     },
-    "conversationCancelled": "The conversation was cancelled."
+    "conversationCancelled": "The conversation was cancelled.",
+    "retrievedContext": {
+      "title": "Retrieved Context ({{count}})"
+    }
   },
   "aiService": {
     "relevantInfoLabel": "[RELEVANT INFORMATION FROM KNOWLEDGE BASE]",

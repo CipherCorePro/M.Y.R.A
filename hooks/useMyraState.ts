@@ -19,11 +19,13 @@ import { RNG, SubQGRNG, QuantumRNG } from '../utils/rng';
 import { addChunksToDB, getAllChunksFromDB, clearAllChunksFromDB, clearChunksBySourceFromDB } from '../utils/db';
 import { AdaptiveFitnessManager } from '../utils/adaptiveFitnessManager';
 import { getDominantAffect } from '../utils/uiHelpers';
+import readXlsxFile from 'read-excel-file';
+import mammoth from 'mammoth';
 
 
-// Import translations using the '@/' alias (points to project root)
-import deTranslations from '@/i18n/de.json';
-import enTranslations from '@/i18n/en.json';
+// Import translations using relative paths
+import deTranslations from '../i18n/de.json';
+import enTranslations from '../i18n/en.json';
 
 const translations: Translations = {
   de: deTranslations,
@@ -752,7 +754,8 @@ export const useMyraState = () => {
         role: 'assistant', 
         content: response.text || t('aiService.error.geminiGenerationError', {speakerName: activeAgentPersona.name}), 
         timestamp: Date.now(), 
-        speakerName: activeAgentPersona.name 
+        speakerName: activeAgentPersona.name,
+        retrievedChunks: relevantChunks.map(chunk => ({ source: chunk.source, text: chunk.text }))
     };
     setChatHistory(prev => [...prev, assistantMessage]);
     setIsLoading(false);
@@ -797,7 +800,14 @@ export const useMyraState = () => {
         const myraEffectiveTemp = Math.max(0, Math.min(2.0, myraConfig.myraAIProviderConfig.temperatureBase + (emotionState.arousal * myraConfig.temperatureLimbusInfluence) + ((nodeStates['Creativus_Myra']?.activation || 0.5) * myraConfig.temperatureCreativusInfluence)));
         
         const myraResponse = await callAiApi(lastMessageContent, myraConfig, {...myraConfig.myraAIProviderConfig, temperatureBase: myraEffectiveTemp}, currentDualHistory, myraSystemInstruction, myraPersona, t);
-        const myraMessage: ChatMessage = { id: uuidv4(), role: 'assistant', content: myraResponse.text || t('aiService.error.geminiGenerationError', {speakerName: myraConfig.myraName}), timestamp: Date.now(), speakerName: myraConfig.myraName };
+        const myraMessage: ChatMessage = { 
+            id: uuidv4(), 
+            role: 'assistant', 
+            content: myraResponse.text || t('aiService.error.geminiGenerationError', {speakerName: myraConfig.myraName}), 
+            timestamp: Date.now(), 
+            speakerName: myraConfig.myraName,
+            retrievedChunks: myraChunks.map(chunk => ({ source: chunk.source, text: chunk.text }))
+        };
         currentDualHistory = [...currentDualHistory, myraMessage];
         setDualConversationHistory(currentDualHistory);
         lastMessageContent = myraMessage.content;
@@ -817,7 +827,14 @@ export const useMyraState = () => {
         const caelumEffectiveTemp = Math.max(0, Math.min(2.0, myraConfig.caelumAIProviderConfig.temperatureBase + (emotionStateCaelum.arousal * myraConfig.temperatureLimbusInfluence) + ((nodeStatesCaelum['Creativus_Caelum']?.activation || 0.5) * myraConfig.temperatureCreativusInfluence)));
         
         const caelumResponse = await callAiApi(lastMessageContent, myraConfig, {...myraConfig.caelumAIProviderConfig, temperatureBase: caelumEffectiveTemp}, currentDualHistory, caelumSystemInstruction, caelumPersona, t);
-        const caelumMessage: ChatMessage = { id: uuidv4(), role: 'assistant', content: caelumResponse.text || t('aiService.error.geminiGenerationError', {speakerName: myraConfig.caelumName}), timestamp: Date.now(), speakerName: myraConfig.caelumName };
+        const caelumMessage: ChatMessage = { 
+            id: uuidv4(), 
+            role: 'assistant', 
+            content: caelumResponse.text || t('aiService.error.geminiGenerationError', {speakerName: myraConfig.caelumName}), 
+            timestamp: Date.now(), 
+            speakerName: myraConfig.caelumName,
+            retrievedChunks: caelumChunks.map(chunk => ({ source: chunk.source, text: chunk.text }))
+        };
         currentDualHistory = [...currentDualHistory, caelumMessage];
         setDualConversationHistory(currentDualHistory);
         lastMessageContent = caelumMessage.content;
@@ -946,23 +963,51 @@ export const useMyraState = () => {
 
   const loadAndProcessFile = async (file: File) => {
     setIsLoadingKnowledge(true);
+    let text = '';
+    const fileName = file.name.toLowerCase();
+
     try {
-      const text = await file.text();
-      const newChunks: TextChunk[] = [];
-      for (let i = 0; i < text.length; i += myraConfig.ragChunkSize - myraConfig.ragChunkOverlap) {
-        const chunkText = text.substring(i, i + myraConfig.ragChunkSize);
-        newChunks.push({
-          id: uuidv4(),
-          source: file.name,
-          index: newChunks.length,
-          text: chunkText
-        });
+      const arrayBuffer = await file.arrayBuffer(); // Keep for .txt, .md, .docx
+
+      if (fileName.endsWith('.txt') || fileName.endsWith('.md')) {
+        text = new TextDecoder().decode(arrayBuffer);
+      } else if (fileName.endsWith('.xlsx')) {
+        let fullText = '';
+        // Use 'file' object directly for read-excel-file
+        const sheets = await readXlsxFile(file, { getSheets: true });
+        for (const sheet of sheets) {
+            const rows = await readXlsxFile(file, { sheet: sheet.name });
+            rows.forEach(row => {
+                fullText += row.map(cell => (cell !== null && cell !== undefined) ? String(cell) : '').join(' ') + '\n';
+            });
+        }
+        text = fullText;
+      } else if (fileName.endsWith('.docx')) {
+        // mammoth uses arrayBuffer
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        text = result.value;
+      } else {
+        throw new Error(t('knowledgePanel.errorFileFormat'));
       }
-      await clearChunksBySourceFromDB(file.name); // Clear old chunks from this source
-      await addChunksToDB(newChunks);
-      await loadInitialKnowledgeFromDB(); // Reload all chunks including new ones
+
+      if (text.trim()) {
+        const newChunks: TextChunk[] = [];
+        for (let i = 0; i < text.length; i += myraConfig.ragChunkSize - myraConfig.ragChunkOverlap) {
+          const chunkText = text.substring(i, i + myraConfig.ragChunkSize);
+          newChunks.push({
+            id: uuidv4(),
+            source: file.name,
+            index: newChunks.length,
+            text: chunkText
+          });
+        }
+        await clearChunksBySourceFromDB(file.name);
+        await addChunksToDB(newChunks);
+        await loadInitialKnowledgeFromDB();
+      }
     } catch (error) {
       console.error(t('knowledgePanel.errorProcessingFile', { message: (error as Error).message }));
+      // Optionally, display this error to the user via a toast or message area
     }
     setIsLoadingKnowledge(false);
   };

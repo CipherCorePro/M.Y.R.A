@@ -6,7 +6,7 @@ Although these settings are defined globally in `MyraConfig`, the RAG system is 
 *   **M.Y.R.A.:** Uses RAG in direct chat and during its contributions in the Dual AI conversation.
 *   **C.A.E.L.U.M.:** Uses RAG during its contributions in the Dual AI conversation.
 
-Additionally, on application startup, `Dokumentation_en.md` (or `_de.md`) and all `.md` files from the `public/docs/` directory (with the appropriate language suffix) are automatically loaded into the knowledge base.
+Additionally, on application startup, `Dokumentation_en.md` (or `_de.md`) and all `.md` files from the `public/docs/` directory (with the appropriate language suffix) are automatically loaded into the knowledge base. `.xlsx` files are processed using the `read-excel-file` library, and `.docx` files with `mammoth`.
 
 ## Parameters
 
@@ -39,14 +39,14 @@ Additionally, on application startup, `Dokumentation_en.md` (or `_de.md`) and al
     *   Existing chunks from the same source are deleted to allow for updates.
     *   New chunks are stored in IndexedDB.
 2.  **Manual Upload & Processing (`KnowledgePanel`, `useMyraState.loadAndProcessFile`):**
-    *   The user uploads a `.txt` or `.md` file.
-    *   The content is split into chunks.
+    *   The user uploads a `.txt`, `.md`, `.xlsx`, or `.docx` file.
+    *   The text content is extracted (using `read-excel-file` for `.xlsx`, `mammoth` for `.docx`), and then split into chunks.
     *   Chunks are stored in IndexedDB.
 3.  **Retrieving Relevant Chunks (`useMyraState.retrieveRelevantChunks`):**
     *   Before an AI generates a response, this function is called, typically with the current prompt or the previous message as the query.
-    *   Keyword-based search across stored chunks (both manually and automatically loaded).
+    *   Keyword-based search across stored chunks.
     *   `ragMaxChunksToRetrieve` most relevant chunks are selected.
-4.  **Enriching the AI Prompt (`useMyraState.generateMyraResponse` / `startDualConversation`):**
+4.  **Enriching the AI Prompt (`useMyraState.generateActiveAgentChatResponse` / `startDualConversation`):**
     *   The text of the retrieved chunks is inserted into the system instruction of the respective AI (M.Y.R.A. or C.A.E.L.U.M.).
     *   The AI uses this additional context to generate more informed responses.
 

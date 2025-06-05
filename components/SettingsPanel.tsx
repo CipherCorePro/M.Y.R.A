@@ -112,7 +112,8 @@ const getConfigFields = (t: SettingsPanelProps['t'], myraConfig: MyraConfig): Co
   // Adaptive Fitness - Dimension Contribution Weights
   ...Object.keys(INITIAL_CONFIG.adaptiveFitnessConfig.dimensionContribWeights).flatMap(dimKey =>
       Object.keys(INITIAL_CONFIG.adaptiveFitnessConfig.dimensionContribWeights[dimKey as keyof MyraConfig['adaptiveFitnessConfig']['dimensionContribWeights']]).map(metricKey => ({
-          key: metricKey,
+          key: `${dimKey}_${metricKey}`, // Unique composite key
+          originalMetricKey: metricKey, // Original key for data access
           parentKey: 'adaptiveFitnessConfig',
           subKey: dimKey as keyof MyraConfig['adaptiveFitnessConfig']['dimensionContribWeights'],
           subSubKey: 'dimensionContribWeights',
@@ -149,23 +150,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ config, onConfigCh
   }, [config]);
 
   const handleInputChange = (
-    key: string,
-    value: string | number | boolean | undefined, // Allow undefined for optional seeds
-    parentKey?: string,
-    subKey?: string,
-    subSubKey?: string
+    field: ConfigField,
+    value: string | number | boolean | undefined
   ) => {
     setLocalConfig(prevConfig => {
       const newConfig = JSON.parse(JSON.stringify(prevConfig)) as MyraConfig;
+      const f = field as any; // Use 'any' for easier dynamic access
 
-      if (parentKey && subKey && subSubKey) {
-        (newConfig[parentKey as keyof MyraConfig] as any)[subSubKey][subKey][key] = value;
-      } else if (parentKey && subKey) {
-        (newConfig[parentKey as keyof MyraConfig] as any)[subKey][key] = value;
-      } else if (parentKey) {
-        (newConfig[parentKey as keyof MyraConfig] as any)[key] = value;
-      } else {
-        (newConfig as any)[key] = value;
+      if (f.parentKey && f.subKey && f.subSubKey && f.originalMetricKey) { // AdaptiveFitnessDimensionSubField
+        (newConfig[f.parentKey as keyof MyraConfig] as any)[f.subSubKey][f.subKey][f.originalMetricKey] = value;
+      } else if (f.parentKey && f.subKey) { // AdaptiveFitnessBaseWeightsField
+        (newConfig[f.parentKey as keyof MyraConfig] as any)[f.subKey][f.key] = value;
+      } else if (f.parentKey) { // MyraAIProviderConfigField, CaelumAIProviderConfigField
+        (newConfig[f.parentKey as keyof MyraConfig] as any)[f.key] = value;
+      } else { // MyraSystemConfigField, MyraPersonaEditableField, etc.
+        (newConfig as any)[f.key] = value;
       }
       return newConfig;
     });
@@ -210,27 +209,28 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ config, onConfigCh
         const initialSnapshotForLang = JSON.parse(JSON.stringify(INITIAL_CONFIG)) as MyraConfig;
         
         currentConfigFields.filter(field => field.groupKey === groupKeyToReset).forEach(field => {
-            const { key } = field as { key: keyof MyraConfig };
+            const f = field as any;
+            const dataKeyForAssignment = f.originalMetricKey || f.key;
 
-            if (personaEditableFieldKeys.includes(key)) {
-                (newConfig as any)[key] = ""; 
-                const actualKeyField = personaKeyFieldMapping[key];
+            if (personaEditableFieldKeys.includes(f.key as keyof MyraConfig)) {
+                (newConfig as any)[f.key] = ""; 
+                const actualKeyField = personaKeyFieldMapping[f.key as keyof MyraConfig];
                 if (actualKeyField) {
                      (newConfig as any)[actualKeyField] = (initialSnapshotForLang as any)[actualKeyField];
                 }
-            } else if (key === 'language' || key === 'theme' || key === 'maxPadHistorySize' || key === 'activeChatAgent') { 
-                 (newConfig as any)[key] = (INITIAL_CONFIG as any)[key];
-            } else if ('parentKey' in field && field.parentKey && 'subKey' in field && field.subKey && 'subSubKey' in field && field.subSubKey) {
-                 (newConfig[field.parentKey as keyof MyraConfig] as any)[field.subSubKey][field.subKey][field.key as string] =
-                 (initialSnapshotForLang[field.parentKey as keyof MyraConfig] as any)[field.subSubKey][field.subKey][field.key as string];
-            } else if ('parentKey' in field && field.parentKey && 'subKey' in field && field.subKey) {
-                (newConfig[field.parentKey as keyof MyraConfig] as any)[field.subKey][key as string] =
-                (initialSnapshotForLang[field.parentKey as keyof MyraConfig]as any)[field.subKey][key as string];
-            } else if ('parentKey' in field && field.parentKey) {
-                (newConfig[field.parentKey as keyof MyraConfig] as any)[key as string] =
-                (initialSnapshotForLang[field.parentKey as keyof MyraConfig] as any)[key as string];
-            } else { 
-                 (newConfig as any)[key as string] = (initialSnapshotForLang as any)[key as string];
+            } else if (f.key === 'language' || f.key === 'theme' || f.key === 'maxPadHistorySize' || f.key === 'activeChatAgent') { 
+                 (newConfig as any)[f.key] = (INITIAL_CONFIG as any)[f.key];
+            } else if (f.parentKey && f.subKey && f.subSubKey) { // AdaptiveFitnessDimensionSubField
+                 (newConfig[f.parentKey as keyof MyraConfig] as any)[f.subSubKey][f.subKey][f.originalMetricKey as string] =
+                 (initialSnapshotForLang[f.parentKey as keyof MyraConfig] as any)[f.subSubKey][f.subKey][f.originalMetricKey as string];
+            } else if (f.parentKey && f.subKey) { // AdaptiveFitnessBaseWeightsField
+                (newConfig[f.parentKey as keyof MyraConfig] as any)[f.subKey][f.key as string] =
+                (initialSnapshotForLang[f.parentKey as keyof MyraConfig]as any)[f.subKey][f.key as string];
+            } else if (f.parentKey) { // MyraAIProviderConfigField, CaelumAIProviderConfigField
+                (newConfig[f.parentKey as keyof MyraConfig] as any)[f.key as string] =
+                (initialSnapshotForLang[f.parentKey as keyof MyraConfig] as any)[f.key as string];
+            } else { // Other direct properties like MyraSystemConfigField
+                 (newConfig as any)[f.key as string] = (initialSnapshotForLang as any)[f.key as string];
             }
         });
         return newConfig;
@@ -257,14 +257,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ config, onConfigCh
     }
 
     let currentValue: any;
-     if ('parentKey' in field && field.parentKey && 'subKey' in field && field.subKey && 'subSubKey' in field && field.subSubKey) {
-        currentValue = (localConfig[field.parentKey as keyof MyraConfig] as any)?.[field.subSubKey]?.[field.subKey]?.[field.key as string];
-    } else if ('parentKey' in field && field.parentKey && 'subKey' in field && field.subKey) {
-      currentValue = (localConfig[field.parentKey as keyof MyraConfig] as any)?.[field.subKey]?.[field.key as string];
-    } else if ('parentKey' in field && field.parentKey) {
-      currentValue = (localConfig[field.parentKey as keyof MyraConfig] as any)?.[field.key as string];
-    } else {
-      currentValue = localConfig[field.key as keyof MyraConfig];
+    const f = field as any; // Use 'any' for easier dynamic access
+
+    if (f.parentKey && f.subKey && f.subSubKey && f.originalMetricKey) { // AdaptiveFitnessDimensionSubField
+        currentValue = (localConfig[f.parentKey as keyof MyraConfig] as any)?.[f.subSubKey]?.[f.subKey]?.[f.originalMetricKey];
+    } else if (f.parentKey && f.subKey) { // AdaptiveFitnessBaseWeightsField
+      currentValue = (localConfig[f.parentKey as keyof MyraConfig] as any)?.[f.subKey]?.[f.key];
+    } else if (f.parentKey) { // MyraAIProviderConfigField, CaelumAIProviderConfigField
+      currentValue = (localConfig[f.parentKey as keyof MyraConfig] as any)?.[f.key];
+    } else { // MyraSystemConfigField, MyraPersonaEditableField, etc.
+      currentValue = localConfig[f.key as keyof MyraConfig];
     }
 
     if (field.type === 'number' && currentValue === undefined && (field.key === 'subqgSeed' || field.key === 'caelumSubqgSeed')) {
@@ -276,23 +278,24 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ config, onConfigCh
     const commonInputClass = "w-full p-2 text-sm bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition duration-150 ease-in-out text-gray-100 placeholder-gray-400";
     const commonLabelClass = "block text-sm font-medium text-gray-300 mb-1";
 
+    // The `field.key` is now unique (e.g., dimKey_metricKey for AdaptiveFitnessDimensionSubField)
+    // and can be used for React key, HTML id, name, htmlFor.
+    const uniqueKey = f.key as string;
+
     switch (field.type) {
       case 'text':
       case 'number':
         return (
-          <div key={field.key as string} className="mb-4">
-            <label htmlFor={field.key as string} className={commonLabelClass}>{t(field.labelKey)}</label>
+          <div key={uniqueKey} className="mb-4">
+            <label htmlFor={uniqueKey} className={commonLabelClass}>{t(field.labelKey)}</label>
             <input
               type={field.type}
-              id={field.key as string}
-              name={field.key as string}
+              id={uniqueKey}
+              name={uniqueKey}
               value={currentValue as string | number}
               onChange={e => handleInputChange(
-                field.key as string,
-                field.type === 'number' ? (e.target.value === '' && (field.key === 'subqgSeed' || field.key === 'caelumSubqgSeed') ? undefined : parseFloat(e.target.value)) : e.target.value,
-                (field as any).parentKey,
-                (field as any).subKey,
-                (field as any).subSubKey
+                field,
+                field.type === 'number' ? (e.target.value === '' && (uniqueKey.includes('Seed')) ? undefined : parseFloat(e.target.value)) : e.target.value
               )}
               step={field.step}
               min={field.min}
@@ -304,19 +307,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ config, onConfigCh
         );
       case 'textarea':
         return (
-          <div key={field.key as string} className="mb-4">
-            <label htmlFor={field.key as string} className={commonLabelClass}>{t(field.labelKey)}</label>
+          <div key={uniqueKey} className="mb-4">
+            <label htmlFor={uniqueKey} className={commonLabelClass}>{t(field.labelKey)}</label>
             <textarea
-              id={field.key as string}
-              name={field.key as string}
+              id={uniqueKey}
+              name={uniqueKey}
               value={currentValue as string}
-              onChange={e => handleInputChange(
-                field.key as string,
-                e.target.value,
-                (field as any).parentKey,
-                (field as any).subKey,
-                (field as any).subSubKey
-              )}
+              onChange={e => handleInputChange(field, e.target.value)}
               rows={field.rows || 3}
               className={commonInputClass}
             />
@@ -333,19 +330,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ config, onConfigCh
         }
 
         return (
-          <div key={field.key as string} className="mb-4">
-            <label htmlFor={field.key as string} className={commonLabelClass}>{t(field.labelKey)}</label>
+          <div key={uniqueKey} className="mb-4">
+            <label htmlFor={uniqueKey} className={commonLabelClass}>{t(field.labelKey)}</label>
             <select
-              id={field.key as string}
-              name={field.key as string}
+              id={uniqueKey}
+              name={uniqueKey}
               value={currentValue as string}
-              onChange={e => handleInputChange(
-                field.key as string,
-                e.target.value,
-                (field as any).parentKey,
-                (field as any).subKey,
-                (field as any).subSubKey
-              )}
+              onChange={e => handleInputChange(field, e.target.value)}
               className={commonInputClass}
             >
               {options?.map(option => (

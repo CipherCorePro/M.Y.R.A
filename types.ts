@@ -165,6 +165,7 @@ export interface ChatMessage {
   speakerName?: string;
   content: string;
   timestamp: number;
+  retrievedChunks?: { source: string; text: string }[];
 }
 
 export interface EmotionState {
@@ -355,9 +356,10 @@ export interface AdaptiveFitnessBaseWeightsField extends ConfigFieldBase {
   subKey: 'baseMetricWeights';
 }
 export interface AdaptiveFitnessDimensionSubField extends ConfigFieldBase {
-    key: string; 
+    key: string; // Unique composite key, e.g., `${dimKey}_${originalMetricKey}`
+    originalMetricKey: string; // The actual data key, e.g., "explorationScore"
     parentKey: 'adaptiveFitnessConfig';
-    subKey: keyof MyraConfig['adaptiveFitnessConfig']['dimensionContribWeights']; 
+    subKey: keyof MyraConfig['adaptiveFitnessConfig']['dimensionContribWeights']; // This is dimKey
     subSubKey: 'dimensionContribWeights'; 
 }
 

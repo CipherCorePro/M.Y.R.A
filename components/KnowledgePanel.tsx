@@ -70,7 +70,7 @@ const KnowledgePanel: React.FC<KnowledgePanelProps> = ({
           <input
             id="file-upload-input"
             type="file"
-            accept=".txt"
+            accept=".txt,.md,.xlsx,.docx"
             onChange={handleFileChange}
             className="block w-full text-xs sm:text-sm text-gray-300 file:mr-2 sm:file:mr-4 file:py-1.5 sm:file:py-2 file:px-2 sm:file:px-4 file:rounded-md file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700 cursor-pointer"
           />
