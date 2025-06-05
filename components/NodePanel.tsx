@@ -32,11 +32,11 @@ const NodeCard: React.FC<{ node: NodeState }> = ({ node }) => {
   return (
     <div className="p-2.5 bg-gray-700/60 rounded-lg shadow-md border border-gray-600/80 hover:border-purple-500/70 transition-all duration-150 ease-in-out">
       <div className="flex items-center justify-between mb-1.5">
-        <div className="flex items-center">
+        <div className="flex items-center min-w-0"> {/* Added min-w-0 for truncation */}
           {getNodeIcon(node.type)}
           <h4 className="ml-2 text-sm font-semibold text-purple-300 truncate" title={node.label}>{node.label}</h4>
         </div>
-        <span className={`px-1.5 py-0.5 text-xs rounded-full ${
+        <span className={`px-1.5 py-0.5 text-xs rounded-full whitespace-nowrap ${ // Added whitespace-nowrap
           node.activation > 0.7 ? 'bg-green-500/30 text-green-300' : 
           node.activation > 0.3 ? 'bg-yellow-500/30 text-yellow-300' : 
           'bg-red-500/30 text-red-300'
@@ -50,7 +50,7 @@ const NodeCard: React.FC<{ node: NodeState }> = ({ node }) => {
           style={{ width: `${node.activation * 100}%` }}
         ></div>
       </div>
-      <div className="text-xs text-gray-400 space-x-2">
+      <div className="text-xs text-gray-400 space-x-2 flex flex-wrap"> {/* Added flex-wrap */}
         <span>Res: {node.resonatorScore.toFixed(2)}</span>
         <span>Foc: {node.focusScore.toFixed(2)}</span>
         <span>Exp: {node.explorationScore.toFixed(2)}</span>
@@ -77,19 +77,19 @@ const NodePanel: React.FC<NodePanelProps> = ({ nodeStates, t }) => {
   const semanticNodes = nodes.filter(n => n.type === 'semantic');
 
   return (
-    <div className="p-3 bg-gray-700/50 backdrop-blur-sm rounded-lg shadow-lg border border-gray-600 space-y-4">
+    <div className="p-2 sm:p-3 bg-gray-700/50 backdrop-blur-sm rounded-lg shadow-lg border border-gray-600 space-y-3 sm:space-y-4">
       <div>
-        <h3 className="text-lg font-semibold mb-2 text-purple-300">{t('nodePanel.modulatorNodes.title')}</h3>
+        <h3 className="text-md sm:text-lg font-semibold mb-2 text-purple-300">{t('nodePanel.modulatorNodes.title')}</h3>
         {modulatorNodes.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {modulatorNodes.map(node => <NodeCard key={node.id} node={node} />)}
           </div>
         ) : (<p className="text-sm text-gray-400 italic">{t('nodePanel.modulatorNodes.empty')}</p>)}
       </div>
       <div>
-        <h3 className="text-lg font-semibold mb-2 text-purple-300">{t('nodePanel.semanticNodes.title')}</h3>
+        <h3 className="text-md sm:text-lg font-semibold mb-2 text-purple-300">{t('nodePanel.semanticNodes.title')}</h3>
          {semanticNodes.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {semanticNodes.slice(0,4).map(node => <NodeCard key={node.id} node={node} />)}
           </div>
         ) : (<p className="text-sm text-gray-400 italic">{t('nodePanel.semanticNodes.empty')}</p>)}

@@ -1,3 +1,4 @@
+
 import { MyraConfig, EmotionState, NodeState, AdaptiveFitnessState, SubQgGlobalMetrics, RNGType, AdaptiveFitnessConfig, AIProviderConfig, Language, Theme } from './types';
 
 export const INITIAL_ADAPTIVE_FITNESS_CONFIG: AdaptiveFitnessConfig = {
@@ -55,34 +56,30 @@ export const INITIAL_CONFIG: MyraConfig = {
   language: 'de' as Language,
   theme: 'nebula' as Theme,
 
-  // Myra Persona Keys
   myraNameKey: "myra.name",
-  userNameKey: "user.name", // Generic user name key
+  userNameKey: "user.name", 
   myraRoleDescriptionKey: "myra.roleDescription",
   myraEthicsPrinciplesKey: "myra.ethicsPrinciples",
   myraResponseInstructionKey: "myra.responseInstruction",
   
-  // Caelum Persona Keys
   caelumNameKey: "caelum.name",
   caelumRoleDescriptionKey: "caelum.roleDescription",
   caelumEthicsPrinciplesKey: "caelum.ethicsPrinciples",
   caelumResponseInstructionKey: "caelum.responseInstruction",
 
-  // Placeholder for actual translated values, will be populated by useMyraState based on language
-  myraName: "",
-  userName: "",
-  myraRoleDescription: "",
-  myraEthicsPrinciples: "",
-  myraResponseInstruction: "",
-  caelumName: "",
-  caelumRoleDescription: "",
-  caelumEthicsPrinciples: "",
-  caelumResponseInstruction: "",
+  myraName: "", // Will be populated by populateTranslatedFields
+  userName: "", // Will be populated by populateTranslatedFields
+  myraRoleDescription: "", // Will be populated by populateTranslatedFields
+  myraEthicsPrinciples: "", // Will be populated by populateTranslatedFields
+  myraResponseInstruction: "", // Will be populated by populateTranslatedFields
+  caelumName: "", // Will be populated by populateTranslatedFields
+  caelumRoleDescription: "", // Will be populated by populateTranslatedFields
+  caelumEthicsPrinciples: "", // Will be populated by populateTranslatedFields
+  caelumResponseInstruction: "", // Will be populated by populateTranslatedFields
 
   myraAIProviderConfig: DEFAULT_MYRA_AI_CONFIG,
   caelumAIProviderConfig: DEFAULT_CAELUM_AI_CONFIG,
 
-  // M.Y.R.A. System Config
   subqgSize: 16,
   subqgBaseEnergy: 0.01,
   subqgCoupling: 0.015,
@@ -102,7 +99,6 @@ export const INITIAL_CONFIG: MyraConfig = {
   emotionDecay: 0.95,
   adaptiveFitnessUpdateInterval: 3,
 
-  // C.A.E.L.U.M. System Config
   caelumSubqgSize: 12,
   caelumSubqgBaseEnergy: 0.005,
   caelumSubqgCoupling: 0.020,
@@ -122,7 +118,7 @@ export const INITIAL_CONFIG: MyraConfig = {
   caelumEmotionDecay: 0.98,
   caelumAdaptiveFitnessUpdateInterval: 5,
 
-  // Global settings
+  activeChatAgent: 'myra' as const, // New field
   maxHistoryMessagesForPrompt: 8,
   temperatureLimbusInfluence: 0.1,
   temperatureCreativusInfluence: 0.15,
@@ -132,6 +128,7 @@ export const INITIAL_CONFIG: MyraConfig = {
   ragMaxChunksToRetrieve: 3,
 
   adaptiveFitnessConfig: INITIAL_ADAPTIVE_FITNESS_CONFIG,
+  maxPadHistorySize: 200,
 };
 
 export const INITIAL_EMOTION_STATE: EmotionState = {
@@ -168,7 +165,6 @@ export const INITIAL_NODE_STATES: NodeState[] = [
   { id: 'Concept_Art_Myra', label: 'Concept: Art (M)', activation: 0.1, resonatorScore: 0.5, focusScore: 0, explorationScore: 0, type: 'semantic' },
 ];
 
-// Node labels here are hardcoded. For full i18n, these would also need to be keys.
 export const INITIAL_CAELUM_NODE_STATES: NodeState[] = [
   { id: 'LimbusAffektus_Caelum', label: 'Limbus Affektus (C)', activation: 0.2, resonatorScore: 0.6, focusScore: 0.1, explorationScore: 0.1, type: 'limbus', specificState: INITIAL_CAELUM_EMOTION_STATE },
   { id: 'Creativus_Caelum', label: 'Pattern Analyzer (C)', activation: 0.3, resonatorScore: 0.4, focusScore: 0.2, explorationScore: 0.2, type: 'creativus' },

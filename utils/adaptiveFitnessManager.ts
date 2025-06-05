@@ -36,6 +36,10 @@ export class AdaptiveFitnessManager {
     this.config = newConfig;
   }
 
+  private findNodeByType(nodes: Record<string, NodeState>, type: NodeState['type']): NodeState | undefined {
+    return Object.values(nodes).find(node => node.type === type);
+  }
+
   public calculateMetricsAndFitness(): AdaptiveFitnessState {
     const systemState = this.getSystemState();
     const afConfig = this.config.adaptiveFitnessConfig;
@@ -45,11 +49,11 @@ export class AdaptiveFitnessManager {
     const calculatedMetrics: Partial<AdaptiveFitnessMetricWeights> & { [key: string]: number } = {};
 
     // 1. Calculate Individual Metrics
-    const conflictNode = systemState.nodes['ConflictMonitor'];
-    const conflictLevel = conflictNode?.specificState?.conflictLevel ?? 0.5; // Default if not found
+    const conflictNode = this.findNodeByType(systemState.nodes, 'conflict');
+    const conflictLevel = conflictNode?.specificState?.conflictLevel ?? 0.5; 
     calculatedMetrics.coherenceProxy = 1.0 - conflictLevel;
 
-    calculatedMetrics.networkComplexityProxy = Math.tanh(Object.keys(systemState.nodes).length / 50); // Example: normalize by 50 nodes
+    calculatedMetrics.networkComplexityProxy = Math.tanh(Object.keys(systemState.nodes).length / 50);
 
     const resonatorScores = Object.values(systemState.nodes)
         .map(n => n.resonatorScore)
@@ -58,33 +62,32 @@ export class AdaptiveFitnessManager {
         ? resonatorScores.reduce((sum, score) => sum + score, 0) / resonatorScores.length 
         : 0.5;
 
-    const execNode = systemState.nodes['ExecutiveControl'];
-    const valNode = systemState.nodes['ValuationSystem'];
+    const execNode = this.findNodeByType(systemState.nodes, 'executive');
+    const valNode = this.findNodeByType(systemState.nodes, 'valuation');
     const limbus = systemState.emotionState;
     let goalAchievement = (execNode?.specificState?.impulseControlLevel ?? 0.5) * 0.4;
-    goalAchievement += (1.0 - (valNode?.specificState?.valuationScore ?? 0.5)) * 0.3; // Higher when valuation is lower (less selfish focus)
+    goalAchievement += (1.0 - (valNode?.specificState?.valuationScore ?? 0.5)) * 0.3; 
     goalAchievement += (limbus.pleasure * 0.2);
-    goalAchievement -= ((limbus.greed + limbus.anger + limbus.fear) / 3) * 0.1; // Penalty for negative drivers
-    calculatedMetrics.goalAchievementProxy = Math.max(0, Math.min(1, goalAchievement + 0.25)); // Base offset and clip
+    goalAchievement -= ((limbus.greed + limbus.anger + limbus.fear) / 3) * 0.1; 
+    calculatedMetrics.goalAchievementProxy = Math.max(0, Math.min(1, goalAchievement + 0.25)); 
 
-    const creativusNode = systemState.nodes['Creativus'];
+    const creativusNode = this.findNodeByType(systemState.nodes, 'creativus');
     const chunksProcessedThisCycle = systemState.processedTextChunksCount - this.lastProcessedChunksCount;
-    // Simplified learning efficiency proxy: bonus if new chunks were processed
     const learningEfficiencyProxy = chunksProcessedThisCycle > 0 ? 0.75 : 0.25; 
     calculatedMetrics.explorationScore = Math.max(0, Math.min(1, 
       ((creativusNode?.activation ?? 0.5) * 0.6) + (learningEfficiencyProxy * 0.4)
     ));
     
-    const criticusNode = systemState.nodes['CortexCriticus'];
+    const criticusNode = this.findNodeByType(systemState.nodes, 'criticus');
     calculatedMetrics.focusScore = Math.max(0, Math.min(1, 
-      ((criticusNode?.activation ?? 0.5) * 0.6) + ((1 - Math.abs(limbus.arousal)) * 0.4) // Higher focus with lower arousal
+      ((criticusNode?.activation ?? 0.5) * 0.6) + ((1 - Math.abs(limbus.arousal)) * 0.4) 
     ));
 
     calculatedMetrics.creativityScore = Math.max(0, Math.min(1,
-      ((creativusNode?.activation ?? 0.5) * 0.7) + (systemState.subQgGlobalMetrics.avgEnergy * 0.3) // High SubQG energy might correlate to novelty
+      ((creativusNode?.activation ?? 0.5) * 0.7) + (systemState.subQgGlobalMetrics.avgEnergy * 0.3) 
     ));
 
-    this.lastProcessedChunksCount = systemState.processedTextChunksCount; // Update for next cycle
+    this.lastProcessedChunksCount = systemState.processedTextChunksCount; 
 
     // 2. Calculate Dimensional Scores
     const dimensions: AdaptiveFitnessState['dimensions'] = {
@@ -117,7 +120,7 @@ export class AdaptiveFitnessManager {
       sumOfAbsoluteWeights += Math.abs(weight);
 
       if (metricKey === 'conflictPenaltyFactor') {
-        weightedSum += conflictLevel * weight; // conflictLevel is 0-1, weight is negative
+        weightedSum += conflictLevel * weight; 
       } else if (calculatedMetrics[metricKey] !== undefined) {
         weightedSum += (calculatedMetrics[metricKey] as number) * weight;
       }

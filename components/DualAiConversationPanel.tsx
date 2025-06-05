@@ -35,9 +35,9 @@ const DualAiConversationPanel: React.FC<DualAiConversationPanelProps> = ({
   };
   
   const getSpeakerIcon = (speakerName?: string) => {
-    if (speakerName === myraConfig.myraName) return <SparklesIcon className="w-5 h-5 mr-2 text-purple-400" />;
-    if (speakerName === myraConfig.caelumName) return <ChatBubbleLeftRightIcon className="w-5 h-5 mr-2 text-sky-400" />;
-    return <UserCircleIcon className="w-5 h-5 mr-2 text-green-400" />;
+    if (speakerName === myraConfig.myraName) return <SparklesIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 text-purple-400" />;
+    if (speakerName === myraConfig.caelumName) return <ChatBubbleLeftRightIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 text-sky-400" />;
+    return <UserCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5 sm:mr-2 text-green-400" />;
   };
   
   const getSpeakerBgColor = (speakerName?: string, role?: string) => {
@@ -51,9 +51,9 @@ const DualAiConversationPanel: React.FC<DualAiConversationPanelProps> = ({
   return (
     <div className="flex flex-col h-full bg-gray-800/30 backdrop-blur-sm rounded-lg shadow-2xl border border-gray-700">
       {/* Controls Section */}
-      <div className="p-4 border-b border-gray-700 bg-gray-800/50 space-y-3">
+      <div className="p-3 sm:p-4 border-b border-gray-700 bg-gray-800/50 space-y-3">
         <div>
-          <label htmlFor="dual-initial-prompt" className="block text-sm font-medium text-gray-300 mb-1">
+          <label htmlFor="dual-initial-prompt" className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
             {t('dualAiPanel.label.initialPrompt', { myraName: myraConfig.myraName, caelumName: myraConfig.caelumName})}
           </label>
           <textarea
@@ -62,13 +62,13 @@ const DualAiConversationPanel: React.FC<DualAiConversationPanelProps> = ({
             value={initialPrompt}
             onChange={(e) => setInitialPrompt(e.target.value)}
             placeholder={t('dualAiPanel.placeholder.initialPrompt')}
-            className="w-full p-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-gray-100 placeholder-gray-400"
+            className="w-full p-2 text-sm sm:text-base bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-gray-100 placeholder-gray-400"
             disabled={isDualConversationLoading}
           />
         </div>
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:space-x-4 space-y-2 sm:space-y-0">
           <div>
-            <label htmlFor="dual-rounds" className="block text-sm font-medium text-gray-300 mb-1">
+            <label htmlFor="dual-rounds" className="block text-xs sm:text-sm font-medium text-gray-300 mb-1">
               {t('dualAiPanel.label.rounds')}
             </label>
             <input
@@ -78,14 +78,14 @@ const DualAiConversationPanel: React.FC<DualAiConversationPanelProps> = ({
               onChange={(e) => setRounds(Math.max(1, parseInt(e.target.value, 10) || 1))}
               min="1"
               max="10"
-              className="p-2 w-24 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-gray-100"
+              className="p-2 w-full sm:w-24 text-sm sm:text-base bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none text-gray-100"
               disabled={isDualConversationLoading}
             />
           </div>
           <button
             onClick={handleStartConversation}
             disabled={isDualConversationLoading || !initialPrompt.trim() || rounds <= 0}
-            className="mt-5 py-2.5 px-6 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto py-2 px-4 sm:py-2.5 sm:px-6 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isDualConversationLoading ? (
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mx-auto"></div>
@@ -97,29 +97,29 @@ const DualAiConversationPanel: React.FC<DualAiConversationPanelProps> = ({
       </div>
 
       {/* Conversation History Section */}
-      <div className="flex-1 p-6 space-y-4 overflow-y-auto fancy-scrollbar">
+      <div className="flex-1 p-3 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto fancy-scrollbar">
         {dualConversationHistory.map((msg) => (
           <div key={msg.id} className={`flex ${
               msg.role === 'user' ? 'justify-center' : 
               msg.speakerName === myraConfig.caelumName ? 'justify-end' : 
               'justify-start'
             }`}>
-            <div className={`max-w-3/4 p-3 rounded-xl shadow-md text-white ${getSpeakerBgColor(msg.speakerName, msg.role)} ${msg.role === 'system' ? 'w-full text-center bg-gray-600' : ''}`}>
+            <div className={`max-w-[90%] sm:max-w-3/4 p-2 sm:p-3 rounded-xl shadow-md text-white ${getSpeakerBgColor(msg.speakerName, msg.role)} ${msg.role === 'system' ? 'w-full text-center bg-gray-600' : ''}`}>
               <div className={`flex items-center mb-1 ${msg.role === 'system' ? 'justify-center' : ''}`}>
                 {getSpeakerIcon(msg.speakerName)}
-                <span className="font-semibold text-sm">
+                <span className="font-semibold text-xs sm:text-sm">
                   {msg.speakerName || (msg.role === 'user' ? myraConfig.userName : t('dualAiPanel.label.system'))}
                 </span>
               </div>
-              <p className={`text-sm whitespace-pre-wrap ${msg.role === 'system' ? 'italic text-gray-300' : ''}`}>{msg.content}</p>
+              <p className={`text-sm sm:text-base whitespace-pre-wrap break-words ${msg.role === 'system' ? 'italic text-gray-300' : ''}`}>{msg.content}</p>
               <div className="text-xs text-gray-400 mt-1 text-right">
-                {new Date(msg.timestamp).toLocaleTimeString()}
+                 {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
           </div>
         ))}
         {dualConversationHistory.length === 0 && !isDualConversationLoading && (
-            <div className="text-center text-gray-400 italic mt-10">
+            <div className="text-center text-gray-400 italic mt-10 px-2">
                 {t('dualAiPanel.info.emptyState')}
             </div>
         )}

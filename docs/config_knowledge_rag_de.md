@@ -1,12 +1,12 @@
-# M.Y.R.A. Konfiguration: Knowledge Base & RAG
+# M.Y.R.A. & C.A.E.L.U.M. Konfiguration: Knowledge Base & RAG
 
-Diese Datei erläutert die Konfigurationsparameter für die Wissensbasis und das Retrieval Augmented Generation (RAG) System. Diese Einstellungen steuern, wie externe Textdokumente verarbeitet und für die Anreicherung von KI-Antworten genutzt werden. Sie finden diese Einstellungen im `SettingsPanel` unter der Gruppe "General System" (da sie global wirken) und sind Teil des `MyraConfig`-Objekts.
+Diese Datei erläutert die Konfigurationsparameter für die Wissensbasis und das Retrieval Augmented Generation (RAG) System. Diese Einstellungen steuern, wie externe Textdokumente verarbeitet und für die Anreicherung von KI-Antworten genutzt werden. Sie finden diese Einstellungen im `SettingsPanel` unter der Gruppe "Allgemeines System" (da sie global wirken) und sind Teil des `MyraConfig`-Objekts.
 
 Obwohl diese Einstellungen global in `MyraConfig` definiert sind, wird das RAG-System verwendet, um den Kontext für die Antworten beider KIs zu erweitern:
 *   **M.Y.R.A.:** Nutzt RAG im direkten Chat und während ihrer Beiträge in der Dual-AI-Konversation.
 *   **C.A.E.L.U.M.:** Nutzt RAG während seiner Beiträge in der Dual-AI-Konversation.
 
-Zusätzlich werden beim Start der Anwendung automatisch `Dokumentation.md` und alle `.md`-Dateien aus dem `public/docs/`-Verzeichnis in die Wissensbasis geladen.
+Zusätzlich werden beim Start der Anwendung automatisch `Dokumentation_de.md` (bzw. `_en.md`) und alle `.md`-Dateien aus dem `public/docs/`-Verzeichnis (mit dem entsprechenden Sprachsuffix) in die Wissensbasis geladen.
 
 ## Parameter
 
@@ -34,7 +34,7 @@ Zusätzlich werden beim Start der Anwendung automatisch `Dokumentation.md` und a
 ## Funktionsweise
 
 1.  **Automatische Ladung beim Start (`useMyraState.loadDocumentationKnowledge`):**
-    *   `Dokumentation.md` und alle `.md`-Dateien aus `public/docs/` werden automatisch abgerufen.
+    *   `Dokumentation_de.md` (oder `_en.md`) und alle `.md`-Dateien aus `public/docs/` (mit dem passenden Sprachsuffix) werden automatisch abgerufen.
     *   Jede Datei wird in Chunks zerlegt (`ragChunkSize`, `ragChunkOverlap`).
     *   Vorhandene Chunks aus der gleichen Quelle werden gelöscht, um Aktualisierungen zu ermöglichen.
     *   Neue Chunks werden in IndexedDB gespeichert.
@@ -52,4 +52,4 @@ Zusätzlich werden beim Start der Anwendung automatisch `Dokumentation.md` und a
 
 ---
 
-[Zurück zur Haupt-Dokumentation](../Dokumentation.md#6-detaillierte-konfigurationsparameter)
+[Zurück zur Haupt-Dokumentation](../Dokumentation_de.md#6-detaillierte-konfigurationsparameter)

@@ -21,6 +21,9 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'), // Changed to point to project root
         }
+      },
+      server: {
+        host: true // This will make the server accessible over the network
       }
     };
 });

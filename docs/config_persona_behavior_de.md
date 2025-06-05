@@ -46,7 +46,7 @@ Diese Einstellungen definieren C.A.E.L.U.M.s Charakter und grundlegende Antwortw
 
 ### `userNameKey` (Referenz auf `myraConfig.userName`)
 *   **Bedeutung:** Schlüssel für den Namen, den beide KIs verwenden, um den Benutzer im Chat anzusprechen.
-*   **Standardwert:** `"user.name"` (übersetzt zu "Benutzer" oder "User")
+*   **Standardwert:** `"user.name"` (übersetzt zu "Benutzer")
 
 ### `temperatureLimbusInfluence`
 *   **Bedeutung:** Faktor, wie stark der `arousal`-Wert der **jeweiligen KI** (M.Y.R.A. oder C.A.E.L.U.M.) die effektive Temperatur für ihre Antwort beeinflusst.
@@ -86,4 +86,4 @@ Diese Parameter finden Sie im `SettingsPanel` unter "C.A.E.L.U.M. System".
 
 ---
 
-[Zurück zur Haupt-Dokumentation](../Dokumentation.md#6-detaillierte-konfigurationsparameter)
+[Zurück zur Haupt-Dokumentation](../Dokumentation_de.md#6-detaillierte-konfigurationsparameter)

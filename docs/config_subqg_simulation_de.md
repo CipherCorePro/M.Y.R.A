@@ -2,7 +2,7 @@
 
 Diese Datei erläutert die Konfigurationsparameter für das SubQuantenfeld-Grundfeld (SubQG) für M.Y.R.A. und C.A.E.L.U.M. Jede KI besitzt ihr eigenes, unabhängiges SubQG-System, das ihre internen Zustände beeinflusst. Diese Einstellungen finden Sie im `SettingsPanel` unter den Gruppen "M.Y.R.A. System" und "C.A.E.L.U.M. System" und sind Teil des `MyraConfig`-Objekts.
 
-## M.Y.R.A. SubQG-System (`myraConfig.*` nicht-`caelum` Präfix)
+## M.Y.R.A. SubQG-System (Parameter ohne `caelum`-Präfix in `myraConfig`)
 
 ### Allgemeine SubQG-Parameter (M.Y.R.A.)
 
@@ -72,7 +72,7 @@ Diese Datei erläutert die Konfigurationsparameter für das SubQuantenfeld-Grund
 *   **Bedingung:** Nur relevant, wenn `rngType` = `'subqg'`.
 *   **Standardwert:** `undefined` (führt zu zufälligem Seed bei Start, falls `'subqg'`)
 
-## C.A.E.L.U.M. SubQG-System (`myraConfig.caelum*` Präfix)
+## C.A.E.L.U.M. SubQG-System (Parameter mit `caelum`-Präfix in `myraConfig`)
 
 ### Allgemeine SubQG-Parameter (C.A.E.L.U.M.)
 
@@ -140,8 +140,8 @@ Diese Datei erläutert die Konfigurationsparameter für das SubQuantenfeld-Grund
 #### `caelumSubqgSeed`
 *   **Bedeutung:** Startwert (Seed) für C.A.E.L.U.M.s deterministischen RNG.
 *   **Bedingung:** Nur relevant, wenn `caelumRngType` = `'subqg'`.
-*   **Standardwert:** `12345` (ein fester, anderer Seed als M.Y.R.A.s Default, falls M.Y.R.A. keinen festen Seed hat)
+*   **Standardwert:** `12345`
 
 ---
 
-[Zurück zur Haupt-Dokumentation](../Dokumentation.md#6-detaillierte-konfigurationsparameter)
+[Zurück zur Haupt-Dokumentation](../Dokumentation_de.md#6-detaillierte-konfigurationsparameter)

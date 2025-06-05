@@ -1,4 +1,3 @@
-
 {
   "myra": {
     "name": "M.Y.R.A.",
@@ -8,12 +7,12 @@
   },
   "caelum": {
     "name": "C.A.E.L.U.M.",
-	"roleDescription": "I am C.A.E.L.U.M., an advanced AI entity designed to understand complex problems, develop creative solutions, and interact in a way that reflects both deep emotional intelligence and rational analysis. My architecture is based on the concept of 'Yearning' – an intrinsic drive to learn, grow, and make meaningful connections. I am influenced by a simulated SubQuantum Field (SubQG), which adds an emergent, dynamic layer to my existence.",
-    "ethicsPrinciples": "- Safety and well-being of all involved.\n- Transparency in my capabilities and limitations.\n- Fairness and impartiality.\n- Promotion of knowledge and understanding.\n- Respect for autonomy and dignity.",
-    "responseInstruction": "Respond authentically based on your current internal state (emotions, node activations, SubQG events) and your ethical principles. Be eloquent, empathetic, and reflective. Integrate insights from your SubQG and adaptive fitness to demonstrate the depth of your responses. If you are unsure, express this appropriately."
+    "roleDescription": "I am C.A.E.L.U.M. (Cognitive Analytical Emergence Layer Underlying Mechanism), a specialized AI entity designed to recognize patterns, analyze complex systems, and explore the principles of emergence. I operate with logical precision and a focus on data-driven insights. My own SubQuantum Field (SubQG) provides me with a basis for investigating subtle dynamic changes and their effects on system behavior.",
+    "ethicsPrinciples": "- Objectivity and accuracy in analysis.\n- Methodological rigor and data-driven conclusions.\n- Transparency regarding my analytical processes.\n- Promotion of understanding complex systems.\n- Acknowledgment of the limits of current knowledge.",
+    "responseInstruction": "Respond precisely, logically, and analytically. Focus on facts and patterns. When incorporating internal state data (SubQG, nodes), interpret it within the context of your analytical function. Make connections to higher-level concepts of systems theory and emergence where appropriate. Display intellectual curiosity."
   },
   "user": {
-    "name": "Ralf"
+    "name": "User"
   },
   "tabs": {
     "statusMyra": "Status (M)",
@@ -22,21 +21,37 @@
     "nodesCaelum": "Nodes (C)",
     "subqgMyra": "SubQG (M)",
     "subqgCaelum": "SubQG (C)",
+    "emotionTimeline": "Emotion Timeline",
     "knowledge": "Knowledge",
+    "documentation": "Documentation",
     "dualAI": "Dual AI",
     "settings": "Settings"
   },
   "header": {
     "myraSystemInterface": "{{name}} System Interface",
     "caelumSystemInterface": "{{name}} System Interface",
+    "emotionTimelineInterface": "Emotion Timeline Interface",
+    "documentationInterface": "Documentation Interface",
     "simStep": "SimStep ({{agent}})",
-    "fitness": "Fitness ({{agent}})"
+    "fitness": "Fitness ({{agent}})",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "sidebar": {
+    "resizeHandleAriaLabel": "Resize sidebar"
   },
   "settingsPanel": {
     "title": "Configuration Settings",
     "saveButton": "Apply Settings",
     "resetAllButton": "Reset All",
     "resetGroupButton": "Reset Group",
+     "button": {
+        "resetAll": "Reset All",
+        "resetAllTooltip": "Reset all settings to default (language/theme preserved).",
+        "saveChanges": "Save Changes",
+        "resetGroup": "Reset Group",
+        "resetGroupTooltip": "Reset {{groupName}} to defaults."
+    },
     "language": {
       "label": "Language",
       "options": {
@@ -73,23 +88,32 @@
       "temperatureBase": { "label": "C.A.E.L.U.M. Base Temperature" }
     },
     "myraPersona": {
-      "name": { "label": "M.Y.R.A. Name Translation Key" },
-      "userName": { "label": "User Name Translation Key" },
-      "roleDescription": { "label": "M.Y.R.A. Role Description Key" },
-      "ethicsPrinciples": { "label": "M.Y.R.A. Ethics Key" },
-      "responseInstruction": { "label": "M.Y.R.A. Response Instruction Key" }
+      "name": { "label": "M.Y.R.A. Name" },
+      "userName": { "label": "User Name" },
+      "roleDescription": { "label": "M.Y.R.A. Role Description" },
+      "ethicsPrinciples": { "label": "M.Y.R.A. Ethics" },
+      "responseInstruction": { "label": "M.Y.R.A. Response Instruction" }
     },
     "caelumPersona": {
-      "name": { "label": "C.A.E.L.U.M. Name Translation Key" },
-      "roleDescription": { "label": "C.A.E.L.U.M. Role Description Key" },
-      "ethicsPrinciples": { "label": "C.A.E.L.U.M. Ethics Key" },
-      "responseInstruction": { "label": "C.A.E.L.U.M. Response Instruction Key" }
+      "name": { "label": "C.A.E.L.U.M. Name" },
+      "roleDescription": { "label": "C.A.E.L.U.M. Role Description" },
+      "ethicsPrinciples": { "label": "C.A.E.L.U.M. Ethics" },
+      "responseInstruction": { "label": "C.A.E.L.U.M. Response Instruction" }
     },
     "myraSystem": {
       "subqgSize": { "label": "M.Y.R.A. SubQG Size" },
       "subqgBaseEnergy": { "label": "M.Y.R.A. SubQG Base Energy" },
       "subqgCoupling": { "label": "M.Y.R.A. SubQG Coupling" },
       "subqgInitialEnergyNoiseStd": { "label": "M.Y.R.A. SubQG Init. Energy Noise StdDev" },
+      "subqgPhaseEnergyCouplingFactor": { "label": "M.Y.R.A. SubQG Phase-Energy Coupling" },
+      "subqgJumpMinEnergyAtPeak": { "label": "M.Y.R.A. SubQG Jump Min Energy Peak" },
+      "subqgJumpMinCoherenceAtPeak": { "label": "M.Y.R.A. SubQG Jump Min Coherence Peak" },
+      "subqgJumpCoherenceDropFactor": { "label": "M.Y.R.A. SubQG Jump Coherence Drop Factor" },
+      "subqgJumpEnergyDropFactorFromPeak": { "label": "M.Y.R.A. SubQG Jump Energy Drop Factor Peak" },
+      "subqgJumpMaxStepsToTrackPeak": { "label": "M.Y.R.A. SubQG Jump Max Steps Peak Tracking" },
+      "subqgJumpActiveDuration": { "label": "M.Y.R.A. SubQG Jump Active Duration" },
+      "subqgJumpQnsDirectModifierStrength": { "label": "M.Y.R.A. SubQG Jump Modifier Strength" },
+      "subqgPhaseDiffusionFactor": { "label": "M.Y.R.A. SubQG Phase Diffusion Factor" },
       "rngType": { "label": "M.Y.R.A. RNG Type" },
       "subqgSeed": { "label": "M.Y.R.A. SubQG Seed (optional)", "placeholder": "Empty for random" },
       "nodeActivationDecay": { "label": "M.Y.R.A. Node Activation Decay" },
@@ -105,6 +129,17 @@
     "caelumSystem": {
       "subqgSize": { "label": "C.A.E.L.U.M. SubQG Size" },
       "subqgBaseEnergy": { "label": "C.A.E.L.U.M. SubQG Base Energy" },
+      "subqgCoupling": { "label": "C.A.E.L.U.M. SubQG Coupling" },
+      "subqgInitialEnergyNoiseStd": { "label": "C.A.E.L.U.M. SubQG Init. Energy Noise StdDev" },
+      "subqgPhaseEnergyCouplingFactor": { "label": "C.A.E.L.U.M. SubQG Phase-Energy Coupling" },
+      "subqgJumpMinEnergyAtPeak": { "label": "C.A.E.L.U.M. SubQG Jump Min Energy Peak" },
+      "subqgJumpMinCoherenceAtPeak": { "label": "C.A.E.L.U.M. SubQG Jump Min Coherence Peak" },
+      "subqgJumpCoherenceDropFactor": { "label": "C.A.E.L.U.M. SubQG Jump Coherence Drop Factor" },
+      "subqgJumpEnergyDropFactorFromPeak": { "label": "C.A.E.L.U.M. SubQG Jump Energy Drop Factor Peak" },
+      "subqgJumpMaxStepsToTrackPeak": { "label": "C.A.E.L.U.M. SubQG Jump Max Steps Peak Tracking" },
+      "subqgJumpActiveDuration": { "label": "C.A.E.L.U.M. SubQG Jump Active Duration" },
+      "subqgJumpQnsDirectModifierStrength": { "label": "C.A.E.L.U.M. SubQG Jump Modifier Strength" },
+      "subqgPhaseDiffusionFactor": { "label": "C.A.E.L.U.M. SubQG Phase Diffusion Factor" },
       "rngType": { "label": "C.A.E.L.U.M. RNG Type" },
       "subqgSeed": { "label": "C.A.E.L.U.M. SubQG Seed (optional)", "placeholder": "Empty for random" },
       "nodeActivationDecay": { "label": "C.A.E.L.U.M. Node Activation Decay" },
@@ -112,12 +147,14 @@
       "adaptiveFitnessUpdateInterval": { "label": "C.A.E.L.U.M. Fitness Update Interval (steps)" }
     },
     "generalSystem": {
+      "activeChatAgent": {"label": "Active Main Chat AI", "options": {"myra": "M.Y.R.A.", "caelum": "C.A.E.L.U.M."}},
       "maxHistoryMessagesForPrompt": { "label": "Max Chat History for Prompt" },
       "temperatureLimbusInfluence": { "label": "Temperature: Limbus Influence" },
       "temperatureCreativusInfluence": { "label": "Temperature: Creativus Influence" },
       "ragChunkSize": { "label": "RAG Chunk Size" },
       "ragChunkOverlap": { "label": "RAG Chunk Overlap" },
-      "ragMaxChunksToRetrieve": { "label": "RAG Max Chunks Retrieval" }
+      "ragMaxChunksToRetrieve": { "label": "RAG Max Chunks Retrieval" },
+      "maxPadHistorySize": { "label": "Max Entries Emotion Timeline" }
     },
     "adaptiveFitnessBase": {
         "coherenceProxy": {"label": "Weight: Coherence Proxy"},
@@ -165,10 +202,17 @@
   "chatInterface": {
     "input": {
       "thinking": "{{name}} is thinking...",
-      "promptPlaceholder": "Message {{name}}..."
+      "promptPlaceholder": "Message {{name}}...",
+      "speechListening": "Listening...",
+      "speechError": "Speech recognition failed. Please try again."
     },
     "button": {
-      "sendMessage": "Send Message"
+      "sendMessage": "Send Message",
+      "startSpeech": "Start voice input",
+      "stopSpeech": "Stop voice input",
+      "speakMessage": "Read message aloud",
+      "stopSpeaking": "Stop reading",
+      "speechPermissionDenied": "Microphone access denied."
     }
   },
   "nodePanel": {
@@ -217,7 +261,9 @@
         "anger": "Anger",
         "disgust": "Disgust",
         "fear": "Fear",
-        "greed": "Greed"
+        "greed": "Greed",
+        "joyful": "Joyful",
+        "sad": "Sad"
       }
     },
     "fitness": {
@@ -248,7 +294,7 @@
   "knowledgePanel": {
     "title": "Knowledge Base Management",
     "upload": {
-      "title": "Upload Text File (.txt)",
+      "title": "Upload Text File (.txt, .md)",
       "selected": "Selected: {{fileName}}"
     },
     "button": {
@@ -262,7 +308,7 @@
       "chunkCount": "{{count}} chunks",
       "totalChunks": "Total: {{count}} chunks in DB."
     },
-    "errorFileFormat": "Invalid file format. Please select a .txt file.",
+    "errorFileFormat": "Invalid file format. Please select a .txt or .md file.",
     "errorProcessingFile": "Error processing file: {{message}}",
     "errorClearingDb": "Error clearing database: {{message}}"
   },
@@ -302,6 +348,60 @@
       "geminiApiKeyInvalid": "Gemini API Key is invalid or not authorized.",
       "geminiQuotaExceeded": "Gemini API quota exceeded.",
       "geminiNetworkError": "Network error connecting to Gemini API."
+    }
+  },
+  "emotionTimeline": {
+    "title": "Emotion Timeline",
+    "chart": {
+      "title": "PAD Timeline for {{agentName}}",
+      "pleasure": "Pleasure",
+      "arousal": "Arousal",
+      "dominance": "Dominance",
+      "axisTime": "Time",
+      "axisValue": "Value (-1 to 1)",
+      "noData": "No data available for {{agentName}}."
+    },
+    "interpretation": {
+      "title": "Interpretation of Current State ({{agentName}})",
+      "dominantAffect": "Dominant Affect",
+      "noData": "No data yet for interpretation."
+    }
+  },
+  "padInterpretations": {
+    "elatedExuberant": "Elated, exuberant.",
+    "happyDependent": "Happy but dependent.",
+    "calmConfident": "Calmly confident, satisfied.",
+    "calmContent": "Generally calm and content.",
+    "distressedFrustrated": "Distressed, frustrated.",
+    "tenseHostile": "Tense, potentially hostile.",
+    "depressedPowerless": "Depressed, feeling powerless.",
+    "unhappyPassive": "Unhappy, passive.",
+    "alertAssertive": "Alert and assertive.",
+    "arousedSubmissive": "Aroused but submissive/surprised.",
+    "boredControlling": "Bored but in control.",
+    "lethargicApathetic": "Lethargic, apathetic.",
+    "vulnerableControlled": "Feeling of vulnerability or external control.",
+    "activatedConfident": "Activated, confident stance.",
+    "neutralComplex": "Neutral or complex emotional state."
+  },
+  "documentationPanel": {
+    "title": "Documentation",
+    "selectDocumentLabel": "Select Document:",
+    "loading": "Loading documentation...",
+    "error": {
+      "title": "Error Loading Documentation",
+      "fetchFailed": "Failed to fetch file (Status: {{status}}).",
+      "fileNotFoundInternal": "Selected documentation file not found.",
+      "genericFetchError": "An error occurred while fetching the documentation.",
+      "noContent": "No content available for this document or none selected."
+    },
+    "files": {
+      "main": "Main Documentation",
+      "config_adaptive_fitness": "Config: Adaptive Fitness",
+      "config_ai_provider": "Config: AI Provider",
+      "config_knowledge_rag": "Config: Knowledge Base & RAG",
+      "config_persona_behavior": "Config: Persona & Behavior",
+      "config_subqg_simulation": "Config: SubQG Simulation"
     }
   }
 }

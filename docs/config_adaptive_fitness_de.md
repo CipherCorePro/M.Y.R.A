@@ -88,4 +88,4 @@ Diese Gewichte definieren, wie stark die Basismetriken zu den vier übergeordnet
 
 ---
 
-[Zurück zur Haupt-Dokumentation](../Dokumentation.md#6-detaillierte-konfigurationsparameter)
+[Zurück zur Haupt-Dokumentation](../Dokumentation_de.md#6-detaillierte-konfigurationsparameter)

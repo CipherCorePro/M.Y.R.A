@@ -1,3 +1,4 @@
+
 import type { RNGType } from './utils/rng'; // Import RNGType
 
 export { RNGType }; // Re-export RNGType for convenience
@@ -70,8 +71,8 @@ export interface MyraConfig {
   language: Language;
   theme: Theme;
 
-  myraNameKey: string; // Key for translation
-  userNameKey: string; // Key for translation, though often user-provided
+  myraNameKey: string; 
+  userNameKey: string; 
   myraRoleDescriptionKey: string;
   myraEthicsPrinciplesKey: string;
   myraResponseInstructionKey: string;
@@ -81,8 +82,6 @@ export interface MyraConfig {
   caelumEthicsPrinciplesKey: string;
   caelumResponseInstructionKey: string;
   
-  // These will store the *translated* versions based on current language
-  // and are populated by useMyraState
   myraName: string;
   userName: string;
   myraRoleDescription: string;
@@ -138,6 +137,8 @@ export interface MyraConfig {
   caelumEmotionDecay: number;
   caelumAdaptiveFitnessUpdateInterval: number;
 
+  // General System Config
+  activeChatAgent: 'myra' | 'caelum'; // New field
   maxHistoryMessagesForPrompt: number;
   temperatureLimbusInfluence: number;
   temperatureCreativusInfluence: number;
@@ -147,9 +148,9 @@ export interface MyraConfig {
   ragMaxChunksToRetrieve: number;
 
   adaptiveFitnessConfig: AdaptiveFitnessConfig;
+  maxPadHistorySize: number; 
 }
 
-// For direct use in aiService, containing the resolved strings
 export interface ResolvedSpeakerPersonaConfig {
   name: string;
   roleDescription: string;
@@ -178,7 +179,7 @@ export interface EmotionState {
 
 export interface NodeState {
   id: string;
-  label: string; // This might become a translation key if node labels need i18n
+  label: string; 
   activation: number;
   resonatorScore: number;
   focusScore: number;
@@ -279,15 +280,15 @@ export interface TextChunk {
 }
 
 export interface ConfigFieldBase {
-  labelKey: string; // Use translation key for label
+  labelKey: string; 
   type: 'text' | 'number' | 'textarea' | 'select';
-  options?: { value: string; labelKey: string }[]; // Options also use labelKeys
+  options?: { value: string; labelKey: string }[]; 
   step?: number;
   min?: number;
   max?: number;
   rows?: number;
   condition?: (config: MyraConfig) => boolean;
-  groupKey: string; // Group name also a translation key
+  groupKey: string; 
   placeholderKey?: string;
 }
 
@@ -296,35 +297,37 @@ type MyraSpecificSystemConfigKeys = Omit<MyraConfig,
   'adaptiveFitnessConfig' |
   'myraAIProviderConfig' |
   'caelumAIProviderConfig' |
-  // Persona keys (now suffixed with "Key")
   'myraNameKey' | 'myraRoleDescriptionKey' | 'myraEthicsPrinciplesKey' | 'myraResponseInstructionKey' | 'userNameKey' |
   'caelumNameKey' | 'caelumRoleDescriptionKey' | 'caelumEthicsPrinciplesKey' | 'caelumResponseInstructionKey' |
-  // Translated persona fields
   'myraName' | 'myraRoleDescription' | 'myraEthicsPrinciples' | 'myraResponseInstruction' | 'userName' |
   'caelumName' | 'caelumRoleDescription' | 'caelumEthicsPrinciples' | 'caelumResponseInstruction' |
-  // Exclude Caelum System Config
   'caelumSubqgSize' | 'caelumSubqgBaseEnergy' | 'caelumSubqgCoupling' | 'caelumSubqgInitialEnergyNoiseStd' |
   'caelumSubqgPhaseEnergyCouplingFactor' | 'caelumSubqgJumpMinEnergyAtPeak' | 'caelumSubqgJumpMinCoherenceAtPeak' |
   'caelumSubqgJumpCoherenceDropFactor' | 'caelumSubqgJumpEnergyDropFactorFromPeak' | 'caelumSubqgJumpMaxStepsToTrackPeak' |
   'caelumSubqgJumpActiveDuration' | 'caelumSubqgJumpQnsDirectModifierStrength' | 'caelumSubqgPhaseDiffusionFactor' |
   'caelumRngType' | 'caelumSubqgSeed' | 'caelumNodeActivationDecay' | 'caelumEmotionDecay' |
-  'caelumAdaptiveFitnessUpdateInterval'
+  'caelumAdaptiveFitnessUpdateInterval' | 'maxPadHistorySize' | 'activeChatAgent' // Add activeChatAgent here too
 >;
 
 export interface MyraSystemConfigField extends ConfigFieldBase {
   key: keyof MyraSpecificSystemConfigKeys;
 }
 
-export interface MyraPersonaConfigField extends ConfigFieldBase {
-    key: 'myraNameKey' | 'myraRoleDescriptionKey' | 'myraEthicsPrinciplesKey' | 'myraResponseInstructionKey' | 'userNameKey';
+export interface MyraPersonaEditableField extends ConfigFieldBase {
+    key: 'myraName' | 'myraRoleDescription' | 'myraEthicsPrinciples' | 'myraResponseInstruction' | 'userName';
 }
 
-export interface CaelumPersonaConfigField extends ConfigFieldBase {
-    key: 'caelumNameKey' | 'caelumRoleDescriptionKey' | 'caelumEthicsPrinciplesKey' | 'caelumResponseInstructionKey';
+export interface CaelumPersonaEditableField extends ConfigFieldBase {
+    key: 'caelumName' | 'caelumRoleDescription' | 'caelumEthicsPrinciples' | 'caelumResponseInstruction';
 }
 
 export interface LocalizationConfigField extends ConfigFieldBase {
     key: 'language' | 'theme';
+}
+
+export interface GeneralSystemConfigField extends ConfigFieldBase {
+  key: 'maxHistoryMessagesForPrompt' | 'temperatureLimbusInfluence' | 'temperatureCreativusInfluence' |
+       'ragChunkSize' | 'ragChunkOverlap' | 'ragMaxChunksToRetrieve' | 'maxPadHistorySize' | 'activeChatAgent'; // Added activeChatAgent
 }
 
 
@@ -352,19 +355,33 @@ export interface AdaptiveFitnessBaseWeightsField extends ConfigFieldBase {
   subKey: 'baseMetricWeights';
 }
 export interface AdaptiveFitnessDimensionSubField extends ConfigFieldBase {
-    key: string;
+    key: string; 
     parentKey: 'adaptiveFitnessConfig';
-    subKey: keyof MyraConfig['adaptiveFitnessConfig']['dimensionContribWeights'];
-    subSubKey: 'dimensionContribWeights';
+    subKey: keyof MyraConfig['adaptiveFitnessConfig']['dimensionContribWeights']; 
+    subSubKey: 'dimensionContribWeights'; 
 }
 
 export type ConfigField =
   | MyraSystemConfigField
-  | MyraPersonaConfigField
-  | CaelumPersonaConfigField
+  | MyraPersonaEditableField      
+  | CaelumPersonaEditableField    
   | CaelumSystemConfigField
   | MyraAIProviderConfigField
   | CaelumAIProviderConfigField
   | AdaptiveFitnessBaseWeightsField
   | AdaptiveFitnessDimensionSubField
-  | LocalizationConfigField; // Added
+  | LocalizationConfigField
+  | GeneralSystemConfigField; 
+
+export interface PADRecord {
+  pleasure: number;
+  arousal: number;
+  dominance: number;
+  timestamp: number;
+  dominantAffect: string;
+}
+
+export type ActiveTab =
+  | 'statusMyra' | 'nodesMyra' | 'subqgMyra'
+  | 'statusCaelum' | 'nodesCaelum' | 'subqgCaelum'
+  | 'knowledge' | 'dualAI' | 'settings' | 'emotionTimeline' | 'documentation';

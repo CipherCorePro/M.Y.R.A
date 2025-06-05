@@ -3,7 +3,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   MyraConfig, ChatMessage, EmotionState, NodeState,
   AdaptiveFitnessState, SubQgGlobalMetrics, SubQgJumpInfo,
-  GeminiGenerateContentResponse, TextChunk, ResolvedSpeakerPersonaConfig, AIProviderConfig, Language, Theme, Translations
+  GeminiGenerateContentResponse, TextChunk, ResolvedSpeakerPersonaConfig, AIProviderConfig, Language, Theme, Translations,
+  PADRecord
 } from '../types';
 import {
   INITIAL_CONFIG,
@@ -15,8 +16,10 @@ import {
 import { callAiApi } from '../services/aiService';
 import { v4 as uuidv4 } from 'uuid';
 import { RNG, SubQGRNG, QuantumRNG } from '../utils/rng';
-import { addChunksToDB, getAllChunksFromDB, clearAllChunksFromDB } from '../utils/db';
+import { addChunksToDB, getAllChunksFromDB, clearAllChunksFromDB, clearChunksBySourceFromDB } from '../utils/db';
 import { AdaptiveFitnessManager } from '../utils/adaptiveFitnessManager';
+import { getDominantAffect } from '../utils/uiHelpers';
+
 
 // Import translations using the '@/' alias (points to project root)
 import deTranslations from '@/i18n/de.json';
@@ -27,7 +30,15 @@ const translations: Translations = {
   en: enTranslations,
 };
 
-// Helper function for deep merge, ensures target properties are updated from source.
+const DOCUMENTATION_BASE_PATHS = [
+  '/Dokumentation', 
+  '/docs/config_adaptive_fitness',
+  '/docs/config_ai_provider',
+  '/docs/config_knowledge_rag',
+  '/docs/config_persona_behavior',
+  '/docs/config_subqg_simulation',
+];
+
 function deepMergeObjects(target: any, source: any) {
     const isObject = (obj: any) => obj && typeof obj === 'object' && !Array.isArray(obj);
 
@@ -67,589 +78,949 @@ const getNestedTranslation = (langObject: any, key: string): string | undefined 
 
 
 const populateTranslatedFields = (configInput: MyraConfig, lang: Language): MyraConfig => {
-  const config = { ...configInput }; // Work on a copy
+  const config = { ...configInput }; 
 
   const tFuncForKey = (keyFromConfig: string): string => {
     const M_CONFIG_EFFECTIVE_TRANSLATIONS = translations[lang] || translations.en;
-    // If keyFromConfig is empty or not a valid key path, it will fall back to keyFromConfig or itself.
     return getNestedTranslation(M_CONFIG_EFFECTIVE_TRANSLATIONS, keyFromConfig) || keyFromConfig;
   };
+  
+  const fieldsToTranslate: Array<keyof MyraConfig> = [
+    'myraName', 'myraRoleDescription', 'myraEthicsPrinciples', 'myraResponseInstruction',
+    'caelumName', 'caelumRoleDescription', 'caelumEthicsPrinciples', 'caelumResponseInstruction', 'userName'
+  ];
+  const keyFields: Partial<Record<keyof MyraConfig, keyof MyraConfig>> = {
+    'myraName': 'myraNameKey',
+    'myraRoleDescription': 'myraRoleDescriptionKey',
+    'myraEthicsPrinciples': 'myraEthicsPrinciplesKey',
+    'myraResponseInstruction': 'myraResponseInstructionKey',
+    'caelumName': 'caelumNameKey',
+    'caelumRoleDescription': 'caelumRoleDescriptionKey',
+    'caelumEthicsPrinciples': 'caelumEthicsPrinciplesKey',
+    'caelumResponseInstruction': 'caelumResponseInstructionKey',
+    'userName': 'userNameKey'
+  };
 
-  // For each persona field, if it's not already populated (e.g., by user edit from localStorage),
-  // then translate it from its corresponding '...Key' field.
-  if (!config.myraName && config.myraNameKey) config.myraName = tFuncForKey(config.myraNameKey);
-  if (!config.userName && config.userNameKey) config.userName = tFuncForKey(config.userNameKey);
-  if (!config.myraRoleDescription && config.myraRoleDescriptionKey) config.myraRoleDescription = tFuncForKey(config.myraRoleDescriptionKey);
-  if (!config.myraEthicsPrinciples && config.myraEthicsPrinciplesKey) config.myraEthicsPrinciples = tFuncForKey(config.myraEthicsPrinciplesKey);
-  if (!config.myraResponseInstruction && config.myraResponseInstructionKey) config.myraResponseInstruction = tFuncForKey(config.myraResponseInstructionKey);
-  
-  if (!config.caelumName && config.caelumNameKey) config.caelumName = tFuncForKey(config.caelumNameKey);
-  if (!config.caelumRoleDescription && config.caelumRoleDescriptionKey) config.caelumRoleDescription = tFuncForKey(config.caelumRoleDescriptionKey);
-  if (!config.caelumEthicsPrinciples && config.caelumEthicsPrinciplesKey) config.caelumEthicsPrinciples = tFuncForKey(config.caelumEthicsPrinciplesKey);
-  if (!config.caelumResponseInstruction && config.caelumResponseInstructionKey) config.caelumResponseInstruction = tFuncForKey(config.caelumResponseInstructionKey);
-  
-  // Ensure key fields themselves have a fallback if they were somehow cleared from a saved config
-  // This typically shouldn't happen if INITIAL_CONFIG is well-defined and merging works.
-  config.myraNameKey = config.myraNameKey || INITIAL_CONFIG.myraNameKey;
-  config.userNameKey = config.userNameKey || INITIAL_CONFIG.userNameKey;
-  config.myraRoleDescriptionKey = config.myraRoleDescriptionKey || INITIAL_CONFIG.myraRoleDescriptionKey;
-  config.myraEthicsPrinciplesKey = config.myraEthicsPrinciplesKey || INITIAL_CONFIG.myraEthicsPrinciplesKey;
-  config.myraResponseInstructionKey = config.myraResponseInstructionKey || INITIAL_CONFIG.myraResponseInstructionKey;
-  config.caelumNameKey = config.caelumNameKey || INITIAL_CONFIG.caelumNameKey;
-  config.caelumRoleDescriptionKey = config.caelumRoleDescriptionKey || INITIAL_CONFIG.caelumRoleDescriptionKey;
-  config.caelumEthicsPrinciplesKey = config.caelumEthicsPrinciplesKey || INITIAL_CONFIG.caelumEthicsPrinciplesKey;
-  config.caelumResponseInstructionKey = config.caelumResponseInstructionKey || INITIAL_CONFIG.caelumResponseInstructionKey;
+  fieldsToTranslate.forEach(field => {
+    const currentFieldValue = config[field] as string;
+    const correspondingKeyField = keyFields[field];
+    
+    if (correspondingKeyField) {
+        const keyFromConfig = config[correspondingKeyField] as string;
+        // Only translate if the current value is empty, the same as the key, or already the translated version of the key
+        // This prevents overriding user's direct edits in the settings panel if they are different from default translations
+        if (!currentFieldValue || currentFieldValue === keyFromConfig || currentFieldValue === tFuncForKey(keyFromConfig)) {
+            (config as any)[field] = tFuncForKey(keyFromConfig);
+        }
+    }
+  });
 
   return config;
 };
 
 
-const initialEffectiveConfig = (() => {
-  let baseConfig: MyraConfig = JSON.parse(JSON.stringify(INITIAL_CONFIG)); // Start with a deep clone of defaults
-  try {
-    const storedLangStr = localStorage.getItem('myraLanguage');
-    const initialLang = storedLangStr ? storedLangStr as Language : INITIAL_CONFIG.language;
-    baseConfig.language = initialLang;
-
-    const storedThemeStr = localStorage.getItem('myraTheme');
-    if (storedThemeStr) baseConfig.theme = storedThemeStr as Theme;
-    
-    const storedConfigStr = localStorage.getItem('myraConfig');
-    if (storedConfigStr) {
-      const parsedConfig = JSON.parse(storedConfigStr) as MyraConfig; // Expect full MyraConfig
-      // Merge stored config onto baseConfig. This preserves user's direct edits to myraName, etc.
-      // and also ensures any new fields from INITIAL_CONFIG are present if the stored one is older.
-      deepMergeObjects(baseConfig, parsedConfig);
-      baseConfig.language = parsedConfig.language || initialLang; // Prioritize stored language
-      baseConfig.theme = parsedConfig.theme || baseConfig.theme;     // Prioritize stored theme
-    }
-    
-    // Ensure seeds are numbers or undefined after merge
-    if (typeof baseConfig.subqgSeed === 'string') {
-      const parsedSeed = parseInt(baseConfig.subqgSeed, 10);
-      baseConfig.subqgSeed = isNaN(parsedSeed) ? undefined : parsedSeed;
-    } else if (baseConfig.subqgSeed === null) { // Handle explicit null from storage
-      baseConfig.subqgSeed = undefined;
-    }
-    if (typeof baseConfig.caelumSubqgSeed === 'string') {
-      const parsedSeed = parseInt(baseConfig.caelumSubqgSeed, 10);
-      baseConfig.caelumSubqgSeed = isNaN(parsedSeed) ? undefined : parsedSeed;
-    } else if (baseConfig.caelumSubqgSeed === null) {
-      baseConfig.caelumSubqgSeed = undefined;
-    }
-
-  } catch (error) {
-    console.error("Error loading MyraConfig from localStorage, using initial defaults:", error);
-    baseConfig = JSON.parse(JSON.stringify(INITIAL_CONFIG)); // Full reset on error
-  }
-  // Now, populate any missing translated fields using the keys and current language
-  return populateTranslatedFields(baseConfig, baseConfig.language);
-})();
-
-
-// Myra Initializations
-const initialMyraRngInstance = initialEffectiveConfig.rngType === 'subqg'
-    ? new SubQGRNG(initialEffectiveConfig.subqgSeed)
-    : new QuantumRNG();
-const initialMyraSubQgMatrix = Array(initialEffectiveConfig.subqgSize).fill(null).map(() =>
-    Array(initialEffectiveConfig.subqgSize).fill(initialEffectiveConfig.subqgBaseEnergy)
-);
-const initialMyraSubQgPhaseMatrix = Array(initialEffectiveConfig.subqgSize).fill(null).map(() =>
-    Array(initialEffectiveConfig.subqgSize).fill(0).map(() => initialMyraRngInstance.next() * 2 * Math.PI)
-);
-
-// Caelum Initializations
-const initialCaelumRngInstance = initialEffectiveConfig.caelumRngType === 'subqg'
-    ? new SubQGRNG(initialEffectiveConfig.caelumSubqgSeed)
-    : new QuantumRNG();
-const initialCaelumSubQgMatrix = Array(initialEffectiveConfig.caelumSubqgSize).fill(null).map(() =>
-    Array(initialEffectiveConfig.caelumSubqgSize).fill(initialEffectiveConfig.caelumSubqgBaseEnergy)
-);
-const initialCaelumSubQgPhaseMatrix = Array(initialEffectiveConfig.caelumSubqgSize).fill(null).map(() =>
-    Array(initialEffectiveConfig.caelumSubqgSize).fill(0).map(() => initialCaelumRngInstance.next() * 2 * Math.PI)
-);
-
-function calculateSubQgMetricsInitialFunc(energyMatrix: number[][], phaseMatrix: number[][], initialMetrics: SubQgGlobalMetrics): SubQgGlobalMetrics {
-    if (!energyMatrix || energyMatrix.length === 0 || energyMatrix[0].length === 0) return initialMetrics;
-    const energies = energyMatrix.flat();
-    const avgEnergy = energies.reduce((sum, val) => sum + val, 0) / energies.length;
-    const stdEnergy = Math.sqrt(energies.reduce((sum, val) => sum + Math.pow(val - avgEnergy, 2), 0) / energies.length);
-
-    const phases = phaseMatrix.flat();
-    if (phases.length === 0) return { avgEnergy, stdEnergy, phaseCoherence: 0 };
-
-    const numElements = phases.length;
-    if (numElements === 0) return { avgEnergy, stdEnergy, phaseCoherence: 0 };
-
-    let sumCos = 0; let sumSin = 0;
-    for (const phase of phases) { sumCos += Math.cos(phase); sumSin += Math.sin(phase); }
-    const meanComplexPhaseVectorX = sumCos / numElements;
-    const meanComplexPhaseVectorY = sumSin / numElements;
-    const phaseCoherence = Math.sqrt(meanComplexPhaseVectorX**2 + meanComplexPhaseVectorY**2);
-
-    return { avgEnergy, stdEnergy, phaseCoherence };
-}
-
-
 export const useMyraState = () => {
-  const [myraConfig, _setMyraConfig] = useState<MyraConfig>(initialEffectiveConfig);
-  const currentLanguage = myraConfig.language;
-  const M_CONFIG_EFFECTIVE_TRANSLATIONS = translations[currentLanguage] || translations.en;
+  const [myraConfig, setMyraConfig] = useState<MyraConfig>(() => {
+    const savedConfig = localStorage.getItem('myraConfig');
+    let baseConfigCopy = JSON.parse(JSON.stringify(INITIAL_CONFIG));
+    let finalConfig = baseConfigCopy;
 
+    if (savedConfig) {
+        try {
+            const loadedFromStorage = JSON.parse(savedConfig);
+            finalConfig = deepMergeObjects(baseConfigCopy, loadedFromStorage);
+        } catch (e) {
+            console.error("Failed to parse myraConfig from localStorage, using defaults.", e);
+        }
+    }
+    
+    const minPadHistorySize = 50; 
+    if (typeof finalConfig.maxPadHistorySize !== 'number' || finalConfig.maxPadHistorySize < minPadHistorySize) {
+        console.warn(`Sanitizing myraConfig.maxPadHistorySize from ${finalConfig.maxPadHistorySize} to ${INITIAL_CONFIG.maxPadHistorySize}.`);
+        finalConfig.maxPadHistorySize = INITIAL_CONFIG.maxPadHistorySize;
+    }
+    
+    return populateTranslatedFields(finalConfig, finalConfig.language || INITIAL_CONFIG.language);
+  });
+
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [simulationStep, setSimulationStep] = useState(0);
+  const [subQgMatrix, setSubQgMatrix] = useState<number[][]>(() => Array(myraConfig.subqgSize).fill(0).map(() => Array(myraConfig.subqgSize).fill(myraConfig.subqgBaseEnergy)));
+  const [subQgPhaseMatrix, setSubQgPhaseMatrix] = useState<number[][]>(() => Array(myraConfig.subqgSize).fill(0).map(() => Array(myraConfig.subqgSize).fill(0).map(() => Math.random() * 2 * Math.PI)));
+  const [subQgGlobalMetrics, setSubQgGlobalMetrics] = useState<SubQgGlobalMetrics>(INITIAL_SUBQG_GLOBAL_METRICS);
+  const [emotionState, setEmotionState] = useState<EmotionState>(INITIAL_EMOTION_STATE);
+  const [nodeStates, setNodeStates] = useState<Record<string, NodeState>>(() => INITIAL_NODE_STATES.reduce((acc, node) => ({ ...acc, [node.id]: node }), {}));
+  const [adaptiveFitness, setAdaptiveFitness] = useState<AdaptiveFitnessState>(INITIAL_ADAPTIVE_FITNESS_STATE);
+  const [activeSubQgJumpModifier, setActiveSubQgJumpModifier] = useState(0);
+  const [subQgJumpModifierActiveStepsRemaining, setSubQgJumpModifierActiveStepsRemaining] = useState(0);
+  const [subQgJumpInfo, setSubQgJumpInfo] = useState<SubQgJumpInfo | null>(null);
+  const [myraStressLevel, setMyraStressLevel] = useState(0.1);
+  const [padHistoryMyra, setPadHistoryMyra] = useState<PADRecord[]>([]);
+
+  const [simulationStepCaelum, setSimulationStepCaelum] = useState(0);
+  const [subQgMatrixCaelum, setSubQgMatrixCaelum] = useState<number[][]>(() => Array(myraConfig.caelumSubqgSize).fill(0).map(() => Array(myraConfig.caelumSubqgSize).fill(myraConfig.caelumSubqgBaseEnergy)));
+  const [subQgPhaseMatrixCaelum, setSubQgPhaseMatrixCaelum] = useState<number[][]>(() => Array(myraConfig.caelumSubqgSize).fill(0).map(() => Array(myraConfig.caelumSubqgSize).fill(0).map(() => Math.random() * 2 * Math.PI)));
+  const [subQgGlobalMetricsCaelum, setSubQgGlobalMetricsCaelum] = useState<SubQgGlobalMetrics>(INITIAL_CAELUM_SUBQG_GLOBAL_METRICS);
+  const [emotionStateCaelum, setEmotionStateCaelum] = useState<EmotionState>(INITIAL_CAELUM_EMOTION_STATE);
+  const [nodeStatesCaelum, setNodeStatesCaelum] = useState<Record<string, NodeState>>(() => INITIAL_CAELUM_NODE_STATES.reduce((acc, node) => ({ ...acc, [node.id]: node }), {}));
+  const [adaptiveFitnessCaelum, setAdaptiveFitnessCaelum] = useState<AdaptiveFitnessState>(INITIAL_CAELUM_ADAPTIVE_FITNESS_STATE);
+  const [activeSubQgJumpModifierCaelum, setActiveSubQgJumpModifierCaelum] = useState(0);
+  const [subQgJumpModifierActiveStepsRemainingCaelum, setSubQgJumpModifierActiveStepsRemainingCaelum] = useState(0);
+  const [subQgJumpInfoCaelum, setSubQgJumpInfoCaelum] = useState<SubQgJumpInfo | null>(null);
+  const [caelumStressLevel, setCaelumStressLevel] = useState(0.05);
+  const [padHistoryCaelum, setPadHistoryCaelum] = useState<PADRecord[]>([]);
+
+  const [dualConversationHistory, setDualConversationHistory] = useState<ChatMessage[]>([]);
+  const [isDualConversationLoading, setIsDualConversationLoading] = useState(false);
+  const dualConversationAbortControllerRef = useRef<AbortController | null>(null);
+
+  const [processedTextChunks, setProcessedTextChunks] = useState<TextChunk[]>([]);
+  const [isLoadingKnowledge, setIsLoadingKnowledge] = useState(false);
+
+  const rngRef = useRef<RNG>(myraConfig.rngType === 'subqg' ? new SubQGRNG(myraConfig.subqgSeed) : new QuantumRNG());
+  const rngRefCaelum = useRef<RNG>(myraConfig.caelumRngType === 'subqg' ? new SubQGRNG(myraConfig.caelumSubqgSeed) : new QuantumRNG());
 
   const t = useCallback((key: string, substitutions?: Record<string, string>): string => {
-    let value = getNestedTranslation(M_CONFIG_EFFECTIVE_TRANSLATIONS, key) || key;
-     if (substitutions) {
-        Object.entries(substitutions).forEach(([subKey, subValue]) => {
-            value = value.replace(`{{${subKey}}}`, subValue);
-        });
+    const lang = myraConfig.language;
+    const langSet = translations[lang] || translations.en; 
+    let translation = getNestedTranslation(langSet, key) || key; 
+    if (substitutions) {
+      Object.entries(substitutions).forEach(([subKey, subValue]) => {
+        translation = translation.replace(new RegExp(`{{${subKey}}}`, 'g'), subValue);
+      });
     }
-    return value;
-  }, [M_CONFIG_EFFECTIVE_TRANSLATIONS]);
+    return translation;
+  }, [myraConfig.language]);
+
+  const myraFitnessManagerRef = useRef<AdaptiveFitnessManager | null>(null);
+  const caelumFitnessManagerRef = useRef<AdaptiveFitnessManager | null>(null);
+
+  const getMyraSystemStateSnapshot = useCallback(() => ({
+    nodes: nodeStates,
+    emotionState: emotionState,
+    subQgGlobalMetrics: subQgGlobalMetrics,
+    processedTextChunksCount: processedTextChunks.length,
+  }), [nodeStates, emotionState, subQgGlobalMetrics, processedTextChunks.length]);
+
+  const getCaelumSystemStateSnapshot = useCallback(() => ({
+    nodes: nodeStatesCaelum,
+    emotionState: emotionStateCaelum,
+    subQgGlobalMetrics: subQgGlobalMetricsCaelum,
+    processedTextChunksCount: processedTextChunks.length, 
+  }), [nodeStatesCaelum, emotionStateCaelum, subQgGlobalMetricsCaelum, processedTextChunks.length]);
+
+  useEffect(() => {
+    myraFitnessManagerRef.current = new AdaptiveFitnessManager(myraConfig, getMyraSystemStateSnapshot);
+    caelumFitnessManagerRef.current = new AdaptiveFitnessManager(myraConfig, getCaelumSystemStateSnapshot);
+  }, [myraConfig, getMyraSystemStateSnapshot, getCaelumSystemStateSnapshot]);
   
-  const setMyraConfig = (newConfigValues: Partial<MyraConfig> | ((prevState: MyraConfig) => MyraConfig)) => {
-    _setMyraConfig(prevConfig => {
-        let updatedConfigBase = typeof newConfigValues === 'function' ? newConfigValues(prevConfig) : { ...prevConfig };
-        if (typeof newConfigValues !== 'function') {
-            deepMergeObjects(updatedConfigBase, newConfigValues); // Apply partial updates
-        }
-        
-        // If language changed, or if persona fields were reset (became empty), repopulate them.
-        const finalConfig = populateTranslatedFields(updatedConfigBase, updatedConfigBase.language);
-        
-        localStorage.setItem('myraConfig', JSON.stringify(finalConfig)); // Store the whole config
-        localStorage.setItem('myraLanguage', finalConfig.language);
-        localStorage.setItem('myraTheme', finalConfig.theme);
-        
-        return finalConfig;
-    });
-  };
+  const updateMyraConfig = useCallback((newConfigPartial: Partial<MyraConfig>) => {
+    setMyraConfig(prevConfig => {
+      let updatedConfig = { ...prevConfig, ...newConfigPartial };
 
-
-  // M.Y.R.A. State
-  const rngRef = useRef<RNG>(initialMyraRngInstance);
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
-  const [emotionState, setEmotionState] = useState<EmotionState>(INITIAL_EMOTION_STATE);
-  const [nodeStates, setNodeStates] = useState<Record<string, NodeState>>(
-    INITIAL_NODE_STATES.reduce((acc, node) => { acc[node.id] = node; return acc; }, {} as Record<string, NodeState>)
-  );
-  const [adaptiveFitness, setAdaptiveFitness] = useState<AdaptiveFitnessState>(INITIAL_ADAPTIVE_FITNESS_STATE);
-  const [subQgMatrix, setSubQgMatrix] = useState<number[][]>(initialMyraSubQgMatrix);
-  const [subQgPhaseMatrix, setSubQgPhaseMatrix] = useState<number[][]>(initialMyraSubQgPhaseMatrix);
-  const [subQgGlobalMetrics, setSubQgGlobalMetrics] = useState<SubQgGlobalMetrics>(
-    calculateSubQgMetricsInitialFunc(initialMyraSubQgMatrix, initialMyraSubQgPhaseMatrix, INITIAL_SUBQG_GLOBAL_METRICS)
-  );
-  const [subQgJumpInfo, setSubQgJumpInfo] = useState<SubQgJumpInfo | null>(null);
-  const [activeSubQgJumpModifier, setActiveSubQgJumpModifier] = useState<number>(0);
-  const [subQgJumpModifierActiveStepsRemaining, setSubQgJumpModifierActiveStepsRemaining] = useState<number>(0);
-  const [simulationStep, setSimulationStep] = useState<number>(0);
-  const [trackingPotentialJump, setTrackingPotentialJump] = useState<boolean>(false);
-  const [peakEnergyAtCoherence, setPeakEnergyAtCoherence] = useState<number | null>(null);
-  const [peakCoherenceValue, setPeakCoherenceValue] = useState<number | null>(null);
-  const [stepsSincePeakTracked, setStepsSincePeakTracked] = useState<number>(0);
-  const [myraStressLevel, setMyraStressLevel] = useState<number>(0);
-
-  // C.A.E.L.U.M. State
-  const rngRefCaelum = useRef<RNG>(initialCaelumRngInstance);
-  const [emotionStateCaelum, setEmotionStateCaelum] = useState<EmotionState>(INITIAL_CAELUM_EMOTION_STATE);
-  const [nodeStatesCaelum, setNodeStatesCaelum] = useState<Record<string, NodeState>>(
-    INITIAL_CAELUM_NODE_STATES.reduce((acc, node) => { acc[node.id] = node; return acc; }, {} as Record<string, NodeState>)
-  );
-  const [adaptiveFitnessCaelum, setAdaptiveFitnessCaelum] = useState<AdaptiveFitnessState>(INITIAL_CAELUM_ADAPTIVE_FITNESS_STATE);
-  const [subQgMatrixCaelum, setSubQgMatrixCaelum] = useState<number[][]>(initialCaelumSubQgMatrix);
-  const [subQgPhaseMatrixCaelum, setSubQgPhaseMatrixCaelum] = useState<number[][]>(initialCaelumSubQgPhaseMatrix);
-  const [subQgGlobalMetricsCaelum, setSubQgGlobalMetricsCaelum] = useState<SubQgGlobalMetrics>(
-     calculateSubQgMetricsInitialFunc(initialCaelumSubQgMatrix, initialCaelumSubQgPhaseMatrix, INITIAL_CAELUM_SUBQG_GLOBAL_METRICS)
-  );
-  const [subQgJumpInfoCaelum, setSubQgJumpInfoCaelum] = useState<SubQgJumpInfo | null>(null);
-  const [activeSubQgJumpModifierCaelum, setActiveSubQgJumpModifierCaelum] = useState<number>(0);
-  const [subQgJumpModifierActiveStepsRemainingCaelum, setSubQgJumpModifierActiveStepsRemainingCaelum] = useState<number>(0);
-  const [simulationStepCaelum, setSimulationStepCaelum] = useState<number>(0);
-  const [trackingPotentialJumpCaelum, setTrackingPotentialJumpCaelum] = useState<boolean>(false);
-  const [peakEnergyAtCoherenceCaelum, setPeakEnergyAtCoherenceCaelum] = useState<number | null>(null);
-  const [peakCoherenceValueCaelum, setPeakCoherenceValueCaelum] = useState<number | null>(null);
-  const [stepsSincePeakTrackedCaelum, setStepsSincePeakTrackedCaelum] = useState<number>(0);
-  const [caelumStressLevel, setCaelumStressLevel] = useState<number>(0);
-
-  // Shared State
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [processedTextChunks, setProcessedTextChunks] = useState<TextChunk[]>([]);
-  const [isLoadingKnowledge, setIsLoadingKnowledge] = useState<boolean>(false);
-  const [dualConversationHistory, setDualConversationHistory] = useState<ChatMessage[]>([]);
-  const [isDualConversationLoading, setIsDualConversationLoading] = useState<boolean>(false);
-  const dualConversationCancelledRef = useRef<boolean>(false);
-
-  const fitnessManagerRef = useRef<AdaptiveFitnessManager>(
-    new AdaptiveFitnessManager(myraConfig, () => ({
-      nodes: nodeStates, emotionState: emotionState, subQgGlobalMetrics: subQgGlobalMetrics, processedTextChunksCount: processedTextChunks.length,
-    }))
-  );
-  const fitnessManagerRefCaelum = useRef<AdaptiveFitnessManager>(
-    new AdaptiveFitnessManager(myraConfig, () => ({
-      nodes: nodeStatesCaelum, emotionState: emotionStateCaelum, subQgGlobalMetrics: subQgGlobalMetricsCaelum, processedTextChunksCount: 0, // Caelum doesn't directly load knowledge for its own fitness calculation in this model
-    }))
-  );
-
-  useEffect(() => {
-    fitnessManagerRef.current.updateConfig(myraConfig);
-    fitnessManagerRefCaelum.current.updateConfig(myraConfig);
-  }, [myraConfig]);
-
-  useEffect(() => {
-    const loadInitialChunks = async () => {
-      setIsLoadingKnowledge(true);
-      try {
-        const chunksFromDB = await getAllChunksFromDB();
-        setProcessedTextChunks(chunksFromDB);
-        fitnessManagerRef.current = new AdaptiveFitnessManager(myraConfig, () => ({
-            nodes: nodeStates, emotionState: emotionState, subQgGlobalMetrics: subQgGlobalMetrics, processedTextChunksCount: chunksFromDB.length,
-        }));
-      } catch (error) { console.error("Error loading initial chunks from DB:", error); }
-      finally { setIsLoadingKnowledge(false); }
-    };
-    loadInitialChunks();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    rngRef.current = myraConfig.rngType === 'subqg' ? new SubQGRNG(myraConfig.subqgSeed) : new QuantumRNG();
-  }, [myraConfig.rngType, myraConfig.subqgSeed]);
-
-  useEffect(() => {
-    rngRefCaelum.current = myraConfig.caelumRngType === 'subqg' ? new SubQGRNG(myraConfig.caelumSubqgSeed) : new QuantumRNG();
-  }, [myraConfig.caelumRngType, myraConfig.caelumSubqgSeed]);
-
-  const updateMyraConfig = (newConfigPartial: Partial<MyraConfig>) => {
-    setMyraConfig(prevConfig => { // This now uses the functional update form correctly
-      const configBeingUpdated: MyraConfig = JSON.parse(JSON.stringify(prevConfig));
-      deepMergeObjects(configBeingUpdated, newConfigPartial);
-
-      if (newConfigPartial.subqgSize && newConfigPartial.subqgSize !== prevConfig.subqgSize) {
-        const newSize = newConfigPartial.subqgSize;
-        const currentRng = rngRef.current; // Use current RNG instance
-        const newEnergyMatrix = Array(newSize).fill(null).map(() => Array(newSize).fill(configBeingUpdated.subqgBaseEnergy));
-        const newPhaseMatrix = Array(newSize).fill(null).map(() => Array(newSize).fill(0).map(() => currentRng.next() * 2 * Math.PI));
-        setSubQgMatrix(newEnergyMatrix); setSubQgPhaseMatrix(newPhaseMatrix);
-        setSubQgGlobalMetrics(calculateSubQgMetricsInitialFunc(newEnergyMatrix, newPhaseMatrix, INITIAL_SUBQG_GLOBAL_METRICS));
+      if (newConfigPartial.myraAIProviderConfig) {
+        updatedConfig.myraAIProviderConfig = { ...prevConfig.myraAIProviderConfig, ...newConfigPartial.myraAIProviderConfig };
       }
-      if (newConfigPartial.caelumSubqgSize && newConfigPartial.caelumSubqgSize !== prevConfig.caelumSubqgSize) {
-        const newSize = newConfigPartial.caelumSubqgSize;
-        const currentRngCaelum = rngRefCaelum.current; // Use current RNG instance for Caelum
-        const newEnergyMatrix = Array(newSize).fill(null).map(() => Array(newSize).fill(configBeingUpdated.caelumSubqgBaseEnergy));
-        const newPhaseMatrix = Array(newSize).fill(null).map(() => Array(newSize).fill(0).map(() => currentRngCaelum.next() * 2 * Math.PI));
-        setSubQgMatrixCaelum(newEnergyMatrix); setSubQgPhaseMatrixCaelum(newPhaseMatrix);
-        setSubQgGlobalMetricsCaelum(calculateSubQgMetricsInitialFunc(newEnergyMatrix, newPhaseMatrix, INITIAL_CAELUM_SUBQG_GLOBAL_METRICS));
+      if (newConfigPartial.caelumAIProviderConfig) {
+        updatedConfig.caelumAIProviderConfig = { ...prevConfig.caelumAIProviderConfig, ...newConfigPartial.caelumAIProviderConfig };
+      }
+      if (newConfigPartial.adaptiveFitnessConfig) {
+        updatedConfig.adaptiveFitnessConfig = deepMergeObjects(
+          JSON.parse(JSON.stringify(prevConfig.adaptiveFitnessConfig)), // Deep copy to avoid modifying original
+          newConfigPartial.adaptiveFitnessConfig
+        );
       }
       
-      // populateTranslatedFields will be called by the _setMyraConfig wrapper (via setMyraConfig)
-      return configBeingUpdated; 
-    });
-  };
+      if (newConfigPartial.language && newConfigPartial.language !== prevConfig.language) {
+        updatedConfig = populateTranslatedFields(updatedConfig, newConfigPartial.language);
+      }
+      
+      const personaKeyFields: (keyof MyraConfig)[] = [
+        'myraNameKey', 'myraRoleDescriptionKey', 'myraEthicsPrinciplesKey', 'myraResponseInstructionKey', 'userNameKey',
+        'caelumNameKey', 'caelumRoleDescriptionKey', 'caelumEthicsPrinciplesKey', 'caelumResponseInstructionKey'
+      ];
+      let keyFieldChanged = false;
+      for (const pk of personaKeyFields) {
+        if (newConfigPartial[pk] && newConfigPartial[pk] !== prevConfig[pk]) {
+            keyFieldChanged = true;
+            break;
+        }
+      }
+      if (keyFieldChanged) {
+          updatedConfig = populateTranslatedFields(updatedConfig, updatedConfig.language);
+      }
 
-  const calculateSubQgMetrics = useCallback((energyMatrix: number[][], phaseMatrix: number[][], initialMetrics: SubQgGlobalMetrics): SubQgGlobalMetrics => {
-    return calculateSubQgMetricsInitialFunc(energyMatrix, phaseMatrix, initialMetrics);
+      localStorage.setItem('myraConfig', JSON.stringify(updatedConfig));
+
+      if (newConfigPartial.subqgSize !== undefined && newConfigPartial.subqgSize !== prevConfig.subqgSize) {
+        setSubQgMatrix(Array(updatedConfig.subqgSize).fill(0).map(() => Array(updatedConfig.subqgSize).fill(updatedConfig.subqgBaseEnergy)));
+        setSubQgPhaseMatrix(Array(updatedConfig.subqgSize).fill(0).map(() => Array(updatedConfig.subqgSize).fill(0).map(() => Math.random() * 2 * Math.PI)));
+      }
+      if (newConfigPartial.caelumSubqgSize !== undefined && newConfigPartial.caelumSubqgSize !== prevConfig.caelumSubqgSize) {
+        setSubQgMatrixCaelum(Array(updatedConfig.caelumSubqgSize).fill(0).map(() => Array(updatedConfig.caelumSubqgSize).fill(updatedConfig.caelumSubqgBaseEnergy)));
+        setSubQgPhaseMatrixCaelum(Array(updatedConfig.caelumSubqgSize).fill(0).map(() => Array(updatedConfig.caelumSubqgSize).fill(0).map(() => Math.random() * 2 * Math.PI)));
+      }
+      
+      if (newConfigPartial.rngType !== undefined || newConfigPartial.subqgSeed !== undefined) {
+        rngRef.current = updatedConfig.rngType === 'subqg' ? new SubQGRNG(updatedConfig.subqgSeed) : new QuantumRNG();
+      }
+      if (newConfigPartial.caelumRngType !== undefined || newConfigPartial.caelumSubqgSeed !== undefined) {
+        rngRefCaelum.current = updatedConfig.caelumRngType === 'subqg' ? new SubQGRNG(updatedConfig.caelumSubqgSeed) : new QuantumRNG();
+      }
+
+      if (myraFitnessManagerRef.current) myraFitnessManagerRef.current.updateConfig(updatedConfig);
+      if (caelumFitnessManagerRef.current) caelumFitnessManagerRef.current.updateConfig(updatedConfig);
+
+      return updatedConfig;
+    });
+  }, [setMyraConfig]);
+
+  const getBaseSystemInstruction = useCallback((
+      currentEmotionState: EmotionState,
+      currentNodeStates: Record<string, NodeState>,
+      currentSubQgMetrics: SubQgGlobalMetrics,
+      currentFitness: AdaptiveFitnessState,
+      currentStress: number,
+      tFunc: typeof t,
+      agentNameForInstruction: string,
+      isCaelum: boolean = false
+    ): string => {
+    let instruction = tFunc('aiService.currentInternalContextLabel', { speakerName: agentNameForInstruction }) + "\n";
+    instruction += `Emotion State (PAD): P:${currentEmotionState.pleasure.toFixed(2)}, A:${currentEmotionState.arousal.toFixed(2)}, D:${currentEmotionState.dominance.toFixed(2)}\n`;
+    instruction += `Dominant Affects: Anger:${currentEmotionState.anger.toFixed(2)}, Fear:${currentEmotionState.fear.toFixed(2)}, Greed:${currentEmotionState.greed.toFixed(2)}\n`;
+    instruction += `Stress Level: ${currentStress.toFixed(2)}\n`;
+    
+    const mainNodeIDs = isCaelum 
+      ? ['LimbusAffektus_Caelum', 'Creativus_Caelum', 'CortexCriticus_Caelum', 'MetaCognitio_Caelum']
+      : ['LimbusAffektus_Myra', 'Creativus_Myra', 'CortexCriticus_Myra', 'MetaCognitio_Myra'];
+    
+    mainNodeIDs.forEach(nodeId => {
+        const node = currentNodeStates[nodeId];
+        if (node) { 
+            instruction += `${node.label}: Act:${node.activation.toFixed(2)}, Res:${node.resonatorScore.toFixed(2)}\n`;
+        }
+    });
+
+    instruction += `SubQG State: AvgEnergy:${currentSubQgMetrics.avgEnergy.toFixed(4)}, Coherence:${currentSubQgMetrics.phaseCoherence.toFixed(3)}\n`;
+    instruction += `Adaptive Fitness: Overall:${currentFitness.overallScore.toFixed(3)} (Know:${currentFitness.dimensions.knowledgeExpansion.toFixed(2)}, Coh:${currentFitness.dimensions.internalCoherence.toFixed(2)}, Crea:${currentFitness.dimensions.expressiveCreativity.toFixed(2)}, Foc:${currentFitness.dimensions.goalFocus.toFixed(2)})\n`;
+    return instruction;
   }, []);
 
-  // --- M.Y.R.A. Specific Simulation Functions ---
-  const detectSubQgJumpMyra = useCallback((currentMetrics: SubQgGlobalMetrics, config: MyraConfig) => {
-    const { subqgJumpMinEnergyAtPeak, subqgJumpMinCoherenceAtPeak, subqgJumpCoherenceDropFactor, subqgJumpEnergyDropFactorFromPeak, subqgJumpMaxStepsToTrackPeak } = config;
-    let newJumpInfo: SubQgJumpInfo | null = null;
-    let _tracking = trackingPotentialJump, _peakE = peakEnergyAtCoherence, _peakC = peakCoherenceValue, _steps = stepsSincePeakTracked;
+  const getMyraBaseSystemInstruction = useCallback(() => {
+    return getBaseSystemInstruction(emotionState, nodeStates, subQgGlobalMetrics, adaptiveFitness, myraStressLevel, t, myraConfig.myraName, false);
+  }, [emotionState, nodeStates, subQgGlobalMetrics, adaptiveFitness, myraStressLevel, t, myraConfig.myraName, getBaseSystemInstruction]);
 
-    if (!_tracking) {
-      if (currentMetrics.avgEnergy > subqgJumpMinEnergyAtPeak && currentMetrics.phaseCoherence > subqgJumpMinCoherenceAtPeak) {
-        _tracking = true; _peakE = currentMetrics.avgEnergy; _peakC = currentMetrics.phaseCoherence; _steps = 0;
+  const getCaelumBaseSystemInstruction = useCallback(() => {
+    return getBaseSystemInstruction(emotionStateCaelum, nodeStatesCaelum, subQgGlobalMetricsCaelum, adaptiveFitnessCaelum, caelumStressLevel, t, myraConfig.caelumName, true);
+  }, [emotionStateCaelum, nodeStatesCaelum, subQgGlobalMetricsCaelum, adaptiveFitnessCaelum, caelumStressLevel, t, myraConfig.caelumName, getBaseSystemInstruction]);
+
+  const retrieveRelevantChunks = useCallback(async (query: string, maxChunks: number): Promise<TextChunk[]> => {
+    if (!query.trim() || maxChunks <= 0) return [];
+    try {
+      const allChunks = processedTextChunks; 
+      if (allChunks.length === 0) return [];
+
+      const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+      if (queryWords.length === 0) return [];
+      
+      const scoredChunks = allChunks.map(chunk => {
+        let score = 0;
+        const chunkTextLower = chunk.text.toLowerCase();
+        queryWords.forEach(word => {
+          if (chunkTextLower.includes(word)) {
+            score++;
+          }
+        });
+        return { ...chunk, score };
+      }).filter(chunk => chunk.score > 0);
+
+      scoredChunks.sort((a, b) => b.score - a.score);
+      return scoredChunks.slice(0, maxChunks);
+
+    } catch (error) {
+      console.error("Error retrieving relevant chunks:", error);
+      return [];
+    }
+  }, [processedTextChunks]);
+
+  const simulateSubQgStep = useCallback((
+    currentMatrix: number[][],
+    currentPhaseMatrix: number[][],
+    config: { size: number, baseEnergy: number, coupling: number, noiseStd: number, phaseEnergyFactor: number, phaseDiffusion: number },
+    rng: RNG
+  ) => {
+    const { size, baseEnergy, coupling, noiseStd, phaseEnergyFactor, phaseDiffusion } = config;
+    const newMatrix = currentMatrix.map(row => [...row]);
+    const newPhaseMatrix = currentPhaseMatrix.map(row => [...row]);
+
+    let totalEnergy = 0;
+    let totalPhaseVectorX = 0;
+    let totalPhaseVectorY = 0;
+
+    for (let i = 0; i < size; i++) {
+      for (let j = 0; j < size; j++) {
+        let energySum = 0;
+        let phaseSumX = 0;
+        let phaseSumY = 0;
+        let neighborCount = 0;
+
+        for (let di = -1; di <= 1; di++) {
+          for (let dj = -1; dj <= 1; dj++) {
+            if (di === 0 && dj === 0) continue;
+            const ni = (i + di + size) % size;
+            const nj = (j + dj + size) % size;
+            energySum += currentMatrix[ni][nj];
+            phaseSumX += Math.cos(currentPhaseMatrix[ni][nj]);
+            phaseSumY += Math.sin(currentPhaseMatrix[ni][nj]);
+            neighborCount++;
+          }
+        }
+        
+        const avgNeighborEnergy = energySum / neighborCount;
+        const energyChange = (avgNeighborEnergy - currentMatrix[i][j]) * coupling;
+        newMatrix[i][j] += energyChange + (rng.next() - 0.5) * noiseStd;
+        newMatrix[i][j] = Math.max(0, newMatrix[i][j] + baseEnergy * 0.05 * (rng.next() - 0.5));
+
+        const avgNeighborPhase = Math.atan2(phaseSumY / neighborCount, phaseSumX / neighborCount);
+        let phaseChange = (avgNeighborPhase - currentPhaseMatrix[i][j]) * phaseDiffusion;
+        phaseChange = ((phaseChange + Math.PI) % (2 * Math.PI)) - Math.PI;
+
+        newPhaseMatrix[i][j] += phaseChange;
+        newPhaseMatrix[i][j] += energyChange * phaseEnergyFactor * (rng.next() - 0.5); 
+        newPhaseMatrix[i][j] = (newPhaseMatrix[i][j] + 2 * Math.PI) % (2 * Math.PI); 
+
+        totalEnergy += newMatrix[i][j];
+        totalPhaseVectorX += Math.cos(newPhaseMatrix[i][j]);
+        totalPhaseVectorY += Math.sin(newPhaseMatrix[i][j]);
       }
-    } else if (_peakC !== null && _peakE !== null) {
-      _steps += 1;
-      const cohDrop = currentMetrics.phaseCoherence < _peakC * (1 - subqgJumpCoherenceDropFactor);
-      const engDrop = currentMetrics.avgEnergy < _peakE * (1 - subqgJumpEnergyDropFactorFromPeak);
-      if (cohDrop || engDrop) {
-        newJumpInfo = { type: "myra_resonance_decay", peakEnergyBeforeDecay: _peakE, peakCoherenceBeforeDecay: _peakC, currentEnergyAtDecayDetection: currentMetrics.avgEnergy, currentCoherenceAtDecayDetection: currentMetrics.phaseCoherence, reasonForDecayDetection: cohDrop && !engDrop ? "c_drop" : engDrop && !cohDrop ? "e_drop" : "ce_drop", stepsFromPeakToDecay: _steps, timestamp: Date.now() };
-        _tracking = false; _peakE = null; _peakC = null; _steps = 0;
-      } else if (currentMetrics.avgEnergy >= _peakE && currentMetrics.phaseCoherence >= _peakC && (currentMetrics.avgEnergy > _peakE || currentMetrics.phaseCoherence > _peakC)) {
-         if (currentMetrics.phaseCoherence > subqgJumpMinCoherenceAtPeak) { _peakE = currentMetrics.avgEnergy; _peakC = currentMetrics.phaseCoherence; _steps = 0; }
+    }
+
+    const avgEnergy = totalEnergy / (size * size);
+    const stdEnergy = Math.sqrt(newMatrix.flat().reduce((sum, val) => sum + Math.pow(val - avgEnergy, 2), 0) / (size * size));
+    const phaseCoherence = Math.sqrt(Math.pow(totalPhaseVectorX / (size * size), 2) + Math.pow(totalPhaseVectorY / (size * size), 2));
+    
+    return { newMatrix, newPhaseMatrix, metrics: { avgEnergy, stdEnergy, phaseCoherence } };
+  }, []);
+
+  const peakTrackingStateRefMyra = useRef({
+    peakEnergy: -1, peakCoherence: -1, stepsAtPeak: 0, trackingActive: false
+  });
+  const peakTrackingStateRefCaelum = useRef({
+    peakEnergy: -1, peakCoherence: -1, stepsAtPeak: 0, trackingActive: false
+  });
+
+  const detectAndProcessSubQgJump = useCallback((
+    metrics: SubQgGlobalMetrics,
+    config: {
+      minEnergyAtPeak: number, minCoherenceAtPeak: number,
+      coherenceDropFactor: number, energyDropFactorFromPeak: number,
+      maxStepsToTrackPeak: number, activeDuration: number,
+      qnsModifierStrength: number
+    },
+    peakTrackingStateRef: React.MutableRefObject<{ peakEnergy: number, peakCoherence: number, stepsAtPeak: number, trackingActive: boolean }>,
+    setJumpInfo: (info: SubQgJumpInfo | null) => void,
+    setActiveJumpModifier: (mod: number) => void,
+    setJumpModifierStepsRemaining: (steps: number) => void,
+    currentJumpInfo: SubQgJumpInfo | null 
+  ) => {
+    let jumpDetected = false;
+    let jumpType = "unknown";
+    let jumpModifier = 0;
+    let jumpInfoUpdate: SubQgJumpInfo | null = null;
+
+    if (peakTrackingStateRef.current.trackingActive) {
+      peakTrackingStateRef.current.stepsAtPeak++;
+      const energyDrop = peakTrackingStateRef.current.peakEnergy - metrics.avgEnergy;
+      const coherenceDrop = peakTrackingStateRef.current.peakCoherence - metrics.phaseCoherence;
+
+      if (energyDrop > config.energyDropFactorFromPeak * peakTrackingStateRef.current.peakEnergy && energyDrop > 0.001) {
+        jumpDetected = true;
+        jumpType = `EnergyDrop (from ${peakTrackingStateRef.current.peakEnergy.toFixed(4)} to ${metrics.avgEnergy.toFixed(4)})`;
+        jumpModifier = config.qnsModifierStrength * (energyDrop / (config.energyDropFactorFromPeak * peakTrackingStateRef.current.peakEnergy + 1e-6));
+        jumpInfoUpdate = { type: jumpType, peakEnergyBeforeDecay: peakTrackingStateRef.current.peakEnergy, currentEnergyAtDecayDetection: metrics.avgEnergy, stepsFromPeakToDecay: peakTrackingStateRef.current.stepsAtPeak, timestamp: Date.now() };
+      } else if (coherenceDrop > config.coherenceDropFactor && coherenceDrop > 0.01) {
+        jumpDetected = true;
+        jumpType = `CoherenceDrop (from ${peakTrackingStateRef.current.peakCoherence.toFixed(3)} to ${metrics.phaseCoherence.toFixed(3)})`;
+        jumpModifier = -config.qnsModifierStrength * (coherenceDrop / (config.coherenceDropFactor + 1e-6)); 
+        jumpInfoUpdate = { type: jumpType, peakCoherenceBeforeDecay: peakTrackingStateRef.current.peakCoherence, currentCoherenceAtDecayDetection: metrics.phaseCoherence, stepsFromPeakToDecay: peakTrackingStateRef.current.stepsAtPeak, timestamp: Date.now() };
       }
-      if (_tracking && _steps >= subqgJumpMaxStepsToTrackPeak) { _tracking = false; _peakE = null; _peakC = null; _steps = 0; }
+
+      if (peakTrackingStateRef.current.stepsAtPeak >= config.maxStepsToTrackPeak && !jumpDetected) {
+        peakTrackingStateRef.current.trackingActive = false;
+        jumpInfoUpdate = { type: "PeakSustainedOrDissipated", peakEnergyBeforeDecay: peakTrackingStateRef.current.peakEnergy, peakCoherenceBeforeDecay: peakTrackingStateRef.current.peakCoherence, stepsFromPeakToDecay: peakTrackingStateRef.current.stepsAtPeak, timestamp: Date.now() };
+      }
+    } else {
+      if (metrics.avgEnergy > config.minEnergyAtPeak && metrics.phaseCoherence > config.minCoherenceAtPeak) {
+        peakTrackingStateRef.current = {
+          peakEnergy: metrics.avgEnergy, peakCoherence: metrics.phaseCoherence, stepsAtPeak: 0, trackingActive: true
+        };
+        jumpInfoUpdate = { type: "PeakCandidateDetected", peakEnergyBeforeDecay: metrics.avgEnergy, peakCoherenceBeforeDecay: metrics.phaseCoherence, timestamp: Date.now() };
+      }
     }
-    setTrackingPotentialJump(_tracking); setPeakEnergyAtCoherence(_peakE); setPeakCoherenceValue(_peakC); setStepsSincePeakTracked(_steps);
-    return newJumpInfo;
-  }, [trackingPotentialJump, peakEnergyAtCoherence, peakCoherenceValue, stepsSincePeakTracked]);
 
-  const simulateSubQgStepMyra = useCallback(() => {
-    const cfg = myraConfig; const size = cfg.subqgSize; const rng = rngRef.current;
-    const newE = subQgMatrix.map(r => [...r]); const newP = subQgPhaseMatrix.map(r => [...r]);
-    for (let i=0; i<size; i++) for (let j=0; j<size; j++) {
-      let nE=0, nPX=0, nPY=0, vN=0;
-      [[-1,0],[1,0],[0,-1],[0,1]].forEach(([dx,dy]) => { const ni=(i+dx+size)%size, nj=(j+dy+size)%size; nE+=subQgMatrix[ni][nj]; nPX+=Math.cos(subQgPhaseMatrix[ni][nj]); nPY+=Math.sin(subQgPhaseMatrix[ni][nj]); vN++; });
-      const avgNE = vN>0?nE/vN:subQgMatrix[i][j]; const eD=cfg.subqgCoupling*(avgNE-subQgMatrix[i][j]); newE[i][j]=Math.max(0,Math.min(1,subQgMatrix[i][j]+eD));
-      const avgNP = vN>0?Math.atan2(nPY/vN,nPX/vN):subQgPhaseMatrix[i][j]; const pDif=cfg.subqgPhaseDiffusionFactor*(avgNP-subQgPhaseMatrix[i][j]); const pEng=eD*cfg.subqgPhaseEnergyCouplingFactor; newP[i][j]=(subQgPhaseMatrix[i][j]+pDif+pEng+2*Math.PI)%(2*Math.PI);
+    if (jumpDetected) {
+      setActiveJumpModifier(jumpModifier);
+      setJumpModifierStepsRemaining(config.activeDuration);
+      peakTrackingStateRef.current.trackingActive = false; 
     }
-    for (let i=0; i<size; i++) for (let j=0; j<size; j++) newE[i][j]=Math.max(0,Math.min(1,newE[i][j]+(rng.next()-0.5)*cfg.subqgInitialEnergyNoiseStd));
-    setSubQgMatrix(newE); setSubQgPhaseMatrix(newP);
-    const newGM = calculateSubQgMetrics(newE, newP, INITIAL_SUBQG_GLOBAL_METRICS); setSubQgGlobalMetrics(newGM);
-    const jump = detectSubQgJumpMyra(newGM, cfg);
-    if (jump) {
-      setSubQgJumpInfo(jump); const pE=jump.peakEnergyBeforeDecay||0, pC=jump.peakCoherenceBeforeDecay||0;
-      const mod=(Math.tanh(pE*20)*0.6+pC*0.4)*cfg.subqgJumpQnsDirectModifierStrength; setActiveSubQgJumpModifier(mod); setSubQgJumpModifierActiveStepsRemaining(cfg.subqgJumpActiveDuration);
+    
+    if (jumpInfoUpdate) {
+        setJumpInfo(jumpInfoUpdate);
     }
-  }, [myraConfig, subQgMatrix, subQgPhaseMatrix, calculateSubQgMetrics, detectSubQgJumpMyra]);
-
-  const updateEmotionStateMyra = useCallback((geminiResponse?: GeminiGenerateContentResponse) => {
-    const cfg=myraConfig; const rng=rngRef.current; setEmotionState(prev => { const nS={...prev}; if(geminiResponse&&!geminiResponse.text.toLowerCase().includes("error")){nS.pleasure+=0.02;nS.arousal+=0.03;} for(const k in nS){nS[k as keyof EmotionState]*=cfg.emotionDecay;nS[k as keyof EmotionState]=Math.max(-1,Math.min(1,nS[k as keyof EmotionState]+(rng.next()-0.5)*0.05));} return nS; });
-  }, [myraConfig]);
-
-  const updateNodeActivationsMyra = useCallback(() => {
-    const cfg=myraConfig; const rng=rngRef.current; setNodeStates(prev => { const nS={...prev}; for(const id in nS){nS[id].activation*=cfg.nodeActivationDecay;nS[id].activation=Math.max(0,Math.min(1,nS[id].activation+(rng.next()-0.45)*0.1)); if(nS[id].type==='limbus'&&nS[id].specificState){(nS[id].specificState as EmotionState)=emotionState;nS[id].activation=(emotionState.arousal+emotionState.pleasure+2)/4;}else if(nS[id].type==='creativus'){nS[id].activation=Math.max(0,Math.min(1,nS[id].activation+(rng.next()-0.4)*0.15));} else if(nS[id].type==='metacognitio'){if(subQgJumpInfo)nS[id].activation+=0.2;if(nS[id].specificState)(nS[id].specificState as any).lastTotalJumps=(subQgJumpInfo?((nS[id].specificState as any).lastTotalJumps||0)+1:((nS[id].specificState as any).lastTotalJumps||0));} nS[id].resonatorScore=rng.next()*0.4+0.3+activeSubQgJumpModifier*0.1; nS[id].focusScore=rng.next()*0.3; nS[id].explorationScore=rng.next()*0.3+activeSubQgJumpModifier*0.05; nS[id].activation=Math.max(0,Math.min(1,nS[id].activation+activeSubQgJumpModifier*0.2));} return nS; });
-  }, [myraConfig, emotionState, subQgJumpInfo, activeSubQgJumpModifier]);
-
-  const calculateMyraStress = useCallback(() => {
-    const conflictNode = nodeStates['ConflictMonitor_Myra'];
-    const conflictLevel = conflictNode?.specificState?.conflictLevel ?? 0;
-    const rawStress=Math.abs(emotionState.arousal)*0.4 + Math.max(0,emotionState.fear)*0.3 + Math.max(0,emotionState.anger)*0.15 + conflictLevel*0.15;
-    setMyraStressLevel(Math.min(1,Math.max(0,rawStress)));
-  }, [emotionState, nodeStates]);
+    return jumpDetected;
+  }, []); 
 
   const simulateNetworkStepMyra = useCallback(() => {
-    setSimulationStep(p=>p+1); simulateSubQgStepMyra(); updateEmotionStateMyra(); updateNodeActivationsMyra(); calculateMyraStress();
-    if(subQgJumpModifierActiveStepsRemaining>0){setSubQgJumpModifierActiveStepsRemaining(p=>p-1); if(subQgJumpModifierActiveStepsRemaining-1<=0){setActiveSubQgJumpModifier(0);}}
-    if((simulationStep+1)%myraConfig.adaptiveFitnessUpdateInterval===0){setAdaptiveFitness(fitnessManagerRef.current.calculateMetricsAndFitness());}
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [simulateSubQgStepMyra, updateEmotionStateMyra, updateNodeActivationsMyra, myraConfig.adaptiveFitnessUpdateInterval, subQgJumpModifierActiveStepsRemaining, simulationStep, calculateMyraStress]);
+    const currentSimStep = simulationStep + 1;
+    setSimulationStep(currentSimStep);
 
-  // --- C.A.E.L.U.M. Specific Simulation Functions ---
-  const detectSubQgJumpCaelum = useCallback((currentMetrics: SubQgGlobalMetrics, config: MyraConfig) => {
-    const { caelumSubqgJumpMinEnergyAtPeak: minE, caelumSubqgJumpMinCoherenceAtPeak: minC, caelumSubqgJumpCoherenceDropFactor: cDrop, caelumSubqgJumpEnergyDropFactorFromPeak: eDrop, caelumSubqgJumpMaxStepsToTrackPeak: maxSteps } = config;
-    let newJumpInfo: SubQgJumpInfo | null = null;
-    let _tracking = trackingPotentialJumpCaelum, _peakE = peakEnergyAtCoherenceCaelum, _peakC = peakCoherenceValueCaelum, _steps = stepsSincePeakTrackedCaelum;
-    if (!_tracking) {
-      if (currentMetrics.avgEnergy > minE && currentMetrics.phaseCoherence > minC) {
-        _tracking = true; _peakE = currentMetrics.avgEnergy; _peakC = currentMetrics.phaseCoherence; _steps = 0;
+    const { newMatrix, newPhaseMatrix, metrics } = simulateSubQgStep(
+      subQgMatrix, subQgPhaseMatrix,
+      {
+        size: myraConfig.subqgSize, baseEnergy: myraConfig.subqgBaseEnergy, coupling: myraConfig.subqgCoupling,
+        noiseStd: myraConfig.subqgInitialEnergyNoiseStd, phaseEnergyFactor: myraConfig.subqgPhaseEnergyCouplingFactor,
+        phaseDiffusion: myraConfig.subqgPhaseDiffusionFactor
+      },
+      rngRef.current
+    );
+    setSubQgMatrix(newMatrix);
+    setSubQgPhaseMatrix(newPhaseMatrix);
+    setSubQgGlobalMetrics(metrics);
+
+    detectAndProcessSubQgJump(
+      metrics,
+      {
+        minEnergyAtPeak: myraConfig.subqgJumpMinEnergyAtPeak, minCoherenceAtPeak: myraConfig.subqgJumpMinCoherenceAtPeak,
+        coherenceDropFactor: myraConfig.subqgJumpCoherenceDropFactor, energyDropFactorFromPeak: myraConfig.subqgJumpEnergyDropFactorFromPeak,
+        maxStepsToTrackPeak: myraConfig.subqgJumpMaxStepsToTrackPeak, activeDuration: myraConfig.subqgJumpActiveDuration,
+        qnsModifierStrength: myraConfig.subqgJumpQnsDirectModifierStrength
+      },
+      peakTrackingStateRefMyra, setSubQgJumpInfo, setActiveSubQgJumpModifier, setSubQgJumpModifierActiveStepsRemaining, subQgJumpInfo
+    );
+    
+    const newCalculatedEmotionStateMyra: EmotionState = {
+        pleasure: emotionState.pleasure * myraConfig.emotionDecay + (rngRef.current.next() - 0.5) * 0.05,
+        arousal: emotionState.arousal * myraConfig.emotionDecay + (rngRef.current.next() - 0.5) * 0.1,
+        dominance: emotionState.dominance * myraConfig.emotionDecay + (rngRef.current.next() - 0.5) * 0.03,
+        anger: Math.max(0, emotionState.anger * myraConfig.emotionDecay + (rngRef.current.next() - 0.45) * 0.02),
+        disgust: Math.max(0, emotionState.disgust * myraConfig.emotionDecay + (rngRef.current.next() - 0.48) * 0.01),
+        fear: Math.max(0, emotionState.fear * myraConfig.emotionDecay + (rngRef.current.next() - 0.4) * 0.03),
+        greed: Math.max(0, emotionState.greed * myraConfig.emotionDecay + (rngRef.current.next() - 0.49) * 0.005),
+    };
+    setEmotionState(newCalculatedEmotionStateMyra);
+
+    const dominantAffMyra = getDominantAffect(newCalculatedEmotionStateMyra, t);
+    setPadHistoryMyra(prevHistory => {
+        const newRecord: PADRecord = {
+            pleasure: newCalculatedEmotionStateMyra.pleasure, arousal: newCalculatedEmotionStateMyra.arousal,
+            dominance: newCalculatedEmotionStateMyra.dominance, timestamp: Date.now(), dominantAffect: dominantAffMyra
+        };
+        const updatedHistory = [...prevHistory, newRecord];
+        if (myraConfig.maxPadHistorySize > 0 && updatedHistory.length > myraConfig.maxPadHistorySize) {
+            return updatedHistory.slice(updatedHistory.length - myraConfig.maxPadHistorySize);
+        }
+        return updatedHistory;
+    });
+
+    setNodeStates(prev => {
+      const newNodes = { ...prev };
+      let totalJumpCountForMeta = newNodes['MetaCognitio_Myra']?.specificState?.lastTotalJumps || 0;
+      if (subQgJumpInfo && subQgJumpInfo.timestamp > (newNodes['MetaCognitio_Myra']?.specificState?.lastJumpTimestamp || 0)) {
+          totalJumpCountForMeta++;
       }
-    } else if (_peakC !== null && _peakE !== null) {
-      _steps += 1;
-      const cohDropVal = currentMetrics.phaseCoherence < _peakC * (1 - cDrop);
-      const engDropVal = currentMetrics.avgEnergy < _peakE * (1 - eDrop);
-      if (cohDropVal || engDropVal) {
-        newJumpInfo = { type: "caelum_analytical_shift", peakEnergyBeforeDecay: _peakE, peakCoherenceBeforeDecay: _peakC, currentEnergyAtDecayDetection: currentMetrics.avgEnergy, currentCoherenceAtDecayDetection: currentMetrics.phaseCoherence, reasonForDecayDetection: cohDropVal && !engDropVal ? "c_drop" : engDropVal && !cohDropVal ? "e_drop" : "ce_drop", stepsFromPeakToDecay: _steps, timestamp: Date.now() };
-        _tracking = false; _peakE = null; _peakC = null; _steps = 0;
-      } else if (currentMetrics.avgEnergy >= _peakE && currentMetrics.phaseCoherence >= _peakC && (currentMetrics.avgEnergy > _peakE || currentMetrics.phaseCoherence > _peakC)) {
-         if (currentMetrics.phaseCoherence > minC) { _peakE = currentMetrics.avgEnergy; _peakC = currentMetrics.phaseCoherence; _steps = 0; }
+
+      for (const id in newNodes) {
+        const node = newNodes[id];
+        let activationChange = (rngRef.current.next() - 0.5) * 0.1; 
+        
+        if (subQgJumpModifierActiveStepsRemaining > 0) {
+          if (node.type === 'creativus' || node.type === 'limbus' || node.type === 'metacognitio') {
+            activationChange += activeSubQgJumpModifier * 0.2 * (rngRef.current.next()); 
+          } else if (node.type === 'criticus') {
+            activationChange -= activeSubQgJumpModifier * 0.1 * (rngRef.current.next());
+          }
+        }
+        if (node.type === 'limbus') activationChange += (metrics.avgEnergy - myraConfig.subqgBaseEnergy) * 5;
+        if (node.type === 'creativus') activationChange += metrics.phaseCoherence * 0.05;
+
+        node.activation = Math.max(0, Math.min(1, node.activation * myraConfig.nodeActivationDecay + activationChange));
+        node.resonatorScore = Math.max(0, Math.min(1, node.resonatorScore * 0.9 + node.activation * 0.1 + (rngRef.current.next() - 0.5) * 0.02));
+        node.focusScore = Math.max(0, Math.min(1, node.focusScore * 0.92 + (node.type === 'criticus' ? node.activation * 0.1 : 0) + (rngRef.current.next() - 0.5) * 0.01));
+        node.explorationScore = Math.max(0, Math.min(1, node.explorationScore * 0.93 + (node.type === 'creativus' ? node.activation * 0.1 : 0) + (rngRef.current.next() - 0.5) * 0.015));
+
+        if (node.id === 'MetaCognitio_Myra') {
+             node.specificState = { ...node.specificState, lastTotalJumps: totalJumpCountForMeta, lastJumpTimestamp: subQgJumpInfo?.timestamp || node.specificState?.lastJumpTimestamp };
+        }
       }
-      if (_tracking && _steps >= maxSteps) { _tracking = false; _peakE = null; _peakC = null; _steps = 0; }
+      return newNodes;
+    });
+    
+    setMyraStressLevel(prevStress => {
+        let newStress = prevStress * 0.9; 
+        newStress += Math.abs(newCalculatedEmotionStateMyra.arousal) * 0.05; 
+        newStress += (1 - subQgGlobalMetrics.phaseCoherence) * 0.03; 
+        newStress += (subQgGlobalMetrics.stdEnergy / (subQgGlobalMetrics.avgEnergy + 1e-6)) * 0.02; 
+        const currentConflictNode = nodeStates['ConflictMonitor_Myra']; 
+        if (currentConflictNode?.specificState?.conflictLevel > 0.5) {
+            newStress += currentConflictNode.specificState.conflictLevel * 0.1;
+        }
+        return Math.max(0, Math.min(1, newStress));
+    });
+
+    if (subQgJumpModifierActiveStepsRemaining > 0) {
+      setSubQgJumpModifierActiveStepsRemaining(prev => prev - 1);
+      if (subQgJumpModifierActiveStepsRemaining -1 === 0) {
+          setActiveSubQgJumpModifier(0); 
+      }
     }
-    setTrackingPotentialJumpCaelum(_tracking); setPeakEnergyAtCoherenceCaelum(_peakE); setPeakCoherenceValueCaelum(_peakC); setStepsSincePeakTrackedCaelum(_steps);
-    return newJumpInfo;
-  }, [trackingPotentialJumpCaelum, peakEnergyAtCoherenceCaelum, peakCoherenceValueCaelum, stepsSincePeakTrackedCaelum]);
-
-  const simulateSubQgStepCaelum = useCallback(() => {
-    const cfg = myraConfig; const size = cfg.caelumSubqgSize; const rng = rngRefCaelum.current;
-    const newE = subQgMatrixCaelum.map(r => [...r]); const newP = subQgPhaseMatrixCaelum.map(r => [...r]);
-    for (let i=0; i<size; i++) for (let j=0; j<size; j++) {
-      let nE=0, nPX=0, nPY=0, vN=0;
-      [[-1,0],[1,0],[0,-1],[0,1]].forEach(([dx,dy]) => { const ni=(i+dx+size)%size, nj=(j+dy+size)%size; nE+=subQgMatrixCaelum[ni][nj]; nPX+=Math.cos(subQgPhaseMatrixCaelum[ni][nj]); nPY+=Math.sin(subQgPhaseMatrixCaelum[ni][nj]); vN++; });
-      const avgNE = vN>0?nE/vN:subQgMatrixCaelum[i][j]; const eD=cfg.caelumSubqgCoupling*(avgNE-subQgMatrixCaelum[i][j]); newE[i][j]=Math.max(0,Math.min(1,subQgMatrixCaelum[i][j]+eD));
-      const avgNP = vN>0?Math.atan2(nPY/vN,nPX/vN):subQgPhaseMatrixCaelum[i][j]; const pDif=cfg.caelumSubqgPhaseDiffusionFactor*(avgNP-subQgPhaseMatrixCaelum[i][j]); const pEng=eD*cfg.caelumSubqgPhaseEnergyCouplingFactor; newP[i][j]=(subQgPhaseMatrixCaelum[i][j]+pDif+pEng+2*Math.PI)%(2*Math.PI);
+    
+    if (currentSimStep % myraConfig.adaptiveFitnessUpdateInterval === 0 && myraFitnessManagerRef.current) {
+      const newFitness = myraFitnessManagerRef.current.calculateMetricsAndFitness();
+      setAdaptiveFitness(newFitness);
     }
-    for (let i=0; i<size; i++) for (let j=0; j<size; j++) newE[i][j]=Math.max(0,Math.min(1,newE[i][j]+(rng.next()-0.5)*cfg.caelumSubqgInitialEnergyNoiseStd));
-    setSubQgMatrixCaelum(newE); setSubQgPhaseMatrixCaelum(newP);
-    const newGM = calculateSubQgMetrics(newE, newP, INITIAL_CAELUM_SUBQG_GLOBAL_METRICS); setSubQgGlobalMetricsCaelum(newGM);
-    const jump = detectSubQgJumpCaelum(newGM, cfg);
-    if (jump) {
-      setSubQgJumpInfoCaelum(jump); const pE=jump.peakEnergyBeforeDecay||0, pC=jump.peakCoherenceBeforeDecay||0;
-      const mod=(Math.tanh(pE*20)*0.6+pC*0.4)*cfg.caelumSubqgJumpQnsDirectModifierStrength; setActiveSubQgJumpModifierCaelum(mod); setSubQgJumpModifierActiveStepsRemainingCaelum(cfg.caelumSubqgJumpActiveDuration);
-    }
-  }, [myraConfig, subQgMatrixCaelum, subQgPhaseMatrixCaelum, calculateSubQgMetrics, detectSubQgJumpCaelum]);
-
-  const updateEmotionStateCaelum = useCallback(() => {
-    const cfg=myraConfig; const rng=rngRefCaelum.current; setEmotionStateCaelum(prev => { const nS={...prev}; for(const k in nS){nS[k as keyof EmotionState]*=cfg.caelumEmotionDecay;nS[k as keyof EmotionState]=Math.max(-1,Math.min(1,nS[k as keyof EmotionState]+(rng.next()-0.5)*0.02));} return nS; });
-  }, [myraConfig]);
-
-  const updateNodeActivationsCaelum = useCallback(() => {
-    const cfg=myraConfig; const rng=rngRefCaelum.current; setNodeStatesCaelum(prev => { const nS={...prev}; for(const id in nS){nS[id].activation*=cfg.caelumNodeActivationDecay;nS[id].activation=Math.max(0,Math.min(1,nS[id].activation+(rng.next()-0.48)*0.08)); if(nS[id].type==='limbus'&&nS[id].specificState){(nS[id].specificState as EmotionState)=emotionStateCaelum;nS[id].activation=(emotionStateCaelum.dominance+1)/2*0.5 + (0.5-Math.abs(emotionStateCaelum.arousal)/2)*0.5;}else if(nS[id].type==='metacognitio'){if(subQgJumpInfoCaelum)nS[id].activation+=0.15;if(nS[id].specificState)(nS[id].specificState as any).lastTotalJumps=(subQgJumpInfoCaelum?((nS[id].specificState as any).lastTotalJumps||0)+1:((nS[id].specificState as any).lastTotalJumps||0));} nS[id].resonatorScore=rng.next()*0.3+0.4+activeSubQgJumpModifierCaelum*0.05; nS[id].focusScore=rng.next()*0.4+0.2; nS[id].explorationScore=rng.next()*0.2+activeSubQgJumpModifierCaelum*0.02; nS[id].activation=Math.max(0,Math.min(1,nS[id].activation+activeSubQgJumpModifierCaelum*0.1));} return nS; });
-  }, [myraConfig, emotionStateCaelum, subQgJumpInfoCaelum, activeSubQgJumpModifierCaelum]);
-
-  const calculateCaelumStress = useCallback(() => {
-    const conflictNode = nodeStatesCaelum['ConflictMonitor_Caelum'];
-    const conflictLevel = conflictNode?.specificState?.conflictLevel ?? 0;
-    const rawStress=Math.abs(emotionStateCaelum.arousal)*0.2 + Math.max(0,emotionStateCaelum.fear)*0.1 + conflictLevel*0.3;
-    setCaelumStressLevel(Math.min(1,Math.max(0,rawStress)));
-  }, [emotionStateCaelum, nodeStatesCaelum]);
+  }, [
+      myraConfig, subQgMatrix, subQgPhaseMatrix, simulateSubQgStep, detectAndProcessSubQgJump, 
+      activeSubQgJumpModifier, subQgJumpModifierActiveStepsRemaining, subQgJumpInfo,
+      nodeStates, simulationStep, t, emotionState
+    ]);
 
   const simulateNetworkStepCaelum = useCallback(() => {
-    setSimulationStepCaelum(p=>p+1); simulateSubQgStepCaelum(); updateEmotionStateCaelum(); updateNodeActivationsCaelum(); calculateCaelumStress();
-    if(subQgJumpModifierActiveStepsRemainingCaelum>0){setSubQgJumpModifierActiveStepsRemainingCaelum(p=>p-1); if(subQgJumpModifierActiveStepsRemainingCaelum-1<=0){setActiveSubQgJumpModifierCaelum(0);}}
-    if((simulationStepCaelum+1)%myraConfig.caelumAdaptiveFitnessUpdateInterval===0){setAdaptiveFitnessCaelum(fitnessManagerRefCaelum.current.calculateMetricsAndFitness());}
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [simulateSubQgStepCaelum, updateEmotionStateCaelum, updateNodeActivationsCaelum, myraConfig.caelumAdaptiveFitnessUpdateInterval, subQgJumpModifierActiveStepsRemainingCaelum, simulationStepCaelum, calculateCaelumStress]);
+    const currentSimStep = simulationStepCaelum + 1;
+    setSimulationStepCaelum(currentSimStep);
 
-  // --- Simulation Loops ---
-  useEffect(() => { const id=setInterval(simulateNetworkStepMyra, 2000); return () => clearInterval(id); }, [simulateNetworkStepMyra]);
-  useEffect(() => { const id=setInterval(simulateNetworkStepCaelum, 2100); return () => clearInterval(id); }, [simulateNetworkStepCaelum]);
-
-  // --- RAG & Knowledge ---
-  const loadAndProcessFile = useCallback(async (file: File) => {
-    if (!file || !file.type.startsWith('text/')) { alert(t('knowledgePanel.errorFileFormat')); return; }
-    setIsLoadingKnowledge(true);
-    try {
-      const text=await file.text(); const sourceName=file.name; const newChunks:TextChunk[]=[]; let idx=0;
-      for(let i=0;i<text.length;i+=myraConfig.ragChunkSize-myraConfig.ragChunkOverlap){const chunkText=text.substring(i,i+myraConfig.ragChunkSize);if(chunkText.trim()){newChunks.push({id:uuidv4(),source:sourceName,index:idx++,text:chunkText.trim()});}}
-      await addChunksToDB(newChunks); const updatedChunks=[...processedTextChunks,...newChunks]; setProcessedTextChunks(updatedChunks);
-      fitnessManagerRef.current = new AdaptiveFitnessManager(myraConfig,()=>({nodes:nodeStates,emotionState:emotionState,subQgGlobalMetrics:subQgGlobalMetrics,processedTextChunksCount:updatedChunks.length}));
-    } catch (e) { console.error("Error processing file:",e); alert(t('knowledgePanel.errorProcessingFile', { message: e instanceof Error ? e.message : String(e) })); }
-    finally { setIsLoadingKnowledge(false); }
-  }, [myraConfig, processedTextChunks, nodeStates, emotionState, subQgGlobalMetrics, t]);
-
-  const clearAllKnowledge = useCallback(async () => {
-    setIsLoadingKnowledge(true);
-    try { await clearAllChunksFromDB(); setProcessedTextChunks([]);
-      fitnessManagerRef.current = new AdaptiveFitnessManager(myraConfig,()=>({nodes:nodeStates,emotionState:emotionState,subQgGlobalMetrics:subQgGlobalMetrics,processedTextChunksCount:0}));
-    } catch (e) { console.error("Error clearing DB:",e); alert(t('knowledgePanel.errorClearingDb', { message: e instanceof Error ? e.message : String(e) })); }
-    finally { setIsLoadingKnowledge(false); }
-  }, [myraConfig, nodeStates, emotionState, subQgGlobalMetrics, t]);
-
-  const retrieveRelevantChunks = useCallback((prompt: string): TextChunk[] => {
-    if(!processedTextChunks.length)return[]; const keywords=prompt.toLowerCase().split(/\s+/).filter(k=>k.length>2); if(!keywords.length)return[];
-    const scored=processedTextChunks.map(c=>{let s=0;const txtL=c.text.toLowerCase();keywords.forEach(k=>{if(txtL.includes(k))s++;});return{c,s};});
-    scored.sort((a,b)=>b.s-a.s); return scored.filter(sc=>sc.s>0).slice(0,myraConfig.ragMaxChunksToRetrieve).map(sc=>sc.c);
-  }, [processedTextChunks, myraConfig.ragMaxChunksToRetrieve]);
-
-  // --- System Instructions ---
-  const getBaseSystemInstructionMyra = useCallback((): string => {
-    let i = `E(PAD): P=${emotionState.pleasure.toFixed(2)},A=${emotionState.arousal.toFixed(2)},D=${emotionState.dominance.toFixed(2)}. NegA: Ang=${emotionState.anger.toFixed(2)},Dis=${emotionState.disgust.toFixed(2)},Fea=${emotionState.fear.toFixed(2)},Gre=${emotionState.greed.toFixed(2)}.\n`;
-    const mN=nodeStates['MetaCognitio_Myra'], crN=nodeStates['Creativus_Myra'], ctN=nodeStates['CortexCriticus_Myra'];
-    i += `Cog: MCog A=${mN?.activation.toFixed(2)}(J:${mN?.specificState?.lastTotalJumps||0}), Cr A=${crN?.activation.toFixed(2)}, Ct A=${ctN?.activation.toFixed(2)}.\n`;
-    if (activeSubQgJumpModifier!==0) i+=`SQG Event: JMod Act: ${activeSubQgJumpModifier.toFixed(3)}.\n`;
-    const fit = adaptiveFitness;
-    i += `Fit: O=${fit.overallScore.toFixed(2)}(KE:${fit.dimensions.knowledgeExpansion.toFixed(2)},IC:${fit.dimensions.internalCoherence.toFixed(2)},EC:${fit.dimensions.expressiveCreativity.toFixed(2)},GF:${fit.dimensions.goalFocus.toFixed(2)}).\n`;
-    return i;
-  }, [emotionState, nodeStates, activeSubQgJumpModifier, adaptiveFitness]);
-
-  const getBaseSystemInstructionCaelum = useCallback((): string => {
-    let i = `E(PAD): P=${emotionStateCaelum.pleasure.toFixed(2)},A=${emotionStateCaelum.arousal.toFixed(2)},D=${emotionStateCaelum.dominance.toFixed(2)}. NegA: Ang=${emotionStateCaelum.anger.toFixed(2)},Dis=${emotionStateCaelum.disgust.toFixed(2)},Fea=${emotionStateCaelum.fear.toFixed(2)},Gre=${emotionStateCaelum.greed.toFixed(2)}.\n`;
-    const mN=nodeStatesCaelum['MetaCognitio_Caelum'], crN=nodeStatesCaelum['Creativus_Caelum'], ctN=nodeStatesCaelum['CortexCriticus_Caelum'];
-    i += `Cog: MCog A=${mN?.activation.toFixed(2)}(J:${mN?.specificState?.lastTotalJumps||0}), Cr A=${crN?.activation.toFixed(2)}, Ct A=${ctN?.activation.toFixed(2)}.\n`;
-    if (activeSubQgJumpModifierCaelum!==0) i+=`SQG Event: JMod Act: ${activeSubQgJumpModifierCaelum.toFixed(3)}.\n`;
-    const fit = adaptiveFitnessCaelum;
-    i += `Fit: O=${fit.overallScore.toFixed(2)}(KE:${fit.dimensions.knowledgeExpansion.toFixed(2)},IC:${fit.dimensions.internalCoherence.toFixed(2)},EC:${fit.dimensions.expressiveCreativity.toFixed(2)},GF:${fit.dimensions.goalFocus.toFixed(2)}).\n`;
-    return i;
-  }, [emotionStateCaelum, nodeStatesCaelum, activeSubQgJumpModifierCaelum, adaptiveFitnessCaelum]);
-
-  // --- Chat Functions ---
-  const generateMyraResponse = useCallback(async (prompt: string) => {
-    setIsLoading(true);
-    const userMsg:ChatMessage={id:uuidv4(),role:'user',content:prompt,timestamp:Date.now(),speakerName:myraConfig.userName};
-    setChatHistory(prev=>[...prev,userMsg]);
-    let sysInstruct=getBaseSystemInstructionMyra();
-    const chunks=retrieveRelevantChunks(prompt); if(chunks.length>0){sysInstruct+=`\n\n${t('aiService.relevantInfoLabel')}\n`;chunks.forEach(c=>{sysInstruct+=`---[S:${c.source},P${c.index+1}]---\n${c.text}\n`;});sysInstruct+=`---[${t('aiService.endInfoLabel')}]---\n`;}
-    let temp=myraConfig.myraAIProviderConfig.temperatureBase + emotionState.arousal*myraConfig.temperatureLimbusInfluence + (nodeStates['Creativus_Myra']?.activation||0)*myraConfig.temperatureCreativusInfluence; temp=Math.max(0.1,Math.min(1.0,temp));
-    const aiCfg:AIProviderConfig={...myraConfig.myraAIProviderConfig,temperatureBase:temp};
-    const persona:ResolvedSpeakerPersonaConfig={name:myraConfig.myraName,roleDescription:myraConfig.myraRoleDescription,ethicsPrinciples:myraConfig.myraEthicsPrinciples,responseInstruction:myraConfig.myraResponseInstruction};
+    const { newMatrix, newPhaseMatrix, metrics } = simulateSubQgStep(
+      subQgMatrixCaelum, subQgPhaseMatrixCaelum,
+      {
+        size: myraConfig.caelumSubqgSize, baseEnergy: myraConfig.caelumSubqgBaseEnergy, coupling: myraConfig.caelumSubqgCoupling,
+        noiseStd: myraConfig.caelumSubqgInitialEnergyNoiseStd, phaseEnergyFactor: myraConfig.caelumSubqgPhaseEnergyCouplingFactor,
+        phaseDiffusion: myraConfig.caelumSubqgPhaseDiffusionFactor
+      },
+      rngRefCaelum.current
+    );
+    setSubQgMatrixCaelum(newMatrix);
+    setSubQgPhaseMatrixCaelum(newPhaseMatrix);
+    setSubQgGlobalMetricsCaelum(metrics);
     
-    const resp=await callAiApi(prompt,myraConfig,aiCfg,chatHistory,sysInstruct,persona, t);
-    const assistMsg:ChatMessage={id:uuidv4(),role:'assistant',content:resp.text,timestamp:Date.now(),speakerName:myraConfig.myraName};
-    setChatHistory(prev=>[...prev,assistMsg]); setIsLoading(false);
-    simulateNetworkStepMyra(); setSubQgJumpInfo(null);
-  }, [myraConfig, emotionState, nodeStates, chatHistory, simulateNetworkStepMyra, retrieveRelevantChunks, getBaseSystemInstructionMyra, t]);
+     detectAndProcessSubQgJump(
+      metrics,
+      {
+        minEnergyAtPeak: myraConfig.caelumSubqgJumpMinEnergyAtPeak, minCoherenceAtPeak: myraConfig.caelumSubqgJumpMinCoherenceAtPeak,
+        coherenceDropFactor: myraConfig.caelumSubqgJumpCoherenceDropFactor, energyDropFactorFromPeak: myraConfig.caelumSubqgJumpEnergyDropFactorFromPeak,
+        maxStepsToTrackPeak: myraConfig.caelumSubqgJumpMaxStepsToTrackPeak, activeDuration: myraConfig.caelumSubqgJumpActiveDuration,
+        qnsModifierStrength: myraConfig.caelumSubqgJumpQnsDirectModifierStrength
+      },
+      peakTrackingStateRefCaelum, setSubQgJumpInfoCaelum, setActiveSubQgJumpModifierCaelum, setSubQgJumpModifierActiveStepsRemainingCaelum, subQgJumpInfoCaelum
+    );
 
-  const startDualConversation = useCallback(async (initialPrompt: string, rounds: number) => {
-    setIsDualConversationLoading(true); 
-    dualConversationCancelledRef.current = false;
-    
-    let uiLog: ChatMessage[] = [];
-    
-    const userMsg:ChatMessage={id:uuidv4(),role:'user',content:initialPrompt,timestamp:Date.now(),speakerName:myraConfig.userName};
-    uiLog = [...uiLog, userMsg];
-    setDualConversationHistory([...uiLog]);
+    const newCalculatedEmotionStateCaelum: EmotionState = {
+        pleasure: emotionStateCaelum.pleasure * myraConfig.caelumEmotionDecay + (rngRefCaelum.current.next() - 0.5) * 0.02,
+        arousal: emotionStateCaelum.arousal * myraConfig.caelumEmotionDecay + (rngRefCaelum.current.next() - 0.5) * 0.05,
+        dominance: emotionStateCaelum.dominance * myraConfig.caelumEmotionDecay + (rngRefCaelum.current.next() - 0.5) * 0.02,
+        anger: Math.max(0, emotionStateCaelum.anger * myraConfig.caelumEmotionDecay + (rngRefCaelum.current.next() - 0.49) * 0.005),
+        disgust: Math.max(0, emotionStateCaelum.disgust * myraConfig.caelumEmotionDecay + (rngRefCaelum.current.next() - 0.49) * 0.002),
+        fear: Math.max(0, emotionStateCaelum.fear * myraConfig.caelumEmotionDecay + (rngRefCaelum.current.next() - 0.45) * 0.01),
+        greed: Math.max(0, emotionStateCaelum.greed * myraConfig.caelumEmotionDecay + (rngRefCaelum.current.next() - 0.495) * 0.001),
+    };
+    setEmotionStateCaelum(newCalculatedEmotionStateCaelum);
 
-    let promptForNextAi = initialPrompt;
-    let historyForApi: ChatMessage[] = []; 
-
-    const myraPers:ResolvedSpeakerPersonaConfig={name:myraConfig.myraName,roleDescription:myraConfig.myraRoleDescription,ethicsPrinciples:myraConfig.myraEthicsPrinciples,responseInstruction:myraConfig.myraResponseInstruction};
-    const caelumPers:ResolvedSpeakerPersonaConfig={name:myraConfig.caelumName,roleDescription:myraConfig.caelumRoleDescription,ethicsPrinciples:myraConfig.caelumEthicsPrinciples,responseInstruction:myraConfig.caelumResponseInstruction};
-
-    for (let i=0; i<rounds; i++) {
-      if(dualConversationCancelledRef.current)break;
-
-      // M.Y.R.A.'s Turn
-      let myraTemp=myraConfig.myraAIProviderConfig.temperatureBase + emotionState.arousal*myraConfig.temperatureLimbusInfluence + (nodeStates['Creativus_Myra']?.activation||0)*myraConfig.temperatureCreativusInfluence; myraTemp=Math.max(0.1,Math.min(1.0,myraTemp));
-      const myraAICfg:AIProviderConfig={...myraConfig.myraAIProviderConfig,temperatureBase:myraTemp};
-      let sysInsMyra=getBaseSystemInstructionMyra();
-      const myraRAGChunks = retrieveRelevantChunks(promptForNextAi); // M.Y.R.A. retrieves based on Caelum's or user's last message
-      if(myraRAGChunks.length>0){sysInsMyra+=`\n\n${t('aiService.relevantInfoLabel')}\n`;myraRAGChunks.forEach(c=>{sysInsMyra+=`---[S:${c.source},P${c.index+1}]---\n${c.text}\n`;});sysInsMyra+=`---[${t('aiService.endInfoLabel')}]---\n`;}
-      
-      const myraResp=await callAiApi(promptForNextAi,myraConfig,myraAICfg,historyForApi,sysInsMyra,myraPers, t);
-      const myraMsg:ChatMessage={id:uuidv4(),role:'assistant',content:myraResp.text,timestamp:Date.now(),speakerName:myraConfig.myraName};
-      
-      uiLog = [...uiLog, myraMsg];
-      setDualConversationHistory([...uiLog]);
-      
-      promptForNextAi = myraMsg.content;
-      historyForApi = [...uiLog.slice(0, -1)];
-      simulateNetworkStepMyra();
-
-      if(dualConversationCancelledRef.current)break;
-      if(i === rounds - 1) break;
-
-      // C.A.E.L.U.M.'s Turn
-      let caelumTemp=myraConfig.caelumAIProviderConfig.temperatureBase + emotionStateCaelum.arousal*myraConfig.temperatureLimbusInfluence + (nodeStatesCaelum['Creativus_Caelum']?.activation||0)*myraConfig.temperatureCreativusInfluence; caelumTemp=Math.max(0.1,Math.min(1.0,caelumTemp));
-      const caelumAICfg:AIProviderConfig={...myraConfig.caelumAIProviderConfig,temperatureBase:caelumTemp};
-      let sysInsCaelum=getBaseSystemInstructionCaelum();
-      const caelumRAGChunks = retrieveRelevantChunks(promptForNextAi); // C.A.E.L.U.M. retrieves based on M.Y.R.A.'s last message
-      if(caelumRAGChunks.length>0){sysInsCaelum+=`\n\n${t('aiService.relevantInfoLabel')}\n`;caelumRAGChunks.forEach(c=>{sysInsCaelum+=`---[S:${c.source},P${c.index+1}]---\n${c.text}\n`;});sysInsCaelum+=`---[${t('aiService.endInfoLabel')}]---\n`;}
-      
-      const caelumResp=await callAiApi(promptForNextAi,myraConfig,caelumAICfg,historyForApi,sysInsCaelum,caelumPers, t);
-      const caelumMsg:ChatMessage={id:uuidv4(),role:'assistant',content:caelumResp.text,timestamp:Date.now(),speakerName:myraConfig.caelumName};
-
-      uiLog = [...uiLog, caelumMsg];
-      setDualConversationHistory([...uiLog]);
-
-      promptForNextAi = caelumMsg.content;
-      historyForApi = [...uiLog.slice(0, -1)];
-      simulateNetworkStepCaelum();
-    }
-
-    if(dualConversationCancelledRef.current){
-        const lastMsg = uiLog.length > 0 ? uiLog[uiLog.length-1] : null;
-        if(!(lastMsg?.role==='system'&&lastMsg.content.includes("cancelled"))){ 
-            const cancelMsgContent = t('dualAiPanel.conversationCancelled');
-            uiLog=[...uiLog,{id:uuidv4(),role:'system',content:cancelMsgContent,timestamp:Date.now()}];
-            setDualConversationHistory([...uiLog]);
+    const dominantAffCaelum = getDominantAffect(newCalculatedEmotionStateCaelum, t);
+    setPadHistoryCaelum(prevHistory => {
+        const newRecord: PADRecord = {
+            pleasure: newCalculatedEmotionStateCaelum.pleasure, arousal: newCalculatedEmotionStateCaelum.arousal,
+            dominance: newCalculatedEmotionStateCaelum.dominance, timestamp: Date.now(), dominantAffect: dominantAffCaelum
+        };
+        const updatedHistory = [...prevHistory, newRecord];
+        if (myraConfig.maxPadHistorySize > 0 && updatedHistory.length > myraConfig.maxPadHistorySize) {
+            return updatedHistory.slice(updatedHistory.length - myraConfig.maxPadHistorySize);
         }
-    }
-    setIsDualConversationLoading(false);
-  }, [myraConfig, simulateNetworkStepMyra, getBaseSystemInstructionMyra, emotionState, nodeStates, retrieveRelevantChunks, simulateNetworkStepCaelum, getBaseSystemInstructionCaelum, emotionStateCaelum, nodeStatesCaelum, t]);
+        return updatedHistory;
+    });
 
+    setNodeStatesCaelum(prev => {
+      const newNodes = { ...prev };
+      let totalJumpCountForMeta = newNodes['MetaCognitio_Caelum']?.specificState?.lastTotalJumps || 0;
+      if (subQgJumpInfoCaelum && subQgJumpInfoCaelum.timestamp > (newNodes['MetaCognitio_Caelum']?.specificState?.lastJumpTimestamp || 0)) {
+          totalJumpCountForMeta++;
+      }
+
+      for (const id in newNodes) {
+        const node = newNodes[id];
+        let activationChange = (rngRefCaelum.current.next() - 0.5) * 0.05; 
+        
+        if (subQgJumpModifierActiveStepsRemainingCaelum > 0) {
+          if (node.type === 'creativus' || node.type === 'metacognitio') { 
+            activationChange += activeSubQgJumpModifierCaelum * 0.25 * (rngRefCaelum.current.next()); 
+          } else if (node.type === 'criticus') { 
+            activationChange -= activeSubQgJumpModifierCaelum * 0.15 * (rngRefCaelum.current.next());
+          }
+        }
+        if (node.type === 'limbus') activationChange += (metrics.avgEnergy - myraConfig.caelumSubqgBaseEnergy) * 3;
+        if (node.type === 'creativus') activationChange += metrics.phaseCoherence * 0.03; 
+
+        node.activation = Math.max(0, Math.min(1, node.activation * myraConfig.caelumNodeActivationDecay + activationChange));
+        node.resonatorScore = Math.max(0, Math.min(1, node.resonatorScore * 0.93 + node.activation * 0.07 + (rngRefCaelum.current.next() - 0.5) * 0.01));
+        node.focusScore = Math.max(0, Math.min(1, node.focusScore * 0.95 + (node.type === 'criticus' ? node.activation * 0.15 : 0) + (rngRefCaelum.current.next() - 0.5) * 0.005));
+        node.explorationScore = Math.max(0, Math.min(1, node.explorationScore * 0.94 + (node.type === 'creativus' ? node.activation * 0.08 : 0) + (rngRefCaelum.current.next() - 0.5) * 0.01));
+        
+        if (node.id === 'MetaCognitio_Caelum') {
+             node.specificState = { ...node.specificState, lastTotalJumps: totalJumpCountForMeta, lastJumpTimestamp: subQgJumpInfoCaelum?.timestamp || node.specificState?.lastJumpTimestamp };
+        }
+      }
+      return newNodes;
+    });
+
+    setCaelumStressLevel(prevStress => {
+        let newStress = prevStress * 0.95; 
+        newStress += Math.abs(newCalculatedEmotionStateCaelum.arousal) * 0.03;
+        newStress += (1 - subQgGlobalMetricsCaelum.phaseCoherence) * 0.02;
+        newStress += (subQgGlobalMetricsCaelum.stdEnergy / (subQgGlobalMetricsCaelum.avgEnergy + 1e-6)) * 0.01;
+        const currentConflictNodeCaelum = nodeStatesCaelum['ConflictMonitor_Caelum']; 
+         if (currentConflictNodeCaelum?.specificState?.conflictLevel > 0.3) { 
+            newStress += currentConflictNodeCaelum.specificState.conflictLevel * 0.05;
+        }
+        return Math.max(0, Math.min(1, newStress));
+    });
+
+    if (subQgJumpModifierActiveStepsRemainingCaelum > 0) {
+      setSubQgJumpModifierActiveStepsRemainingCaelum(prev => prev - 1);
+      if (subQgJumpModifierActiveStepsRemainingCaelum -1 === 0) {
+          setActiveSubQgJumpModifierCaelum(0);
+      }
+    }
+
+    if (currentSimStep % myraConfig.caelumAdaptiveFitnessUpdateInterval === 0 && caelumFitnessManagerRef.current) {
+      const newFitness = caelumFitnessManagerRef.current.calculateMetricsAndFitness();
+      setAdaptiveFitnessCaelum(newFitness);
+    }
+  }, [
+    myraConfig, subQgMatrixCaelum, subQgPhaseMatrixCaelum, simulateSubQgStep, detectAndProcessSubQgJump,
+    activeSubQgJumpModifierCaelum, subQgJumpModifierActiveStepsRemainingCaelum, subQgJumpInfoCaelum,
+    nodeStatesCaelum, simulationStepCaelum, t, emotionStateCaelum
+  ]);
+
+  useEffect(() => {
+    const myraIntervalId = setInterval(simulateNetworkStepMyra, 2000);
+    return () => clearInterval(myraIntervalId);
+  }, [simulateNetworkStepMyra]);
+
+  useEffect(() => {
+    const caelumIntervalId = setInterval(simulateNetworkStepCaelum, 2100); 
+    return () => clearInterval(caelumIntervalId);
+  }, [simulateNetworkStepCaelum]);
+
+  const generateActiveAgentChatResponse = async (prompt: string) => {
+    setIsLoading(true);
+    const userMessage: ChatMessage = { 
+        id: uuidv4(), 
+        role: 'user', 
+        content: prompt, 
+        timestamp: Date.now(), 
+        speakerName: myraConfig.userName 
+    };
+    const currentChatHistory = [...chatHistory, userMessage];
+    setChatHistory(currentChatHistory);
+
+    const isCaelumActive = myraConfig.activeChatAgent === 'caelum';
+    const activeAgentConfig = isCaelumActive ? myraConfig.caelumAIProviderConfig : myraConfig.myraAIProviderConfig;
+    const activeAgentPersona: ResolvedSpeakerPersonaConfig = {
+        name: isCaelumActive ? myraConfig.caelumName : myraConfig.myraName,
+        roleDescription: isCaelumActive ? myraConfig.caelumRoleDescription : myraConfig.myraRoleDescription,
+        ethicsPrinciples: isCaelumActive ? myraConfig.caelumEthicsPrinciples : myraConfig.myraEthicsPrinciples,
+        responseInstruction: isCaelumActive ? myraConfig.caelumResponseInstruction : myraConfig.myraResponseInstruction,
+    };
+    const activeAgentBaseSystemInstruction = isCaelumActive ? getCaelumBaseSystemInstruction() : getMyraBaseSystemInstruction();
+    const activeAgentEmotionState = isCaelumActive ? emotionStateCaelum : emotionState;
+    const activeAgentNodeStates = isCaelumActive ? nodeStatesCaelum : nodeStates;
+    const activeAgentCreativusNodeId = isCaelumActive ? 'Creativus_Caelum' : 'Creativus_Myra';
+
+    const relevantChunks = await retrieveRelevantChunks(prompt, myraConfig.ragMaxChunksToRetrieve);
+    let systemInstruction = activeAgentBaseSystemInstruction;
+    if (relevantChunks.length > 0) {
+      systemInstruction += `\n\n${t('aiService.relevantInfoLabel')}\n` + relevantChunks.map(c => c.text).join("\n---\n") + `\n${t('aiService.endInfoLabel')}`;
+    }
+    
+    const effectiveTemp = Math.max(0, Math.min(2.0, 
+        activeAgentConfig.temperatureBase + 
+        (activeAgentEmotionState.arousal * myraConfig.temperatureLimbusInfluence) + 
+        ((activeAgentNodeStates[activeAgentCreativusNodeId]?.activation || 0.5) * myraConfig.temperatureCreativusInfluence)
+    ));
+
+    const response = await callAiApi(prompt, myraConfig, {...activeAgentConfig, temperatureBase: effectiveTemp} , currentChatHistory.slice(0, -1), systemInstruction, activeAgentPersona, t); // Pass history WITHOUT the current user message
+    const assistantMessage: ChatMessage = { 
+        id: uuidv4(), 
+        role: 'assistant', 
+        content: response.text || t('aiService.error.geminiGenerationError', {speakerName: activeAgentPersona.name}), 
+        timestamp: Date.now(), 
+        speakerName: activeAgentPersona.name 
+    };
+    setChatHistory(prev => [...prev, assistantMessage]);
+    setIsLoading(false);
+
+    if (isCaelumActive) {
+        simulateNetworkStepCaelum();
+    } else {
+        simulateNetworkStepMyra(); 
+    }
+  };
+
+
+  const startDualConversation = async (initialPrompt: string, rounds: number) => {
+    if (isDualConversationLoading) return;
+
+    setIsDualConversationLoading(true);
+    dualConversationAbortControllerRef.current = new AbortController();
+    const { signal } = dualConversationAbortControllerRef.current;
+
+    const userMessage: ChatMessage = {
+      id: uuidv4(), role: 'user', content: initialPrompt, timestamp: Date.now(), speakerName: myraConfig.userName
+    };
+    
+    let currentDualHistory: ChatMessage[] = [userMessage];
+    setDualConversationHistory(currentDualHistory);
+    let lastMessageContent = initialPrompt;
+
+    try {
+      for (let i = 0; i < rounds; i++) {
+        if (signal.aborted) {
+            setDualConversationHistory(prev => [...prev, {id: uuidv4(), role: 'system', content: t('dualAiPanel.conversationCancelled'), timestamp: Date.now()}]);
+            break;
+        }
+
+        // M.Y.R.A.'s turn
+        const myraChunks = await retrieveRelevantChunks(lastMessageContent, myraConfig.ragMaxChunksToRetrieve);
+        let myraSystemInstruction = getMyraBaseSystemInstruction();
+        if (myraChunks.length > 0) {
+          myraSystemInstruction += `\n\n${t('aiService.relevantInfoLabel')}\n` + myraChunks.map(c => c.text).join("\n---\n") + `\n${t('aiService.endInfoLabel')}`;
+        }
+        const myraPersona: ResolvedSpeakerPersonaConfig = { name: myraConfig.myraName, roleDescription: myraConfig.myraRoleDescription, ethicsPrinciples: myraConfig.myraEthicsPrinciples, responseInstruction: myraConfig.myraResponseInstruction };
+        const myraEffectiveTemp = Math.max(0, Math.min(2.0, myraConfig.myraAIProviderConfig.temperatureBase + (emotionState.arousal * myraConfig.temperatureLimbusInfluence) + ((nodeStates['Creativus_Myra']?.activation || 0.5) * myraConfig.temperatureCreativusInfluence)));
+        
+        const myraResponse = await callAiApi(lastMessageContent, myraConfig, {...myraConfig.myraAIProviderConfig, temperatureBase: myraEffectiveTemp}, currentDualHistory, myraSystemInstruction, myraPersona, t);
+        const myraMessage: ChatMessage = { id: uuidv4(), role: 'assistant', content: myraResponse.text || t('aiService.error.geminiGenerationError', {speakerName: myraConfig.myraName}), timestamp: Date.now(), speakerName: myraConfig.myraName };
+        currentDualHistory = [...currentDualHistory, myraMessage];
+        setDualConversationHistory(currentDualHistory);
+        lastMessageContent = myraMessage.content;
+        simulateNetworkStepMyra();
+        if (signal.aborted) {
+             setDualConversationHistory(prev => [...prev, {id: uuidv4(), role: 'system', content: t('dualAiPanel.conversationCancelled'), timestamp: Date.now()}]);
+             break;
+        }
+
+        // C.A.E.L.U.M.'s turn
+        const caelumChunks = await retrieveRelevantChunks(lastMessageContent, myraConfig.ragMaxChunksToRetrieve);
+        let caelumSystemInstruction = getCaelumBaseSystemInstruction();
+        if (caelumChunks.length > 0) {
+          caelumSystemInstruction += `\n\n${t('aiService.relevantInfoLabel')}\n` + caelumChunks.map(c => c.text).join("\n---\n") + `\n${t('aiService.endInfoLabel')}`;
+        }
+        const caelumPersona: ResolvedSpeakerPersonaConfig = { name: myraConfig.caelumName, roleDescription: myraConfig.caelumRoleDescription, ethicsPrinciples: myraConfig.caelumEthicsPrinciples, responseInstruction: myraConfig.caelumResponseInstruction };
+        const caelumEffectiveTemp = Math.max(0, Math.min(2.0, myraConfig.caelumAIProviderConfig.temperatureBase + (emotionStateCaelum.arousal * myraConfig.temperatureLimbusInfluence) + ((nodeStatesCaelum['Creativus_Caelum']?.activation || 0.5) * myraConfig.temperatureCreativusInfluence)));
+        
+        const caelumResponse = await callAiApi(lastMessageContent, myraConfig, {...myraConfig.caelumAIProviderConfig, temperatureBase: caelumEffectiveTemp}, currentDualHistory, caelumSystemInstruction, caelumPersona, t);
+        const caelumMessage: ChatMessage = { id: uuidv4(), role: 'assistant', content: caelumResponse.text || t('aiService.error.geminiGenerationError', {speakerName: myraConfig.caelumName}), timestamp: Date.now(), speakerName: myraConfig.caelumName };
+        currentDualHistory = [...currentDualHistory, caelumMessage];
+        setDualConversationHistory(currentDualHistory);
+        lastMessageContent = caelumMessage.content;
+        simulateNetworkStepCaelum();
+      }
+    } catch (error) {
+      console.error("Error during dual conversation:", error);
+      setDualConversationHistory(prev => [...prev, {id: uuidv4(), role: 'system', content: `Error: ${(error as Error).message}`, timestamp: Date.now()}]);
+    } finally {
+      setIsDualConversationLoading(false);
+      dualConversationAbortControllerRef.current = null;
+    }
+  };
 
   const injectSubQgStimulus = useCallback((x: number, y: number, energyDelta: number, phaseValue?: number) => {
-    const currentConfig = myraConfig;
-    setSubQgMatrix(prev => { const newMatrix = prev.map(row => [...row]); if (x >= 0 && x < currentConfig.subqgSize && y >= 0 && y < currentConfig.subqgSize) { newMatrix[x][y] = Math.max(0, Math.min(1, newMatrix[x][y] + energyDelta)); } return newMatrix; });
-    if (phaseValue !== undefined) { setSubQgPhaseMatrix(prev => { const newPhaseMatrix = prev.map(row => [...row]); if (x >= 0 && x < currentConfig.subqgSize && y >= 0 && y < currentConfig.subqgSize) { newPhaseMatrix[x][y] = (phaseValue + 2 * Math.PI) % (2 * Math.PI); } return newPhaseMatrix; }); }
-  }, [myraConfig]);
+    setSubQgMatrix(prevMatrix => {
+      const newMatrix = prevMatrix.map(row => [...row]);
+      if (newMatrix[x] && newMatrix[x][y] !== undefined) {
+        newMatrix[x][y] = Math.max(0, newMatrix[x][y] + energyDelta);
+      }
+      return newMatrix;
+    });
+    if (phaseValue !== undefined) {
+       setSubQgPhaseMatrix(prevPhaseMatrix => {
+         const newPhaseMatrix = prevPhaseMatrix.map(row => [...row]);
+         if (newPhaseMatrix[x] && newPhaseMatrix[x][y] !== undefined) {
+           newPhaseMatrix[x][y] = (phaseValue + 2 * Math.PI) % (2 * Math.PI);
+         }
+         return newPhaseMatrix;
+       });
+    }
+  }, []);
 
   const injectSubQgStimulusCaelum = useCallback((x: number, y: number, energyDelta: number, phaseValue?: number) => {
-    const currentConfig = myraConfig;
-    setSubQgMatrixCaelum(prev => { const newMatrix = prev.map(row => [...row]); if (x >= 0 && x < currentConfig.caelumSubqgSize && y >= 0 && y < currentConfig.caelumSubqgSize) { newMatrix[x][y] = Math.max(0, Math.min(1, newMatrix[x][y] + energyDelta)); } return newMatrix; });
-    if (phaseValue !== undefined) { setSubQgPhaseMatrixCaelum(prev => { const newPhaseMatrix = prev.map(row => [...row]); if (x >= 0 && x < currentConfig.caelumSubqgSize && y >= 0 && y < currentConfig.caelumSubqgSize) { newPhaseMatrix[x][y] = (phaseValue + 2 * Math.PI) % (2 * Math.PI); } return newPhaseMatrix; }); }
-  }, [myraConfig]);
+    setSubQgMatrixCaelum(prevMatrix => {
+      const newMatrix = prevMatrix.map(row => [...row]);
+      if (newMatrix[x] && newMatrix[x][y] !== undefined) {
+        newMatrix[x][y] = Math.max(0, newMatrix[x][y] + energyDelta);
+      }
+      return newMatrix;
+    });
+     if (phaseValue !== undefined) {
+       setSubQgPhaseMatrixCaelum(prevPhaseMatrix => {
+         const newPhaseMatrix = prevPhaseMatrix.map(row => [...row]);
+         if (newPhaseMatrix[x] && newPhaseMatrix[x][y] !== undefined) {
+           newPhaseMatrix[x][y] = (phaseValue + 2 * Math.PI) % (2 * Math.PI);
+         }
+         return newPhaseMatrix;
+       });
+    }
+  }, []);
+  
+  const loadInitialKnowledgeFromDB = useCallback(async () => {
+    setIsLoadingKnowledge(true);
+    try {
+      const chunks = await getAllChunksFromDB();
+      setProcessedTextChunks(chunks);
+    } catch (error) {
+      console.error("Failed to load knowledge from DB:", error);
+    }
+    setIsLoadingKnowledge(false);
+  }, []);
 
+ const loadDocumentationKnowledge = useCallback(async () => {
+    setIsLoadingKnowledge(true);
+    const currentLang = myraConfig.language || 'de';
+    const fallbackLang = 'en';
+
+    for (const basePath of DOCUMENTATION_BASE_PATHS) {
+        let filePath = `${basePath}_${currentLang}.md`;
+        let success = false;
+        try {
+            const response = await fetch(filePath);
+            if (response.ok) {
+                const content = await response.text();
+                const sourceName = `${basePath.split('/').pop()}_${currentLang}.md`;
+                
+                await clearChunksBySourceFromDB(sourceName);
+
+                const newChunks: TextChunk[] = [];
+                for (let i = 0; i < content.length; i += myraConfig.ragChunkSize - myraConfig.ragChunkOverlap) {
+                    const chunkText = content.substring(i, i + myraConfig.ragChunkSize);
+                    newChunks.push({
+                        id: uuidv4(),
+                        source: sourceName,
+                        index: newChunks.length,
+                        text: chunkText
+                    });
+                }
+                if (newChunks.length > 0) {
+                   await addChunksToDB(newChunks);
+                }
+                success = true;
+            }
+        } catch (e) { console.error(`Error fetching or processing ${filePath}`, e); }
+
+        if (!success && currentLang !== fallbackLang) {
+            filePath = `${basePath}_${fallbackLang}.md`;
+            try {
+                const response = await fetch(filePath);
+                if (response.ok) {
+                    const content = await response.text();
+                    const sourceName = `${basePath.split('/').pop()}_${fallbackLang}.md`;
+                    await clearChunksBySourceFromDB(sourceName);
+                    const newChunks: TextChunk[] = [];
+                    for (let i = 0; i < content.length; i += myraConfig.ragChunkSize - myraConfig.ragChunkOverlap) {
+                        const chunkText = content.substring(i, i + myraConfig.ragChunkSize);
+                        newChunks.push({ id: uuidv4(), source: sourceName, index: newChunks.length, text: chunkText });
+                    }
+                     if (newChunks.length > 0) {
+                       await addChunksToDB(newChunks);
+                    }
+                }
+            } catch (e) { console.error(`Error fetching or processing fallback ${filePath}`, e); }
+        }
+    }
+    await loadInitialKnowledgeFromDB(); // Reload all chunks into state
+    setIsLoadingKnowledge(false);
+  }, [myraConfig.language, myraConfig.ragChunkSize, myraConfig.ragChunkOverlap, loadInitialKnowledgeFromDB]);
+
+  useEffect(() => {
+    loadDocumentationKnowledge();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount to load documentation initially. Relies on loadInitialKnowledgeFromDB for state update.
+
+
+  const loadAndProcessFile = async (file: File) => {
+    setIsLoadingKnowledge(true);
+    try {
+      const text = await file.text();
+      const newChunks: TextChunk[] = [];
+      for (let i = 0; i < text.length; i += myraConfig.ragChunkSize - myraConfig.ragChunkOverlap) {
+        const chunkText = text.substring(i, i + myraConfig.ragChunkSize);
+        newChunks.push({
+          id: uuidv4(),
+          source: file.name,
+          index: newChunks.length,
+          text: chunkText
+        });
+      }
+      await clearChunksBySourceFromDB(file.name); // Clear old chunks from this source
+      await addChunksToDB(newChunks);
+      await loadInitialKnowledgeFromDB(); // Reload all chunks including new ones
+    } catch (error) {
+      console.error(t('knowledgePanel.errorProcessingFile', { message: (error as Error).message }));
+    }
+    setIsLoadingKnowledge(false);
+  };
+
+  const clearAllKnowledge = async () => {
+    setIsLoadingKnowledge(true);
+    try {
+      await clearAllChunksFromDB();
+      setProcessedTextChunks([]);
+    } catch (error) {
+       console.error(t('knowledgePanel.errorClearingDb', { message: (error as Error).message }));
+    }
+    setIsLoadingKnowledge(false);
+  };
 
   return {
     myraConfig,
-    language: currentLanguage, 
-    t, 
-    // Myra State
-    chatHistory, emotionState, nodeStates, adaptiveFitness, subQgMatrix, subQgPhaseMatrix, subQgGlobalMetrics, subQgJumpInfo, activeSubQgJumpModifier, subQgJumpModifierActiveStepsRemaining, simulationStep, myraStressLevel,
-    // Caelum State
-    emotionStateCaelum, nodeStatesCaelum, adaptiveFitnessCaelum, subQgMatrixCaelum, subQgPhaseMatrixCaelum, subQgGlobalMetricsCaelum, subQgJumpInfoCaelum, activeSubQgJumpModifierCaelum, subQgJumpModifierActiveStepsRemainingCaelum, simulationStepCaelum, caelumStressLevel,
-    // Shared
-    isLoading,
-    processedTextChunks, loadAndProcessFile, clearAllKnowledge, isLoadingKnowledge,
-    dualConversationHistory, isDualConversationLoading, startDualConversation,
-    // Functions
-    generateMyraResponse,
-    injectSubQgStimulus,
-    injectSubQgStimulusCaelum,
     updateMyraConfig,
+    chatHistory,
+    isLoading,
+    generateActiveAgentChatResponse,
+    simulationStep,
+    subQgMatrix,
+    subQgPhaseMatrix,
+    subQgGlobalMetrics,
+    emotionState,
+    nodeStates,
+    adaptiveFitness,
+    injectSubQgStimulus,
+    activeSubQgJumpModifier,
+    subQgJumpModifierActiveStepsRemaining,
+    subQgJumpInfo,
+    myraStressLevel,
+    padHistoryMyra,
+
+    simulationStepCaelum,
+    subQgMatrixCaelum,
+    subQgPhaseMatrixCaelum,
+    subQgGlobalMetricsCaelum,
+    emotionStateCaelum,
+    nodeStatesCaelum,
+    adaptiveFitnessCaelum,
+    injectSubQgStimulusCaelum,
+    activeSubQgJumpModifierCaelum,
+    subQgJumpModifierActiveStepsRemainingCaelum,
+    subQgJumpInfoCaelum,
+    caelumStressLevel,
+    padHistoryCaelum,
+    
+    dualConversationHistory,
+    isDualConversationLoading,
+    startDualConversation,
+
+    processedTextChunks,
+    isLoadingKnowledge,
+    loadAndProcessFile,
+    clearAllKnowledge,
+    t,
+    language: myraConfig.language,
   };
 };

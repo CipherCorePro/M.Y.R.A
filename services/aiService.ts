@@ -1,4 +1,12 @@
 
+// Add this declaration at the top of the file
+declare var process: {
+  env: {
+    API_KEY?: string;
+    [key: string]: string | undefined;
+  };
+};
+
 import { GoogleGenAI, GenerateContentResponse as SDKGenerateContentResponse, Content } from "@google/genai";
 import { 
   MyraConfig, ChatMessage, 

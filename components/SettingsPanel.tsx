@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     MyraConfig,
     AdaptiveFitnessMetricWeights,
     MyraSystemConfigField,
-    MyraPersonaConfigField,
-    CaelumPersonaConfigField,
+    MyraPersonaEditableField,
+    CaelumPersonaEditableField,
     CaelumSystemConfigField,
     AdaptiveFitnessBaseWeightsField,
     AdaptiveFitnessDimensionSubField,
@@ -12,10 +13,11 @@ import {
     CaelumAIProviderConfigField,
     ConfigField,
     LocalizationConfigField,
+    GeneralSystemConfigField,
     Language,
     Theme
 } from '../types';
-import { Cog6ToothIcon, ServerIcon, CloudIcon, BeakerIcon as SubQGIcon, BookOpenIcon, ChartPieIcon, CpuChipIcon as CaelumAICPUChipIcon, AdjustmentsVerticalIcon as CaelumSystemIcon, AdjustmentsVerticalIcon, LanguageIcon, PaintBrushIcon } from './IconComponents';
+import { Cog6ToothIcon, ServerIcon, CloudIcon, BeakerIcon as SubQGIcon, BookOpenIcon, ChartPieIcon, CpuChipIcon as CaelumAICPUChipIconActual, AdjustmentsVerticalIcon, LanguageIcon as LanguageIconActual, PaintBrushIcon as PaintBrushIconActual, UserCircleIcon as UserCircleIconActual } from './IconComponents';
 import { INITIAL_CONFIG } from '../constants';
 
 interface SettingsPanelProps {
@@ -24,10 +26,15 @@ interface SettingsPanelProps {
   t: (key: string, substitutions?: Record<string, string>) => string;
 }
 
+// Use actual imported icons
+const UserCircleIcon: React.FC<{className?: string}> = UserCircleIconActual;
+const LanguageIcon: React.FC<{className?: string}> = LanguageIconActual;
+const PaintBrushIcon: React.FC<{className?: string}> = PaintBrushIconActual;
+const CaelumAICPUChipIcon: React.FC<{className?: string}> = CaelumAICPUChipIconActual;
+const CaelumSystemIcon: React.FC<{className?: string}> = AdjustmentsVerticalIcon;
 
-const UserCircleIcon: React.FC<{className?: string}> = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className || "w-6 h-6"}><path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" /></svg>;
 
-const getConfigFields = (t: SettingsPanelProps['t']): ConfigField[] => [
+const getConfigFields = (t: SettingsPanelProps['t'], myraConfig: MyraConfig): ConfigField[] => [
   // Localization Group
   { key: 'language', labelKey: 'settingsPanel.language.label', type: 'select', options: [ { value: 'de', labelKey: 'settingsPanel.language.options.de' }, { value: 'en', labelKey: 'settingsPanel.language.options.en' } ], groupKey: "settingsPanel.group.localization" } as LocalizationConfigField,
   { key: 'theme', labelKey: 'settingsPanel.theme.label', type: 'select', options: [ { value: 'nebula', labelKey: 'settingsPanel.theme.options.nebula' }, { value: 'biosphere', labelKey: 'settingsPanel.theme.options.biosphere' }, { value: 'matrix', labelKey: 'settingsPanel.theme.options.matrix' } ], groupKey: "settingsPanel.group.localization" } as LocalizationConfigField,
@@ -46,18 +53,18 @@ const getConfigFields = (t: SettingsPanelProps['t']): ConfigField[] => [
   { key: 'lmStudioGenerationModel', parentKey: 'caelumAIProviderConfig', labelKey: 'settingsPanel.caelumAI.lmStudioGenerationModel.label', type: 'text', condition: config => config.caelumAIProviderConfig.aiProvider === 'lmstudio', groupKey: "settingsPanel.group.caelumAI" } as CaelumAIProviderConfigField,
   { key: 'temperatureBase', parentKey: 'caelumAIProviderConfig', labelKey: 'settingsPanel.caelumAI.temperatureBase.label', type: 'number', step: 0.05, min: 0, max: 2.0, groupKey: "settingsPanel.group.caelumAI" } as CaelumAIProviderConfigField,
 
-  // Myra Persona Group (using keys now)
-  { key: 'myraNameKey', labelKey: 'settingsPanel.myraPersona.name.label', type: 'text', groupKey: "settingsPanel.group.myraPersona" } as MyraPersonaConfigField,
-  { key: 'userNameKey', labelKey: 'settingsPanel.myraPersona.userName.label', type: 'text', groupKey: "settingsPanel.group.myraPersona" } as MyraPersonaConfigField,
-  { key: 'myraRoleDescriptionKey', labelKey: 'settingsPanel.myraPersona.roleDescription.label', type: 'textarea', rows: 3, groupKey: "settingsPanel.group.myraPersona" } as MyraPersonaConfigField,
-  { key: 'myraEthicsPrinciplesKey', labelKey: 'settingsPanel.myraPersona.ethicsPrinciples.label', type: 'textarea', rows: 3, groupKey: "settingsPanel.group.myraPersona" } as MyraPersonaConfigField,
-  { key: 'myraResponseInstructionKey', labelKey: 'settingsPanel.myraPersona.responseInstruction.label', type: 'textarea', rows: 4, groupKey: "settingsPanel.group.myraPersona" } as MyraPersonaConfigField,
+  // Myra Persona Group (editing translated values directly)
+  { key: 'myraName', labelKey: 'settingsPanel.myraPersona.name.label', type: 'text', groupKey: "settingsPanel.group.myraPersona" } as MyraPersonaEditableField,
+  { key: 'userName', labelKey: 'settingsPanel.myraPersona.userName.label', type: 'text', groupKey: "settingsPanel.group.myraPersona" } as MyraPersonaEditableField,
+  { key: 'myraRoleDescription', labelKey: 'settingsPanel.myraPersona.roleDescription.label', type: 'textarea', rows: 3, groupKey: "settingsPanel.group.myraPersona" } as MyraPersonaEditableField,
+  { key: 'myraEthicsPrinciples', labelKey: 'settingsPanel.myraPersona.ethicsPrinciples.label', type: 'textarea', rows: 3, groupKey: "settingsPanel.group.myraPersona" } as MyraPersonaEditableField,
+  { key: 'myraResponseInstruction', labelKey: 'settingsPanel.myraPersona.responseInstruction.label', type: 'textarea', rows: 4, groupKey: "settingsPanel.group.myraPersona" } as MyraPersonaEditableField,
 
-  // Caelum Persona Group
-  { key: 'caelumNameKey', labelKey: 'settingsPanel.caelumPersona.name.label', type: 'text', groupKey: "settingsPanel.group.caelumPersona" } as CaelumPersonaConfigField,
-  { key: 'caelumRoleDescriptionKey', labelKey: 'settingsPanel.caelumPersona.roleDescription.label', type: 'textarea', rows: 3, groupKey: "settingsPanel.group.caelumPersona" } as CaelumPersonaConfigField,
-  { key: 'caelumEthicsPrinciplesKey', labelKey: 'settingsPanel.caelumPersona.ethicsPrinciples.label', type: 'textarea', rows: 3, groupKey: "settingsPanel.group.caelumPersona" } as CaelumPersonaConfigField,
-  { key: 'caelumResponseInstructionKey', labelKey: 'settingsPanel.caelumPersona.responseInstruction.label', type: 'textarea', rows: 4, groupKey: "settingsPanel.group.caelumPersona" } as CaelumPersonaConfigField,
+  // Caelum Persona Group (editing translated values directly)
+  { key: 'caelumName', labelKey: 'settingsPanel.caelumPersona.name.label', type: 'text', groupKey: "settingsPanel.group.caelumPersona" } as CaelumPersonaEditableField,
+  { key: 'caelumRoleDescription', labelKey: 'settingsPanel.caelumPersona.roleDescription.label', type: 'textarea', rows: 3, groupKey: "settingsPanel.group.caelumPersona" } as CaelumPersonaEditableField,
+  { key: 'caelumEthicsPrinciples', labelKey: 'settingsPanel.caelumPersona.ethicsPrinciples.label', type: 'textarea', rows: 3, groupKey: "settingsPanel.group.caelumPersona" } as CaelumPersonaEditableField,
+  { key: 'caelumResponseInstruction', labelKey: 'settingsPanel.caelumPersona.responseInstruction.label', type: 'textarea', rows: 4, groupKey: "settingsPanel.group.caelumPersona" } as CaelumPersonaEditableField,
 
   // M.Y.R.A. System Group
   { key: 'subqgSize', labelKey: 'settingsPanel.myraSystem.subqgSize.label', type: 'number', min: 4, max: 64, step: 1, groupKey: "settingsPanel.group.myraSystem" } as MyraSystemConfigField,
@@ -80,19 +87,21 @@ const getConfigFields = (t: SettingsPanelProps['t']): ConfigField[] => [
   { key: 'caelumAdaptiveFitnessUpdateInterval', labelKey: 'settingsPanel.caelumSystem.adaptiveFitnessUpdateInterval.label', type: 'number', min: 1, max: 20, step: 1, groupKey: "settingsPanel.group.caelumSystem" } as CaelumSystemConfigField,
 
   // General System Group
-  { key: 'maxHistoryMessagesForPrompt', labelKey: 'settingsPanel.generalSystem.maxHistoryMessagesForPrompt.label', type: 'number', min: 0, max: 20, step: 1, groupKey: "settingsPanel.group.generalSystem" } as MyraSystemConfigField,
-  { key: 'temperatureLimbusInfluence', labelKey: 'settingsPanel.generalSystem.temperatureLimbusInfluence.label', type: 'number', min: -0.5, max: 0.5, step: 0.01, groupKey: "settingsPanel.group.generalSystem" } as MyraSystemConfigField,
-  { key: 'temperatureCreativusInfluence', labelKey: 'settingsPanel.generalSystem.temperatureCreativusInfluence.label', type: 'number', min: -0.5, max: 0.5, step: 0.01, groupKey: "settingsPanel.group.generalSystem" } as MyraSystemConfigField,
-  { key: 'ragChunkSize', labelKey: 'settingsPanel.generalSystem.ragChunkSize.label', type: 'number', min: 100, max: 2000, step: 50, groupKey: "settingsPanel.group.generalSystem" } as MyraSystemConfigField,
-  { key: 'ragChunkOverlap', labelKey: 'settingsPanel.generalSystem.ragChunkOverlap.label', type: 'number', min: 0, max: 500, step: 10, groupKey: "settingsPanel.group.generalSystem" } as MyraSystemConfigField,
-  { key: 'ragMaxChunksToRetrieve', labelKey: 'settingsPanel.generalSystem.ragMaxChunksToRetrieve.label', type: 'number', min: 1, max: 10, step: 1, groupKey: "settingsPanel.group.generalSystem" } as MyraSystemConfigField,
+  { key: 'activeChatAgent', labelKey: 'settingsPanel.generalSystem.activeChatAgent.label', type: 'select', options: [ {value: 'myra', labelKey: myraConfig.myraName || t('settingsPanel.generalSystem.activeChatAgent.options.myra')}, {value: 'caelum', labelKey: myraConfig.caelumName || t('settingsPanel.generalSystem.activeChatAgent.options.caelum')} ], groupKey: "settingsPanel.group.generalSystem" } as GeneralSystemConfigField,
+  { key: 'maxHistoryMessagesForPrompt', labelKey: 'settingsPanel.generalSystem.maxHistoryMessagesForPrompt.label', type: 'number', min: 0, max: 20, step: 1, groupKey: "settingsPanel.group.generalSystem" } as GeneralSystemConfigField,
+  { key: 'temperatureLimbusInfluence', labelKey: 'settingsPanel.generalSystem.temperatureLimbusInfluence.label', type: 'number', min: -0.5, max: 0.5, step: 0.01, groupKey: "settingsPanel.group.generalSystem" } as GeneralSystemConfigField,
+  { key: 'temperatureCreativusInfluence', labelKey: 'settingsPanel.generalSystem.temperatureCreativusInfluence.label', type: 'number', min: -0.5, max: 0.5, step: 0.01, groupKey: "settingsPanel.group.generalSystem" } as GeneralSystemConfigField,
+  { key: 'ragChunkSize', labelKey: 'settingsPanel.generalSystem.ragChunkSize.label', type: 'number', min: 100, max: 2000, step: 50, groupKey: "settingsPanel.group.generalSystem" } as GeneralSystemConfigField,
+  { key: 'ragChunkOverlap', labelKey: 'settingsPanel.generalSystem.ragChunkOverlap.label', type: 'number', min: 0, max: 500, step: 10, groupKey: "settingsPanel.group.generalSystem" } as GeneralSystemConfigField,
+  { key: 'ragMaxChunksToRetrieve', labelKey: 'settingsPanel.generalSystem.ragMaxChunksToRetrieve.label', type: 'number', min: 1, max: 10, step: 1, groupKey: "settingsPanel.group.generalSystem" } as GeneralSystemConfigField,
+  { key: 'maxPadHistorySize', labelKey: 'settingsPanel.generalSystem.maxPadHistorySize.label', type: 'number', min: 50, max: 1000, step: 50, groupKey: "settingsPanel.group.generalSystem" } as GeneralSystemConfigField,
 
   // Adaptive Fitness - Base Metric Weights
   ...Object.keys(INITIAL_CONFIG.adaptiveFitnessConfig.baseMetricWeights).map(subKey => ({
     key: subKey as keyof AdaptiveFitnessMetricWeights,
     parentKey: 'adaptiveFitnessConfig',
     subKey: 'baseMetricWeights',
-    labelKey: `settingsPanel.adaptiveFitnessBase.${subKey}.label`, // e.g. settingsPanel.adaptiveFitnessBase.coherenceProxy.label
+    labelKey: `settingsPanel.adaptiveFitnessBase.${subKey}.label`,
     type: 'number',
     step: 0.01,
     min: -1,
@@ -107,7 +116,7 @@ const getConfigFields = (t: SettingsPanelProps['t']): ConfigField[] => [
           parentKey: 'adaptiveFitnessConfig',
           subKey: dimKey as keyof MyraConfig['adaptiveFitnessConfig']['dimensionContribWeights'],
           subSubKey: 'dimensionContribWeights',
-          labelKey: `settingsPanel.adaptiveFitnessDim.${dimKey}.${metricKey}.label`, // e.g. settingsPanel.adaptiveFitnessDim.knowledgeExpansion.learningEfficiency.label
+          labelKey: `settingsPanel.adaptiveFitnessDim.${dimKey}.${metricKey}.label`,
           type: 'number',
           step: 0.01,
           min: 0,
@@ -117,35 +126,31 @@ const getConfigFields = (t: SettingsPanelProps['t']): ConfigField[] => [
   )
 ];
 
-
 export const SettingsPanel: React.FC<SettingsPanelProps> = ({ config, onConfigChange, t }) => {
   const [localConfig, setLocalConfig] = useState<MyraConfig>(config);
-  const currentConfigFields = React.useMemo(() => getConfigFields(t), [t]);
+  const currentConfigFields = React.useMemo(() => getConfigFields(t, config), [t, config]); // Pass config to dynamically set options
   const [activeGroupKey, setActiveGroupKey] = useState<string | null>(currentConfigFields[0]?.groupKey || null);
 
   const groupIcons: Record<string, React.ReactElement> = {
-    "settingsPanel.group.localization": <LanguageIcon className="w-5 h-5 mr-2 text-icon-localization" />,
-    "settingsPanel.group.myraAI": <CloudIcon className="w-5 h-5 mr-2 text-icon-myra-ai" />,
-    "settingsPanel.group.caelumAI": <CaelumAICPUChipIcon className="w-5 h-5 mr-2 text-icon-caelum-ai" />,
-    "settingsPanel.group.myraPersona": <UserCircleIcon className="w-5 h-5 mr-2 text-icon-myra-persona" />,
-    "settingsPanel.group.caelumPersona": <UserCircleIcon className="w-5 h-5 mr-2 text-icon-caelum-persona" />,
-    "settingsPanel.group.myraSystem": <SubQGIcon className="w-5 h-5 mr-2 text-icon-myra-system" />,
-    "settingsPanel.group.caelumSystem": <CaelumSystemIcon className="w-5 h-5 mr-2 text-icon-caelum-system" />,
-    "settingsPanel.group.generalSystem": <Cog6ToothIcon className="w-5 h-5 mr-2 text-icon-general" />,
-    "settingsPanel.group.adaptiveFitnessBase": <ChartPieIcon className="w-5 h-5 mr-2 text-icon-fitness" />,
-    "settingsPanel.group.adaptiveFitnessDim": <ChartPieIcon className="w-5 h-5 mr-2 text-icon-fitness-dim" />,
+    "settingsPanel.group.localization": <LanguageIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 text-yellow-400" />,
+    "settingsPanel.group.myraAI": <CloudIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 text-myra-primary" />,
+    "settingsPanel.group.caelumAI": <CaelumAICPUChipIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 text-caelum-primary" />,
+    "settingsPanel.group.myraPersona": <UserCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 text-pink-400" />,
+    "settingsPanel.group.caelumPersona": <UserCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 text-rose-400" />,
+    "settingsPanel.group.myraSystem": <SubQGIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 text-green-400" />,
+    "settingsPanel.group.caelumSystem": <CaelumSystemIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 text-teal-400" />,
+    "settingsPanel.group.generalSystem": <Cog6ToothIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 text-gray-400" />,
+    "settingsPanel.group.adaptiveFitnessBase": <ChartPieIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 text-indigo-400" />,
+    "settingsPanel.group.adaptiveFitnessDim": <ChartPieIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 text-violet-400" />,
   };
 
-
   useEffect(() => {
-    // When the global config changes (e.g., language change from hook), update local state
-    // This ensures that translated persona fields in localConfig are also updated
     setLocalConfig(config);
   }, [config]);
 
   const handleInputChange = (
     key: string,
-    value: string | number | boolean,
+    value: string | number | boolean | undefined, // Allow undefined for optional seeds
     parentKey?: string,
     subKey?: string,
     subSubKey?: string
@@ -182,18 +187,39 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ config, onConfigCh
     onConfigChange(configToSave);
   };
 
+  const personaEditableFieldKeys: Array<keyof MyraConfig> = [
+    'myraName', 'myraRoleDescription', 'myraEthicsPrinciples', 'myraResponseInstruction', 'userName',
+    'caelumName', 'caelumRoleDescription', 'caelumEthicsPrinciples', 'caelumResponseInstruction'
+  ];
+
+  const personaKeyFieldMapping: Partial<Record<keyof MyraConfig, keyof MyraConfig>> = {
+      'myraName': 'myraNameKey',
+      'myraRoleDescription': 'myraRoleDescriptionKey',
+      'myraEthicsPrinciples': 'myraEthicsPrinciplesKey',
+      'myraResponseInstruction': 'myraResponseInstructionKey',
+      'userName': 'userNameKey',
+      'caelumName': 'caelumNameKey',
+      'caelumRoleDescription': 'caelumRoleDescriptionKey',
+      'caelumEthicsPrinciples': 'caelumEthicsPrinciplesKey',
+      'caelumResponseInstruction': 'caelumResponseInstructionKey',
+  };
+
   const handleResetGroup = (groupKeyToReset: string) => {
     setLocalConfig(prevConfig => {
         const newConfig = JSON.parse(JSON.stringify(prevConfig)) as MyraConfig;
-        // Use a snapshot of INITIAL_CONFIG with currently selected language for persona keys
         const initialSnapshotForLang = JSON.parse(JSON.stringify(INITIAL_CONFIG)) as MyraConfig;
-        initialSnapshotForLang.language = newConfig.language; // keep current language for resolving keys from initial
-
-
+        
         currentConfigFields.filter(field => field.groupKey === groupKeyToReset).forEach(field => {
-            const { key } = field;
-            if (field.key === 'language' || field.key === 'theme') { // Handle language/theme reset carefully
-                 (newConfig as any)[key as string] = (INITIAL_CONFIG as any)[key as string];
+            const { key } = field as { key: keyof MyraConfig };
+
+            if (personaEditableFieldKeys.includes(key)) {
+                (newConfig as any)[key] = ""; 
+                const actualKeyField = personaKeyFieldMapping[key];
+                if (actualKeyField) {
+                     (newConfig as any)[actualKeyField] = (initialSnapshotForLang as any)[actualKeyField];
+                }
+            } else if (key === 'language' || key === 'theme' || key === 'maxPadHistorySize' || key === 'activeChatAgent') { 
+                 (newConfig as any)[key] = (INITIAL_CONFIG as any)[key];
             } else if ('parentKey' in field && field.parentKey && 'subKey' in field && field.subKey && 'subSubKey' in field && field.subSubKey) {
                  (newConfig[field.parentKey as keyof MyraConfig] as any)[field.subSubKey][field.subKey][field.key as string] =
                  (initialSnapshotForLang[field.parentKey as keyof MyraConfig] as any)[field.subSubKey][field.subKey][field.key as string];
@@ -203,29 +229,27 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ config, onConfigCh
             } else if ('parentKey' in field && field.parentKey) {
                 (newConfig[field.parentKey as keyof MyraConfig] as any)[key as string] =
                 (initialSnapshotForLang[field.parentKey as keyof MyraConfig] as any)[key as string];
-            } else { // Top-level (includes persona keys like myraNameKey)
+            } else { 
                  (newConfig as any)[key as string] = (initialSnapshotForLang as any)[key as string];
             }
         });
-        // After resetting keys, we must re-populate the translated fields for persona
-        // This will be handled by the main setLocalConfig's useEffect dependency on 'config' or by a direct call.
-        // For now, the main save will re-trigger the full translation population in useMyraState.
-        // Or, more directly:
-        return newConfig; // This will be passed to onConfigChange, which eventually updates the main config
+        return newConfig;
     });
   };
 
   const handleResetAll = () => {
-     // Reset to INITIAL_CONFIG but keep current language and theme to avoid jarring UI shift before save.
-     // The save action will then correctly populate translated fields.
     const currentLang = localConfig.language;
     const currentTheme = localConfig.theme;
-    const fullyResetConfig = JSON.parse(JSON.stringify(INITIAL_CONFIG)) as MyraConfig;
+    let fullyResetConfig = JSON.parse(JSON.stringify(INITIAL_CONFIG)) as MyraConfig;
+    
+    personaEditableFieldKeys.forEach(key => {
+      (fullyResetConfig as any)[key] = "";
+    });
+
     fullyResetConfig.language = currentLang;
     fullyResetConfig.theme = currentTheme;
     setLocalConfig(fullyResetConfig);
   };
-
 
   const renderField = (field: ConfigField) => {
     if (field.condition && !field.condition(localConfig)) {
@@ -244,117 +268,205 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ config, onConfigCh
     }
 
     if (field.type === 'number' && currentValue === undefined && (field.key === 'subqgSeed' || field.key === 'caelumSubqgSeed')) {
-        currentValue = '';
+        currentValue = ''; // Display as empty for optional undefined seeds
     } else if (currentValue === undefined) {
-        currentValue = field.type === 'number' ? 0 : field.type === 'textarea' ? '' : '';
+        currentValue = ''; // Default to empty string if undefined, for non-seed numbers or other types
     }
 
+    const commonInputClass = "w-full p-2 text-sm bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition duration-150 ease-in-out text-gray-100 placeholder-gray-400";
+    const commonLabelClass = "block text-sm font-medium text-gray-300 mb-1";
 
-    const commonProps = {
-      id: String(field.key) + (field as any).parentKey + (field as any).subKey,
-      className: "w-full p-2 bg-input text-input-text border border-input-border rounded-md focus:ring-2 focus:ring-highlight focus:border-highlight outline-none placeholder-text-accent",
-      value: currentValue,
-      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        let val: string | number | boolean = e.target.value;
-        if (field.type === 'number') {
-            val = (e.target.value === '' && (field.key === 'subqgSeed' || field.key === 'caelumSubqgSeed'))
-                ? ''
-                : parseFloat(e.target.value)
-        } else if (field.key === 'language') {
-            val = e.target.value as Language;
-        } else if (field.key === 'theme') {
-            val = e.target.value as Theme;
-        }
-        handleInputChange(
-            String(field.key),
-            val,
-            (field as any).parentKey,
-            (field as any).subKey,
-            (field as any).subSubKey
+    switch (field.type) {
+      case 'text':
+      case 'number':
+        return (
+          <div key={field.key as string} className="mb-4">
+            <label htmlFor={field.key as string} className={commonLabelClass}>{t(field.labelKey)}</label>
+            <input
+              type={field.type}
+              id={field.key as string}
+              name={field.key as string}
+              value={currentValue as string | number}
+              onChange={e => handleInputChange(
+                field.key as string,
+                field.type === 'number' ? (e.target.value === '' && (field.key === 'subqgSeed' || field.key === 'caelumSubqgSeed') ? undefined : parseFloat(e.target.value)) : e.target.value,
+                (field as any).parentKey,
+                (field as any).subKey,
+                (field as any).subSubKey
+              )}
+              step={field.step}
+              min={field.min}
+              max={field.max}
+              placeholder={field.placeholderKey ? t(field.placeholderKey) : undefined}
+              className={commonInputClass}
+            />
+          </div>
         );
-      }
-    };
+      case 'textarea':
+        return (
+          <div key={field.key as string} className="mb-4">
+            <label htmlFor={field.key as string} className={commonLabelClass}>{t(field.labelKey)}</label>
+            <textarea
+              id={field.key as string}
+              name={field.key as string}
+              value={currentValue as string}
+              onChange={e => handleInputChange(
+                field.key as string,
+                e.target.value,
+                (field as any).parentKey,
+                (field as any).subKey,
+                (field as any).subSubKey
+              )}
+              rows={field.rows || 3}
+              className={commonInputClass}
+            />
+          </div>
+        );
+      case 'select':
+        let options = field.options;
+        // Dynamically set labels for activeChatAgent options
+        if (field.key === 'activeChatAgent') {
+            options = [
+                { value: 'myra', labelKey: localConfig.myraName || t('settingsPanel.generalSystem.activeChatAgent.options.myra') },
+                { value: 'caelum', labelKey: localConfig.caelumName || t('settingsPanel.generalSystem.activeChatAgent.options.caelum') }
+            ];
+        }
 
-    const numberProps = field.type === 'number' ? { step: field.step, min: field.min, max: field.max, placeholder: field.placeholderKey ? t(field.placeholderKey) : undefined } : {};
-    const textInputProps = { placeholder: field.placeholderKey ? t(field.placeholderKey) : undefined };
-
-
-    return (
-      <div key={String(field.key) + (field as any).parentKey + (field as any).subKey} className="mb-3">
-        <label htmlFor={String(field.key)} className="block text-sm font-medium text-text-secondary mb-1">{t(field.labelKey)}</label>
-        {field.type === 'text' && <input type="text" {...commonProps} {...textInputProps} />}
-        {field.type === 'number' && <input type="number" {...commonProps} {...numberProps} />}
-        {field.type === 'textarea' && <textarea rows={field.rows || 3} {...commonProps} {...textInputProps} />}
-        {field.type === 'select' && (
-          <select {...commonProps}>
-            {field.options?.map(opt => <option key={opt.value} value={opt.value}>{t(opt.labelKey)}</option>)}
-          </select>
-        )}
-      </div>
-    );
+        return (
+          <div key={field.key as string} className="mb-4">
+            <label htmlFor={field.key as string} className={commonLabelClass}>{t(field.labelKey)}</label>
+            <select
+              id={field.key as string}
+              name={field.key as string}
+              value={currentValue as string}
+              onChange={e => handleInputChange(
+                field.key as string,
+                e.target.value,
+                (field as any).parentKey,
+                (field as any).subKey,
+                (field as any).subSubKey
+              )}
+              className={commonInputClass}
+            >
+              {options?.map(option => (
+                <option key={option.value} value={option.value}>
+                    { (field.key === 'activeChatAgent') ? option.labelKey : t(option.labelKey)}
+                </option>
+              ))}
+            </select>
+          </div>
+        );
+      default:
+        return null;
+    }
   };
 
-  const groupedFields = currentConfigFields.reduce((acc, field) => {
-    const group = field.groupKey || 'settingsPanel.group.misc';
-    if (!acc[group]) acc[group] = [];
-    acc[group].push(field);
-    return acc;
-  }, {} as Record<string, ConfigField[]>);
+  const groupedFields = useMemo(() => {
+    const groups: Record<string, ConfigField[]> = {};
+    currentConfigFields.forEach(field => {
+      if (!groups[field.groupKey]) {
+        groups[field.groupKey] = [];
+      }
+      groups[field.groupKey].push(field);
+    });
+    return groups;
+  }, [currentConfigFields]);
+
+  const orderedGroupKeys = useMemo(() => {
+    const order = [
+        "settingsPanel.group.localization",
+        "settingsPanel.group.myraAI", "settingsPanel.group.caelumAI",
+        "settingsPanel.group.myraPersona", "settingsPanel.group.caelumPersona",
+        "settingsPanel.group.myraSystem", "settingsPanel.group.caelumSystem",
+        "settingsPanel.group.generalSystem",
+        "settingsPanel.group.adaptiveFitnessBase", "settingsPanel.group.adaptiveFitnessDim"
+    ];
+    const existingKeys = Object.keys(groupedFields);
+    const ordered = order.filter(key => existingKeys.includes(key));
+    const unordered = existingKeys.filter(key => !order.includes(key)).sort();
+    return [...ordered, ...unordered];
+  }, [groupedFields]);
+
+  useEffect(() => {
+    if (!activeGroupKey && orderedGroupKeys.length > 0) {
+      setActiveGroupKey(orderedGroupKeys[0]);
+    }
+  }, [activeGroupKey, orderedGroupKeys]);
 
   return (
-    <div className="p-1 max-h-[calc(100vh-120px)] overflow-y-auto fancy-scrollbar text-text-primary">
-        <div className="sticky top-0 bg-secondary-transparent backdrop-blur-md z-10 p-3 rounded-t-lg border-b border-accent">
-             <div className="flex justify-between items-center mb-3">
-                <h2 className="text-xl font-semibold text-highlight">{t('settingsPanel.title')}</h2>
-                <div className="space-x-2">
-                    <button
-                        onClick={handleResetAll}
-                        className="py-1.5 px-3 bg-button-warn text-button-warn-text text-xs font-semibold rounded-lg hover:bg-button-warn-hover focus:outline-none focus:ring-2 focus:ring-highlight-warn"
-                    >
-                        {t('settingsPanel.resetAllButton')}
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        className="py-1.5 px-4 bg-button-confirm text-button-confirm-text text-xs font-semibold rounded-lg hover:bg-button-confirm-hover focus:outline-none focus:ring-2 focus:ring-highlight-confirm"
-                    >
-                        {t('settingsPanel.saveButton')}
-                    </button>
-                </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-                {Object.keys(groupedFields).map(groupKey => (
-                    <button
-                        key={groupKey}
-                        onClick={() => setActiveGroupKey(groupKey)}
-                        className={`flex items-center py-1.5 px-3 text-xs font-medium rounded-md transition-colors duration-150
-                            ${activeGroupKey === groupKey ? 'bg-tab-active text-tab-active-text shadow-md' : 'bg-tab-inactive text-tab-inactive-text hover:bg-tab-hover'}`}
-                    >
-                        {groupIcons[groupKey] || <Cog6ToothIcon className="w-4 h-4 mr-1.5"/>}
-                        {t(groupKey)}
-                    </button>
-                ))}
-            </div>
+    <div className="p-2 sm:p-3 bg-gray-700/50 backdrop-blur-sm rounded-lg shadow-lg border border-gray-600 h-full flex flex-col overflow-hidden">
+      <div className="flex justify-between items-center mb-3 sm:mb-4 pb-3 border-b border-gray-600 sticky top-0 bg-gray-700/50 z-10 px-1">
+        <h3 className="text-lg sm:text-xl font-semibold text-purple-300">{t('settingsPanel.title')}</h3>
+        <div className="flex space-x-2">
+            <button
+              onClick={handleResetAll}
+              className="px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition duration-150"
+              title={t('settingsPanel.button.resetAllTooltip')}
+              aria-label={t('settingsPanel.button.resetAllTooltip')}
+            >
+              {t('settingsPanel.button.resetAll')}
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-3 py-1 sm:px-4 sm:py-1.5 text-xs sm:text-sm bg-green-600 text-white font-semibold rounded-md hover:bg-green-700 transition duration-150"
+              aria-label={t('settingsPanel.button.saveChanges')}
+            >
+              {t('settingsPanel.button.saveChanges')}
+            </button>
         </div>
+      </div>
 
-      {Object.entries(groupedFields).map(([groupKey, fields]) => (
-        activeGroupKey === groupKey && (
-          <div key={groupKey} className="mb-6 p-4 bg-accent-transparent backdrop-blur-sm rounded-b-lg shadow-lg border border-accent-light border-t-0">
-            <div className="flex justify-between items-center mb-3">
-                <h3 className="text-lg font-semibold text-highlight flex items-center">
-                     {groupIcons[groupKey] || <Cog6ToothIcon className="w-5 h-5 mr-2"/>}
-                    {t(groupKey)}
-                </h3>
-                <button
-                    onClick={() => handleResetGroup(groupKey)}
-                    className="py-1 px-2.5 bg-button-warn text-button-warn-text text-xs font-semibold rounded-md hover:bg-button-warn-hover focus:outline-none focus:ring-1 focus:ring-highlight-warn"
-                >
-                    {t('settingsPanel.resetGroupButton')}
-                </button>
-            </div>
-            {fields.map(renderField)}
-          </div>
-        )
-      ))}
+      <div className="flex flex-1 overflow-hidden space-x-2 sm:space-x-3">
+        <nav className="w-1/3 md:w-1/4 space-y-1.5 overflow-y-auto fancy-scrollbar pr-1 sm:pr-2 py-1">
+          {orderedGroupKeys.map(groupKey => (
+            <button
+              key={groupKey}
+              onClick={() => setActiveGroupKey(groupKey)}
+              className={`w-full flex items-center text-left px-2 py-2 sm:px-3 sm:py-2.5 rounded-md text-xs sm:text-sm transition-colors duration-150
+                ${activeGroupKey === groupKey
+                  ? 'bg-purple-600 text-white font-semibold shadow-md'
+                  : 'text-gray-300 hover:bg-gray-600/70 hover:text-white bg-gray-700'
+                }`}
+              role="tab"
+              aria-selected={activeGroupKey === groupKey}
+              aria-controls={`settings-group-panel-${groupKey}`}
+            >
+              {groupIcons[groupKey] || <AdjustmentsVerticalIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />}
+              <span className="truncate">{t(groupKey)}</span>
+            </button>
+          ))}
+        </nav>
+
+        <main className="w-2/3 md:w-3/4 overflow-y-auto fancy-scrollbar py-1">
+          {orderedGroupKeys.map(groupKey => (
+            <section
+              key={groupKey}
+              id={`settings-group-panel-${groupKey}`}
+              role="tabpanel"
+              aria-labelledby={`settings-group-tab-${groupKey}`} // This would need corresponding id on button
+              className={`${activeGroupKey === groupKey ? 'block' : 'hidden'}`}
+            >
+              <div className="bg-gray-800/30 p-3 sm:p-4 rounded-lg shadow-inner border border-gray-600/50">
+                  <div className="flex justify-between items-center mb-3 sm:mb-4 pb-2 border-b border-gray-600">
+                    <h4 className="text-md sm:text-lg font-semibold text-purple-400 flex items-center">
+                      {groupIcons[groupKey] || <AdjustmentsVerticalIcon className="w-5 h-5 mr-2" />}
+                      {t(groupKey)}
+                    </h4>
+                    <button
+                      onClick={() => handleResetGroup(groupKey)}
+                      className="px-2 py-1 text-xs bg-red-700 text-white rounded-md hover:bg-red-800 transition duration-150"
+                      title={t('settingsPanel.button.resetGroupTooltip', { groupName: t(groupKey) })}
+                      aria-label={t('settingsPanel.button.resetGroupTooltip', { groupName: t(groupKey) })}
+                    >
+                      {t('settingsPanel.button.resetGroup')}
+                    </button>
+                  </div>
+                  {groupedFields[groupKey]?.map(field => renderField(field))}
+              </div>
+            </section>
+          ))}
+        </main>
+      </div>
     </div>
   );
 };

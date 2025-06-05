@@ -1,9 +1,8 @@
-
 import React from 'react';
 
 interface IconProps {
   className?: string;
-  style?: React.CSSProperties; // Added optional style property
+  style?: React.CSSProperties; 
 }
 
 export const SparklesIcon: React.FC<IconProps> = ({ className, style }) => (
@@ -169,5 +168,47 @@ export const LanguageIcon: React.FC<IconProps> = ({ className, style }) => (
 export const PaintBrushIcon: React.FC<IconProps> = ({ className, style }) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className || "w-6 h-6"} style={style}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
+  </svg>
+);
+
+export const Bars3Icon: React.FC<IconProps> = ({ className, style }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className || "w-6 h-6"} style={style}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+  </svg>
+);
+
+export const XMarkIcon: React.FC<IconProps> = ({ className, style }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className || "w-6 h-6"} style={style}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+  </svg>
+);
+
+export const PresentationChartLineIcon: React.FC<IconProps> = ({ className, style }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className || "w-6 h-6"} style={style}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h12A2.25 2.25 0 0020.25 14.25V3M3.75 14.25v-1.5c0-.621.504-1.125 1.125-1.125h1.5c.621 0 1.125.504 1.125 1.125v1.5m-3 0S3 16.5 3 16.5m0 0v1.5c0 .621.504 1.125 1.125 1.125h1.5c.621 0 1.125-.504 1.125-1.125v-1.5m-3 0h3.75m-3.75 0h3.75m3.75 0h.008v.008h-.008v-.008zm0 0h3.75m3.75 0h.008v.008h-.008v-.008zm0 0h3.75m0 0h.008v.008h-.008v-.008L12 12.75l-3.75 3" />
+  </svg>
+);
+
+export const EllipsisVerticalIcon: React.FC<IconProps> = ({ className, style }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className || "w-6 h-6"} style={style}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+  </svg>
+);
+
+export const DocumentTextIcon: React.FC<IconProps> = ({ className, style }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className || "w-6 h-6"} style={style}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+  </svg>
+);
+
+export const MicrophoneIcon: React.FC<IconProps> = ({ className, style }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className || "w-6 h-6"} style={style}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15c.665 0 1.233-.206 1.713-.544M12 15c-.665 0-1.233-.206-1.713-.544M12 15V6.375m0 8.625a2.25 2.25 0 000-4.5m0 4.5a2.25 2.25 0 010-4.5m0 0V6.375m0 0A2.25 2.25 0 009.75 8.625m2.25-2.25A2.25 2.25 0 0114.25 8.625m0 0V15" />
+  </svg>
+);
+
+export const SpeakerWaveIcon: React.FC<IconProps> = ({ className, style }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className || "w-6 h-6"} style={style}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12.75 2.25v2.25H9.75V2.25H12.75zm0 19.5v-2.25H9.75v2.25H12.75zm5.536-6.724a5.232 5.232 0 00-1.98-4.058M5.714 10.972a5.232 5.232 0 00-1.98 4.058m11.072-4.058a3 3 0 00-3.536-3.536m-2.475 0A3 3 0 009.25 7.436m6.5 6.788a3 3 0 00-3.536 3.536m-2.475 0a3 3 0 00-3.536-3.536M12 9a3 3 0 100 6 3 3 0 000-6z" />
   </svg>
 );

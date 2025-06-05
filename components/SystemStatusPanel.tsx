@@ -16,12 +16,12 @@ interface SystemStatusPanelProps {
 }
 
 const MetricDisplay: React.FC<{ label: string; value: string | number; icon?: React.ReactNode; unit?: string, color?: string, t: SystemStatusPanelProps['t'] }> = ({ label, value, icon, unit, color="text-purple-300", t }) => (
-  <div className="flex justify-between items-center py-1.5 px-2 bg-gray-700/50 rounded-md hover:bg-gray-600/50 transition-colors">
-    <div className="flex items-center text-sm text-gray-300">
-      {icon && <span className={`mr-2 ${color}`}>{icon}</span>}
+  <div className="flex justify-between items-center py-1 sm:py-1.5 px-1.5 sm:px-2 bg-gray-700/50 rounded-md hover:bg-gray-600/50 transition-colors">
+    <div className="flex items-center text-xs sm:text-sm text-gray-300">
+      {icon && <span className={`mr-1 sm:mr-2 ${color}`}>{icon}</span>}
       {t(label)}:
     </div>
-    <div className={`text-sm font-semibold ${typeof value === 'number' ? 'text-green-300' : 'text-gray-200'}`}>
+    <div className={`text-xs sm:text-sm font-semibold ${typeof value === 'number' ? 'text-green-300' : 'text-gray-200'}`}>
       {typeof value === 'number' && Number.isFinite(value) ? value.toFixed(3) : value} {unit}
     </div>
   </div>
@@ -64,10 +64,10 @@ const HeartbeatDisplay: React.FC<{ stressLevel: number, t: SystemStatusPanelProp
   const heartColor = stressLevel > 0.7 ? 'text-red-500' : stressLevel > 0.4 ? 'text-red-400' : 'text-pink-400';
 
   return (
-    <div className="flex items-center py-2 px-2 bg-gray-700/50 rounded-md mt-2">
-      <HeartIcon className={`w-7 h-7 mr-3 transition-all duration-150 ease-out ${heartColor} ${isPulsing ? 'scale-125 drop-shadow-[0_0_8px_rgba(255,50,50,0.7)]' : 'scale-100'}`} />
+    <div className="flex items-center py-1.5 sm:py-2 px-1.5 sm:px-2 bg-gray-700/50 rounded-md mt-2">
+      <HeartIcon className={`w-6 h-6 sm:w-7 sm:h-7 mr-2 sm:mr-3 transition-all duration-150 ease-out ${heartColor} ${isPulsing ? 'scale-125 drop-shadow-[0_0_8px_rgba(255,50,50,0.7)]' : 'scale-100'}`} />
       <div>
-        <div className="text-sm font-semibold text-gray-100">
+        <div className="text-xs sm:text-sm font-semibold text-gray-100">
           {Math.round(currentHeartRate)} {t('systemStatusPanel.vitals.bpm')}
         </div>
         <div className="text-xs text-gray-400">
@@ -95,11 +95,11 @@ const SubQGPulseIndicator: React.FC<{ jumpInfo: SubQgJumpInfo | null, modifier: 
   const pulseColor = `rgba(0, 200, 255, ${0.5 + pulseStrength * 0.5})`;
 
   return (
-    <div className="flex items-center py-1.5 px-2 bg-gray-700/50 rounded-md mt-2">
-      <PulseWaveIcon className={`w-6 h-6 mr-2 transition-all duration-200 ease-out ${isPulsing ? 'scale-125 text-cyan-300' : 'scale-100 text-cyan-500'}`} 
+    <div className="flex items-center py-1 sm:py-1.5 px-1.5 sm:px-2 bg-gray-700/50 rounded-md mt-2">
+      <PulseWaveIcon className={`w-5 h-5 sm:w-6 sm:h-6 mr-2 transition-all duration-200 ease-out ${isPulsing ? 'scale-125 text-cyan-300' : 'scale-100 text-cyan-500'}`} 
         style={isPulsing ? { filter: `drop-shadow(0 0 6px ${pulseColor})` } : {}}
       />
-      <div className="text-sm">
+      <div className="text-xs sm:text-sm">
         {isPulsing ? (
           <span className="font-semibold text-cyan-300 animate-pulse">{t('systemStatusPanel.subQg.event')}</span>
         ) : (
@@ -121,11 +121,11 @@ const SystemStatusPanel: React.FC<SystemStatusPanelProps> = ({
     .reduce((max, [key, val]) => Math.abs(val) > Math.abs(emotionState[max.key as keyof EmotionState] || 0) ? { key, val } : max, { key: 'neutral', val: 0.0 });
 
   return (
-    <div className="p-3 bg-gray-700/50 backdrop-blur-sm rounded-lg shadow-lg border border-gray-600 space-y-4">
+    <div className="p-2 sm:p-3 bg-gray-700/50 backdrop-blur-sm rounded-lg shadow-lg border border-gray-600 space-y-3 sm:space-y-4">
       <div>
-        <h3 className="text-lg font-semibold mb-2 text-purple-300 flex items-center"><HeartIcon className="w-5 h-5 mr-2 text-pink-400"/>{t('systemStatusPanel.emotion.title')}</h3>
+        <h3 className="text-md sm:text-lg font-semibold mb-2 text-purple-300 flex items-center"><HeartIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-pink-400"/>{t('systemStatusPanel.emotion.title')}</h3>
         <HeartbeatDisplay stressLevel={myraStressLevel} t={t} />
-        <div className="space-y-1 text-xs mt-3">
+        <div className="space-y-1 text-xs mt-2 sm:mt-3">
           <MetricDisplay label="systemStatusPanel.emotion.pleasure" value={emotionState.pleasure} t={t}/>
           <MetricDisplay label="systemStatusPanel.emotion.arousal" value={emotionState.arousal} t={t}/>
           <MetricDisplay label="systemStatusPanel.emotion.dominance" value={emotionState.dominance} t={t}/>
@@ -139,9 +139,9 @@ const SystemStatusPanel: React.FC<SystemStatusPanelProps> = ({
       </div>
 
       <div>
-        <h3 className="text-lg font-semibold mb-2 text-purple-300 flex items-center"><AcademicCapIcon className="w-5 h-5 mr-2"/>{t('systemStatusPanel.fitness.title')}</h3>
+        <h3 className="text-md sm:text-lg font-semibold mb-2 text-purple-300 flex items-center"><AcademicCapIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2"/>{t('systemStatusPanel.fitness.title')}</h3>
         <div className="space-y-1 text-xs">
-          <MetricDisplay label="systemStatusPanel.fitness.overallScore" value={adaptiveFitness.overallScore} icon={<ChartBarIcon className="w-4 h-4"/>} t={t}/>
+          <MetricDisplay label="systemStatusPanel.fitness.overallScore" value={adaptiveFitness.overallScore} icon={<ChartBarIcon className="w-3 h-3 sm:w-4 sm:h-4"/>} t={t}/>
           {adaptiveFitness.dimensions && Object.entries(adaptiveFitness.dimensions).map(([key, value]) => (
             <MetricDisplay 
               key={key} 
@@ -154,9 +154,9 @@ const SystemStatusPanel: React.FC<SystemStatusPanelProps> = ({
       </div>
       
       <div>
-        <h3 className="text-lg font-semibold mb-2 text-purple-300 flex items-center"><FireIcon className="w-5 h-5 mr-2"/>{t('systemStatusPanel.subQg.title')}</h3>
+        <h3 className="text-md sm:text-lg font-semibold mb-2 text-purple-300 flex items-center"><FireIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2"/>{t('systemStatusPanel.subQg.title')}</h3>
         <SubQGPulseIndicator jumpInfo={subQgJumpInfo} modifier={activeSubQgJumpModifier} t={t} />
-        <div className="space-y-1 text-xs mt-3">
+        <div className="space-y-1 text-xs mt-2 sm:mt-3">
           <MetricDisplay label="systemStatusPanel.subQg.avgEnergy" value={subQgGlobalMetrics.avgEnergy} t={t}/>
           <MetricDisplay label="systemStatusPanel.subQg.stdEnergy" value={subQgGlobalMetrics.stdEnergy} t={t}/>
           <MetricDisplay label="systemStatusPanel.subQg.phaseCoherence" value={subQgGlobalMetrics.phaseCoherence} t={t}/>
