@@ -1,88 +1,77 @@
-# M.Y.R.A. & C.A.E.L.U.M. Konfiguration: Persona & Verhalten
+# M.Y.R.A., C.A.E.L.U.M. & Konfigurierbare Agenten: Persona & Verhalten
 
-Diese Datei erläutert die Konfigurationsparameter, die die Persönlichkeiten, ethischen Richtlinien, Antwortinstruktionen und Systemverhaltensweisen (wie Zerfallsraten und Temperatureinflüsse) von M.Y.R.A. und C.A.E.L.U.M. steuern. Diese Einstellungen finden Sie im `SettingsPanel` und sind Teil des `MyraConfig`-Objekts.
+Diese Datei erläutert die Konfigurationsparameter, die die Persönlichkeiten, ethischen Richtlinien, Antwortinstruktionen und Systemverhaltensweisen (wie Zerfallsraten und Temperatureinflüsse) von M.Y.R.A., C.A.E.L.U.M. und **konfigurierbaren Agenten** steuern.
 
-## M.Y.R.A. Persona
+## Agentenspezifische Persona-Einstellungen
 
-Diese Einstellungen definieren M.Y.R.A.s Charakter und grundlegende Antwortweise. Sie werden über Schlüssel (`myraNameKey`, etc.) referenziert, die dann basierend auf der ausgewählten Sprache in die tatsächlichen Texte übersetzt werden. Die bearbeitbaren Felder im `SettingsPanel` unter "M.Y.R.A. Persona" erlauben es, diese übersetzten Werte direkt anzupassen oder die Schlüssel selbst zu ändern.
+Jeder Agent (M.Y.R.A., C.A.E.L.U.M. und jeder konfigurierbare Agent) hat seine eigene, unabhängige Persona, die sein grundlegendes Auftreten und seine Antwortweise definiert.
 
-### `myraNameKey` (Referenz auf `myraConfig.myraName`)
-*   **Bedeutung:** Schlüssel für den Namen, den M.Y.R.A. für sich selbst verwendet.
-*   **Standardwert:** `"myra.name"` (übersetzt zu "M.Y.R.A.")
+### Für M.Y.R.A. (konfiguriert über `myraConfig.*` Felder bzw. `myra*Key` für Übersetzungen):
+*   **`myraName`**: Name, den M.Y.R.A. für sich selbst verwendet.
+*   **`myraRoleDescription`**: Detaillierte Beschreibung von M.Y.R.A.s Rolle und Persönlichkeit.
+*   **`myraEthicsPrinciples`**: Ethische Kernprinzipien von M.Y.R.A.
+*   **`myraResponseInstruction`**: Spezifische Anweisungen, wie M.Y.R.A. antworten soll.
 
-### `myraRoleDescriptionKey` (Referenz auf `myraConfig.myraRoleDescription`)
-*   **Bedeutung:** Schlüssel für die detaillierte Beschreibung von M.Y.R.A.s Rolle und Persönlichkeit.
-*   **Standardwert:** `"myra.roleDescription"`
+Diese Werte werden aus den entsprechenden `*Key`-Feldern (z.B. `myraNameKey`) basierend auf der globalen Spracheinstellung übersetzt und können im `SettingsPanel` angepasst werden.
 
-### `myraEthicsPrinciplesKey` (Referenz auf `myraConfig.myraEthicsPrinciples`)
-*   **Bedeutung:** Schlüssel für M.Y.R.A.s ethische Kernprinzipien.
-*   **Standardwert:** `"myra.ethicsPrinciples"`
+### Für C.A.E.L.U.M. (konfiguriert über `myraConfig.caelum*` Felder bzw. `caelum*Key` für Übersetzungen):
+*   **`caelumName`**: Name, den C.A.E.L.U.M. für sich selbst verwendet.
+*   **`caelumRoleDescription`**: Detaillierte Beschreibung von C.A.E.L.U.M.s Rolle.
+*   **`caelumEthicsPrinciples`**: Ethische Kernprinzipien von C.A.E.L.U.M.
+*   **`caelumResponseInstruction`**: Spezifische Anweisungen, wie C.A.E.L.U.M. antworten soll.
 
-### `myraResponseInstructionKey` (Referenz auf `myraConfig.myraResponseInstruction`)
-*   **Bedeutung:** Schlüssel für spezifische Anweisungen, wie M.Y.R.A. antworten soll.
-*   **Standardwert:** `"myra.responseInstruction"`
+Analog zu M.Y.R.A. werden diese Werte aus den `*Key`-Feldern übersetzt und sind im `SettingsPanel` anpassbar.
 
-## C.A.E.L.U.M. Persona
+### Für konfigurierbare Agenten (`myraConfig.configurableAgents[n].*`):
+Jeder Agent in der `configurableAgents`-Liste besitzt folgende direkt editierbare Persona-Felder in seinem Konfigurationsobjekt:
+*   **`name`**: Name des Agenten.
+*   **`roleDescription`**: Rollenbeschreibung des Agenten.
+*   **`ethicsPrinciples`**: Ethische Prinzipien des Agenten.
+*   **`responseInstruction`**: Antwortinstruktionen für den Agenten.
+*   **`personalityTrait`**: Optionales Merkmal ('critical', 'visionary', 'conservative', 'neutral'), das die Antwortweise beeinflussen kann. Dies wird primär durch die Formulierung der `responseInstruction` und die Systeminstruktion für das LLM umgesetzt.
 
-Diese Einstellungen definieren C.A.E.L.U.M.s Charakter und grundlegende Antwortweise, analog zu M.Y.R.A. Die bearbeitbaren Felder im `SettingsPanel` unter "C.A.E.L.U.M. Persona" erlauben direkte Anpassungen.
-
-### `caelumNameKey` (Referenz auf `myraConfig.caelumName`)
-*   **Bedeutung:** Schlüssel für den Namen, den C.A.E.L.U.M. für sich selbst verwendet.
-*   **Standardwert:** `"caelum.name"` (übersetzt zu "C.A.E.L.U.M.")
-
-### `caelumRoleDescriptionKey` (Referenz auf `myraConfig.caelumRoleDescription`)
-*   **Bedeutung:** Schlüssel für die detaillierte Beschreibung von C.A.E.L.U.M.s Rolle.
-*   **Standardwert:** `"caelum.roleDescription"`
-
-### `caelumEthicsPrinciplesKey` (Referenz auf `myraConfig.caelumEthicsPrinciples`)
-*   **Bedeutung:** Schlüssel für C.A.E.L.U.M.s ethische Kernprinzipien.
-*   **Standardwert:** `"caelum.ethicsPrinciples"`
-
-### `caelumResponseInstructionKey` (Referenz auf `myraConfig.caelumResponseInstruction`)
-*   **Bedeutung:** Schlüssel für spezifische Anweisungen, wie C.A.E.L.U.M. antworten soll.
-*   **Standardwert:** `"caelum.responseInstruction"`
+Diese Einstellungen sind im `SettingsPanel` im Bereich des jeweiligen konfigurierbaren Agenten zugänglich.
 
 ## Gemeinsame / Globale Parameter
 
+Diese Parameter in `myraConfig` beeinflussen das Verhalten aller Agenten oder das allgemeine System.
+
 ### `userNameKey` (Referenz auf `myraConfig.userName`)
-*   **Bedeutung:** Schlüssel für den Namen, den beide KIs verwenden, um den Benutzer im Chat anzusprechen.
+*   **Bedeutung:** Schlüssel für den Namen, den alle KIs verwenden, um den Benutzer im Chat anzusprechen.
 *   **Standardwert:** `"user.name"` (übersetzt zu "Benutzer")
 
 ### `temperatureLimbusInfluence`
-*   **Bedeutung:** Faktor, wie stark der `arousal`-Wert der **jeweiligen KI** (M.Y.R.A. oder C.A.E.L.U.M.) die effektive Temperatur für ihre Antwort beeinflusst.
+*   **Bedeutung:** Faktor, wie stark der `arousal`-Wert des **jeweiligen aktiven Agenten** (M.Y.R.A., C.A.E.L.U.M. oder konfigurierbarer Agent) die effektive Temperatur für seine Antwort beeinflusst.
 *   **Standardwert:** `0.1`
 
 ### `temperatureCreativusInfluence`
-*   **Bedeutung:** Faktor, wie stark die Aktivierung des `Creativus` (M.Y.R.A.) bzw. `Pattern Analyzer` (C.A.E.L.U.M.) Knotens der **jeweiligen KI** die effektive Temperatur beeinflusst.
+*   **Bedeutung:** Faktor, wie stark die Aktivierung des `Creativus`-Knotens (oder des äquivalenten Knotens für andere Agenten, typischerweise der Kreativitäts-/Musteranalyse-Knoten) des **jeweiligen aktiven Agenten** die effektive Temperatur beeinflusst.
 *   **Standardwert:** `0.15`
 
 ### `maxHistoryMessagesForPrompt`
-*   **Bedeutung:** Maximale Anzahl vorheriger Chat-Nachrichten (Benutzer und Assistenten), die als Kontext für das LLM verwendet werden. Gilt global für alle LLM-Aufrufe.
+*   **Bedeutung:** Maximale Anzahl vorheriger Chat-Nachrichten (Benutzer und Assistenten), die als Kontext für das LLM verwendet werden. Gilt global für alle LLM-Aufrufe aller Agenten.
 *   **Standardwert:** `8`
 
-## M.Y.R.A. System-Verhaltensparameter
+### `maxPadHistorySize`
+*   **Bedeutung:** Die maximale Anzahl von PAD-Zuständen (Pleasure, Arousal, Dominance), die für jeden Agenten im Emotionsverlauf gespeichert werden.
+*   **Standardwert:** `200`
 
-Diese Parameter finden Sie im `SettingsPanel` unter "M.Y.R.A. System".
+### `activeChatAgent`
+*   **Bedeutung:** Bestimmt, welche der Haupt-KIs (M.Y.R.A. oder C.A.E.L.U.M.) im primären Chat-Interface (`ChatInterface.tsx`) aktiv ist.
+*   **Mögliche Werte:** `'myra'`, `'caelum'`.
+*   **Standardwert:** `'myra'`
 
-### `nodeActivationDecay`
-*   **Bedeutung:** Zerfallsfaktor für M.Y.R.A.s Knotena_ktivierungen pro Simulationsschritt.
-*   **Standardwert:** `0.95`
+## Agentenspezifische System-Verhaltensparameter
 
-### `emotionDecay`
-*   **Bedeutung:** Zerfallsfaktor für M.Y.R.A.s Emotionen pro Simulationsschritt.
-*   **Standardwert:** `0.95`
+Jeder Agent (M.Y.R.A., C.A.E.L.U.M. und jeder konfigurierbare Agent) hat seine eigenen Zerfallsraten für Knotenaktivierungen und Emotionen. Diese sind Teil des `systemConfig`-Objekts des jeweiligen Agenten.
 
-## C.A.E.L.U.M. System-Verhaltensparameter
+### `nodeActivationDecay` (Teil von `systemConfig` jedes Agenten)
+*   **Bedeutung:** Zerfallsfaktor für die Knotena_ktivierungen des Agenten pro Simulationsschritt. Beeinflusst, wie schnell die Aktivierung eines Knotens ohne weitere Stimulation abnimmt.
+*   **Standardwerte:** M.Y.R.A.: `0.95`, C.A.E.L.U.M.: `0.97`. Konfigurierbare Agenten übernehmen M.Y.R.A.s Standard (`0.95`) bei Erstellung, können aber individuell angepasst werden.
 
-Diese Parameter finden Sie im `SettingsPanel` unter "C.A.E.L.U.M. System".
-
-### `caelumNodeActivationDecay`
-*   **Bedeutung:** Zerfallsfaktor für C.A.E.L.U.M.s Knotena_ktivierungen pro Simulationsschritt. Beeinflusst, wie lange wichtige Knotenaktivierungen bestehen bleiben.
-*   **Standardwert:** `0.97`
-
-### `caelumEmotionDecay`
-*   **Bedeutung:** Zerfallsfaktor für C.A.E.L.U.M.s (oft gedämpfte) Emotionen pro Simulationsschritt. Beeinflusst, wie stabil emotionale Grundstimmungen bleiben.
-*   **Standardwert:** `0.98`
+### `emotionDecay` (Teil von `systemConfig` jedes Agenten)
+*   **Bedeutung:** Zerfallsfaktor für die Intensität der Emotionen des Agenten pro Simulationsschritt. Beeinflusst, wie schnell emotionale Zustände ohne weitere Stimulation abklingen.
+*   **Standardwerte:** M.Y.R.A.: `0.95`, C.A.E.L.U.M.: `0.98`. Konfigurierbare Agenten übernehmen M.Y.R.A.s Standard (`0.95`) bei Erstellung, können aber individuell angepasst werden.
 
 ---
 

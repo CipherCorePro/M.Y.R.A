@@ -21,7 +21,7 @@ interface SystemStateSnapshot {
 
 export class AdaptiveFitnessManager {
   private config: MyraConfig;
-  private getSystemState: () => SystemStateSnapshot;
+  public getSystemState: () => SystemStateSnapshot; // Made public
   private lastProcessedChunksCount: number = 0; 
 
   constructor(config: MyraConfig, getSystemState: () => SystemStateSnapshot) {
@@ -32,8 +32,11 @@ export class AdaptiveFitnessManager {
     this.lastProcessedChunksCount = initialState.processedTextChunksCount || 0;
   }
 
-  public updateConfig(newConfig: MyraConfig) {
+  public updateConfig(newConfig: MyraConfig, newGetSystemState?: () => SystemStateSnapshot) {
     this.config = newConfig;
+    if (newGetSystemState) {
+      this.getSystemState = newGetSystemState;
+    }
   }
 
   private findNodeByType(nodes: Record<string, NodeState>, type: NodeState['type']): NodeState | undefined {

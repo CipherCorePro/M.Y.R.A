@@ -329,7 +329,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ chatHistory, onSendMessag
 
   return (
     <div className="flex flex-col h-full bg-gray-800/30 backdrop-blur-sm rounded-lg shadow-2xl border border-gray-700">
-      <div className="flex-1 p-3 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto fancy-scrollbar">
+      <div className="flex-1 p-3 sm:p-6 space-y-3 sm:space-y-4 overflow-y-auto fancy-scrollbar chat-background-image">
         {chatHistory.map((msg) => (
           <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div className={`max-w-[85%] sm:max-w-3/4 p-2 sm:p-3 rounded-xl shadow-md relative group ${

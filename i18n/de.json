@@ -26,6 +26,7 @@
     "knowledge": "Wissen",
     "documentation": "Dokumentation",
     "dualAI": "Dual AI",
+    "multiAgentConversation": "Multi-Agenten Konv.",
     "settings": "Einstellungen"
   },
   "header": {
@@ -33,6 +34,7 @@
     "caelumSystemInterface": "{{name}} System Interface",
     "emotionTimelineInterface": "Emotionsverlauf Interface",
     "documentationInterface": "Dokumentation Interface",
+    "multiAgentConversationInterface": "Multi-Agenten Konversation",
     "simStep": "SimSchritt ({{agent}})",
     "fitness": "Fitness ({{agent}})",
     "openMenu": "Menü öffnen",
@@ -51,7 +53,10 @@
         "resetAllTooltip": "Alle Einstellungen auf Standardwerte zurücksetzen (Sprache/Theme bleiben erhalten).",
         "saveChanges": "Änderungen speichern",
         "resetGroup": "Gruppe zurücksetzen",
-        "resetGroupTooltip": "{{groupName}} auf Standardwerte zurücksetzen."
+        "resetGroupTooltip": "{{groupName}} auf Standardwerte zurücksetzen.",
+        "addAgent": "Agent Hinzufügen",
+        "deleteAgent": "Agent Löschen",
+        "confirmDeleteAgent": "Sind Sie sicher, dass Sie den Agenten '{{agentName}}' löschen möchten?"
     },
     "language": {
       "label": "Sprache",
@@ -87,6 +92,57 @@
       "lmStudioBaseUrl": { "label": "C.A.E.L.U.M. LM Studio URL" },
       "lmStudioGenerationModel": { "label": "C.A.E.L.U.M. LM Studio Gen Modell" },
       "temperatureBase": { "label": "C.A.E.L.U.M. Basis Temperatur" }
+    },
+    "configurableAgents": {
+        "title": "Konfigurierbare Agenten",
+        "agentName": {"label": "Agentenname"},
+        "persona": {"title": "Persona"},
+        "aiProvider": {"title": "KI Provider"},
+        "systemConfig": {"title": "Systemkonfiguration"},
+        "adaptiveFitness": {"title": "Adaptive Fitness"},
+        "name": {"label": "Name"},
+        "roleDescription": {"label": "Rollenbeschreibung"},
+        "ethicsPrinciples": {"label": "Ethische Prinzipien"},
+        "responseInstruction": {"label": "Antwortinstruktion"},
+        "personalityTrait": {"label": "Persönlichkeitsmerkmal"},
+        "aiProviderConfigKey": {"label": "KI Provider Konfig."},
+        "traits": {
+            "critical": "Kritisch",
+            "visionary": "Visionär",
+            "conservative": "Konservativ",
+            "neutral": "Neutral"
+        },
+        "providerKeys": {
+            "myraAIProviderConfig": "M.Y.R.A. Standard",
+            "caelumAIProviderConfig": "C.A.E.L.U.M. Standard"
+        },
+        "noAgents": "Keine konfigurierbaren Agenten definiert. Klicken Sie auf 'Agent Hinzufügen'.",
+        "confirmDelete": "Sind Sie sicher, dass Sie den Agenten '{{agentName}}' löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden."
+    },
+    "agentSpecific": {
+        "aiProvider": { "label": "KI Provider" },
+        "geminiModelName": { "label": "Gemini Modell" },
+        "lmStudioBaseUrl": { "label": "LM Studio URL" },
+        "lmStudioGenerationModel": { "label": "LM Studio Gen Modell" },
+        "temperatureBase": { "label": "Basis Temperatur" },
+        "subqgSize": { "label": "SubQG Größe" },
+        "subqgBaseEnergy": { "label": "SubQG Basisenergie" },
+        "subqgCoupling": { "label": "SubQG Kopplung" },
+        "subqgInitialEnergyNoiseStd": { "label": "SubQG Init. Energierauschen StdAbw" },
+        "subqgPhaseEnergyCouplingFactor": { "label": "SubQG Phasen-Energie Kopplung" },
+        "subqgJumpMinEnergyAtPeak": { "label": "SubQG Sprung Min Energie Peak" },
+        "subqgJumpMinCoherenceAtPeak": { "label": "SubQG Sprung Min Kohärenz Peak" },
+        "subqgJumpCoherenceDropFactor": { "label": "SubQG Sprung Kohärenz Abfallfaktor" },
+        "subqgJumpEnergyDropFactorFromPeak": { "label": "SubQG Sprung Energie Abfallfaktor Peak" },
+        "subqgJumpMaxStepsToTrackPeak": { "label": "SubQG Sprung Max Schritte Peakverfolgung" },
+        "subqgJumpActiveDuration": { "label": "SubQG Sprung Aktive Dauer" },
+        "subqgJumpQnsDirectModifierStrength": { "label": "SubQG Sprung Modifikator Stärke" },
+        "subqgPhaseDiffusionFactor": { "label": "SubQG Phasen Diffusionsfaktor" },
+        "rngType": { "label": "RNG Typ" },
+        "subqgSeed": { "label": "SubQG Seed (optional)", "placeholder": "Leer für zufällig" },
+        "nodeActivationDecay": { "label": "Knoten Aktivierungszerfall" },
+        "emotionDecay": { "label": "Emotionszerfall" },
+        "adaptiveFitnessUpdateInterval": { "label": "Fitness Update Intervall (Schritte)" }
     },
     "myraPersona": {
       "name": { "label": "M.Y.R.A. Name" },
@@ -190,6 +246,7 @@
       "localization": "Lokalisierung",
       "myraAI": "M.Y.R.A. KI Provider",
       "caelumAI": "C.A.E.L.U.M. KI Provider",
+      "configurableAgents": "Konfigurierbare Agenten",
       "myraPersona": "M.Y.R.A. Persona",
       "caelumPersona": "C.A.E.L.U.M. Persona",
       "myraSystem": "M.Y.R.A. System",
@@ -334,6 +391,30 @@
         "inProgress": "Konversation läuft..."
     },
     "conversationCancelled": "Die Konversation wurde abgebrochen.",
+    "retrievedContext": {
+      "title": "Abgerufener Kontext ({{count}})"
+    }
+  },
+  "multiAgentConversationPanel": {
+    "title": "Multi-Agenten Konversation",
+    "label": {
+      "initialPrompt": "Start-Prompt:",
+      "roundsPerAgent": "Runden pro Agent:",
+      "selectAgents": "Teilnehmende Agenten auswählen:",
+      "system": "System",
+      "agent": "Agent",
+      "unknownAgent": "Unbekannter Agent"
+    },
+    "placeholder": {
+      "initialPrompt": "Geben Sie hier das Thema oder die Startfrage ein..."
+    },
+    "button": {
+      "startConversation": "Konversation starten"
+    },
+    "info": {
+        "emptyState": "Wählen Sie Agenten aus und starten Sie eine neue Konversation.",
+        "inProgress": "Konversation läuft..."
+    },
     "retrievedContext": {
       "title": "Abgerufener Kontext ({{count}})"
     }

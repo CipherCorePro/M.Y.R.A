@@ -1,82 +1,62 @@
-# M.Y.R.A. & C.A.E.L.U.M. Configuration: AI Provider
+# M.Y.R.A., C.A.E.L.U.M. & Configurable Agents: AI Provider Configuration
 
-This file explains the configuration parameters related to the selection and configuration of the AI provider (Large Language Model) used by M.Y.R.A. and C.A.E.L.U.M. for generating responses. These settings can be found in the `SettingsPanel` under the "M.Y.R.A. AI Provider" and "C.A.E.L.U.M. AI Provider" groups and are part of the `MyraConfig` object under `myraAIProviderConfig` and `caelumAIProviderConfig` respectively.
+This file explains the configuration parameters related to the selection and configuration of the AI provider (Large Language Model). These settings apply to M.Y.R.A., C.A.E.L.U.M., and **each individually configurable agent**.
 
-## M.Y.R.A. AI Provider (`myraAIProviderConfig`)
+*   For M.Y.R.A., these settings are found in the `SettingsPanel` under "M.Y.R.A. AI Provider" (path in `MyraConfig`: `myraAIProviderConfig`).
+*   For C.A.E.L.U.M., these settings are found in the `SettingsPanel` under "C.A.E.L.U.M. AI Provider" (path in `MyraConfig`: `caelumAIProviderConfig`).
+*   For **each configurable agent**, these settings are found in the `SettingsPanel` within the respective agent's section under "AI Provider" (path in `MyraConfig`: `configurableAgents[n].aiProviderConfig`).
 
-### `myraAIProviderConfig.aiProvider`
+Each agent can thus use its own independent AI provider and its specific settings.
 
-*   **Meaning:** Specifies which AI service is used for M.Y.R.A.
+## General AI Provider Parameters (apply per agent)
+
+The following parameters are available within the `aiProviderConfig` object of each agent (M.Y.R.A., C.A.E.L.U.M., or a configurable agent):
+
+### `aiProvider`
+
+*   **Meaning:** Specifies which AI service is used for the respective agent.
 *   **Possible Values:** `'gemini'`, `'lmstudio'`.
-*   **Default Value:** `'gemini'`
+*   **Default Value (for M.Y.R.A. & C.A.E.L.U.M.):** `'gemini'`
+*   **Default Value (for new configurable agents):** Inherits M.Y.R.A.'s default (`'gemini'`) upon creation.
 
-### `myraAIProviderConfig.geminiModelName`
+### `geminiModelName`
 
-*   **Meaning:** Gemini model name for M.Y.R.A. (e.g., `'gemini-2.5-flash-preview-04-17'`).
-*   **Condition:** If `myraAIProviderConfig.aiProvider` = `'gemini'`.
-*   **Default Value:** `'gemini-2.5-flash-preview-04-17'`
+*   **Meaning:** Gemini model name (e.g., `'gemini-2.5-flash-preview-04-17'`).
+*   **Condition:** If `aiProvider` = `'gemini'`.
+*   **Default Values:**
+    *   M.Y.R.A.: `'gemini-2.5-flash-preview-04-17'`
+    *   C.A.E.L.U.M.: `'gemini-2.5-flash-preview-04-17'`
+    *   Configurable Agents: Inherit M.Y.R.A.'s default upon creation.
 
-### `myraAIProviderConfig.lmStudioBaseUrl`
+### `lmStudioBaseUrl`
 
-*   **Meaning:** Base URL of the LM Studio API endpoint for M.Y.R.A.
-*   **Condition:** If `myraAIProviderConfig.aiProvider` = `'lmstudio'`.
-*   **Default Value:** `'http://localhost:1234/v1'`
+*   **Meaning:** Base URL of the LM Studio API endpoint.
+*   **Condition:** If `aiProvider` = `'lmstudio'`.
+*   **Default Value (for all agent defaults):** `'http://localhost:1234/v1'`
 
-### `myraAIProviderConfig.lmStudioGenerationModel`
+### `lmStudioGenerationModel`
 
-*   **Meaning:** LM Studio model identifier for M.Y.R.A.
-*   **Condition:** If `myraAIProviderConfig.aiProvider` = `'lmstudio'`.
-*   **Default Value:** `'google/gemma-3-1b'`
+*   **Meaning:** LM Studio model identifier for text generation.
+*   **Condition:** If `aiProvider` = `'lmstudio'`.
+*   **Default Values:**
+    *   M.Y.R.A.: `'google/gemma-3-1b'`
+    *   C.A.E.L.U.M.: `'NousResearch/Nous-Hermes-2-Mistral-7B-DPO'`
+    *   Configurable Agents: Inherit M.Y.R.A.'s default upon creation.
 
-### `myraAIProviderConfig.lmStudioEmbeddingModel`
+### `lmStudioEmbeddingModel`
 
-*   **Meaning:** LM Studio model for embeddings (currently not actively used for response generation, but relevant for future RAG improvements).
-*   **Default Value:** `'text-embedding-nomic-embed-text-v1.5'`
+*   **Meaning:** LM Studio model for embeddings. This model is currently **not** actively used for response generation but is intended for future, more refined RAG implementations (e.g., semantic search instead of keyword search).
+*   **Default Value (for all agent defaults):** `'text-embedding-nomic-embed-text-v1.5'` (example)
 
-### `myraAIProviderConfig.temperatureBase`
+### `temperatureBase`
 
-*   **Meaning:** Base temperature for M.Y.R.A.'s AI response generation.
+*   **Meaning:** Base temperature for the agent's AI response generation. A higher value leads to more creative but potentially less coherent responses.
 *   **Value Range:** Typically 0.0 to 2.0.
-*   **Default Value:** `0.7`
-*   **Interactions:** Dynamically modified by `temperatureLimbusInfluence` and `temperatureCreativusInfluence` based on M.Y.R.A.'s internal state.
-
-## C.A.E.L.U.M. AI Provider (`caelumAIProviderConfig`)
-
-### `caelumAIProviderConfig.aiProvider`
-
-*   **Meaning:** Specifies which AI service is used for C.A.E.L.U.M.
-*   **Possible Values:** `'gemini'`, `'lmstudio'`.
-*   **Default Value:** `'gemini'`
-
-### `caelumAIProviderConfig.geminiModelName`
-
-*   **Meaning:** Gemini model name for C.A.E.L.U.M.
-*   **Condition:** If `caelumAIProviderConfig.aiProvider` = `'gemini'`.
-*   **Default Value:** `'gemini-2.5-flash-preview-04-17'`
-
-### `caelumAIProviderConfig.lmStudioBaseUrl`
-
-*   **Meaning:** Base URL of the LM Studio API endpoint for C.A.E.L.U.M.
-*   **Condition:** If `caelumAIProviderConfig.aiProvider` = `'lmstudio'`.
-*   **Default Value:** `'http://localhost:1234/v1'`
-
-### `caelumAIProviderConfig.lmStudioGenerationModel`
-
-*   **Meaning:** LM Studio model identifier for C.A.E.L.U.M.
-*   **Condition:** If `caelumAIProviderConfig.aiProvider` = `'lmstudio'`.
-*   **Default Value:** `'NousResearch/Nous-Hermes-2-Mistral-7B-DPO'`
-
-### `caelumAIProviderConfig.lmStudioEmbeddingModel`
-
-*   **Meaning:** LM Studio model for embeddings (currently not actively used for response generation).
-*   **Default Value:** `'text-embedding-nomic-embed-text-v1.5'`
-
-### `caelumAIProviderConfig.temperatureBase`
-
-*   **Meaning:** Base temperature for C.A.E.L.U.M.'s AI response generation.
-*   **Value Range:** Typically 0.0 to 2.0.
-*   **Default Value:** `0.5`
-*   **Interactions:** Dynamically modified by `temperatureLimbusInfluence` and `temperatureCreativusInfluence` based on C.A.E.L.U.M.'s internal state.
+*   **Default Values:**
+    *   M.Y.R.A.: `0.7`
+    *   C.A.E.L.U.M.: `0.5` (often lower for more precise, analytical responses)
+    *   Configurable Agents: Inherit M.Y.R.A.'s default upon creation.
+*   **Interactions:** The effective temperature is dynamically modified by the global `temperatureLimbusInfluence` and `temperatureCreativusInfluence` parameters (from `MyraConfig`), based on the *individual internal state (emotions, node activations) of the respective agent*.
 
 ---
 

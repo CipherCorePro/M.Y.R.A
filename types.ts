@@ -1,5 +1,6 @@
 
-import type { RNGType } from './utils/rng'; // Import RNGType
+import type { RNG, RNGType } from './utils/rng'; // Import RNGType
+import { AdaptiveFitnessManager } from './utils/adaptiveFitnessManager';
 
 export { RNGType }; // Re-export RNGType for convenience
 
@@ -67,6 +68,41 @@ export interface AIProviderConfig {
   temperatureBase: number;
 }
 
+export interface AgentSystemCoreConfig {
+  subqgSize: number;
+  subqgBaseEnergy: number;
+  subqgCoupling: number;
+  subqgInitialEnergyNoiseStd: number;
+  subqgPhaseEnergyCouplingFactor: number;
+  subqgJumpMinEnergyAtPeak: number;
+  subqgJumpMinCoherenceAtPeak: number;
+  subqgJumpCoherenceDropFactor: number;
+  subqgJumpEnergyDropFactorFromPeak: number;
+  subqgJumpMaxStepsToTrackPeak: number;
+  subqgJumpActiveDuration: number;
+  subqgJumpQnsDirectModifierStrength: number;
+  subqgPhaseDiffusionFactor: number;
+  rngType: RNGType;
+  subqgSeed?: number;
+  nodeActivationDecay: number;
+  emotionDecay: number;
+  adaptiveFitnessUpdateInterval: number; 
+}
+
+export interface ConfigurableAgentPersona {
+  id: string; 
+  name: string;
+  roleDescription: string;
+  ethicsPrinciples: string;
+  responseInstruction: string;
+  personalityTrait?: 'critical' | 'visionary' | 'conservative' | 'neutral';
+  aiProviderConfig: AIProviderConfig;
+  systemConfig: AgentSystemCoreConfig; // Each agent has its own full system config
+  adaptiveFitnessConfig: AdaptiveFitnessConfig; // Each agent has its own adaptive fitness config
+  // Initial node states can be defined per agent if desired, or a default set can be used.
+  // initialNodeStates?: NodeState[]; 
+}
+
 export interface MyraConfig {
   language: Language;
   theme: Theme;
@@ -76,7 +112,7 @@ export interface MyraConfig {
   myraRoleDescriptionKey: string;
   myraEthicsPrinciplesKey: string;
   myraResponseInstructionKey: string;
-
+  
   caelumNameKey: string;
   caelumRoleDescriptionKey: string;
   caelumEthicsPrinciplesKey: string;
@@ -93,11 +129,12 @@ export interface MyraConfig {
   caelumEthicsPrinciples: string;
   caelumResponseInstruction: string;
 
-
   myraAIProviderConfig: AIProviderConfig;
   caelumAIProviderConfig: AIProviderConfig;
 
-  // M.Y.R.A. System Config
+  configurableAgents: ConfigurableAgentPersona[];
+
+  // M.Y.R.A. System Config (directly mapped from AgentSystemCoreConfig structure)
   subqgSize: number;
   subqgBaseEnergy: number;
   subqgCoupling: number;
@@ -117,7 +154,7 @@ export interface MyraConfig {
   emotionDecay: number;
   adaptiveFitnessUpdateInterval: number;
 
-  // C.A.E.L.U.M. System Config
+  // C.A.E.L.U.M. System Config (directly mapped from AgentSystemCoreConfig structure)
   caelumSubqgSize: number;
   caelumSubqgBaseEnergy: number;
   caelumSubqgCoupling: number;
@@ -138,7 +175,7 @@ export interface MyraConfig {
   caelumAdaptiveFitnessUpdateInterval: number;
 
   // General System Config
-  activeChatAgent: 'myra' | 'caelum'; // New field
+  activeChatAgent: 'myra' | 'caelum';
   maxHistoryMessagesForPrompt: number;
   temperatureLimbusInfluence: number;
   temperatureCreativusInfluence: number;
@@ -147,7 +184,7 @@ export interface MyraConfig {
   ragChunkOverlap: number;
   ragMaxChunksToRetrieve: number;
 
-  adaptiveFitnessConfig: AdaptiveFitnessConfig;
+  adaptiveFitnessConfig: AdaptiveFitnessConfig; // This is M.Y.R.A.'s default if not overridden by agent
   maxPadHistorySize: number; 
 }
 
@@ -156,13 +193,15 @@ export interface ResolvedSpeakerPersonaConfig {
   roleDescription: string;
   ethicsPrinciples: string;
   responseInstruction: string;
+  personalityTrait?: ConfigurableAgentPersona['personalityTrait'];
 }
 
 
 export interface ChatMessage {
   id: string;
-  role: 'user' | 'assistant' | 'system';
-  speakerName?: string;
+  role: 'user' | 'assistant' | 'system'; 
+  speakerName?: string; 
+  speakerId?: 'user' | 'myra' | 'caelum' | string; // string for configurable agent IDs
   content: string;
   timestamp: number;
   retrievedChunks?: { source: string; text: string }[];
@@ -216,6 +255,26 @@ export interface AdaptiveFitnessState {
   };
   metrics?: Partial<AdaptiveFitnessMetricWeights> & { [key: string]: number };
 }
+
+export interface AgentRuntimeState {
+  id: string;
+  subQgMatrix: number[][];
+  subQgPhaseMatrix: number[][];
+  nodeStates: Record<string, NodeState>;
+  emotionState: EmotionState;
+  adaptiveFitness: AdaptiveFitnessState;
+  subQgGlobalMetrics: SubQgGlobalMetrics;
+  subQgJumpInfo: SubQgJumpInfo | null;
+  simulationStep: number;
+  activeSubQgJumpModifier: number;
+  subQgJumpModifierActiveStepsRemaining: number;
+  stressLevel: number;
+  padHistory: PADRecord[];
+  rng: RNG;
+  subQgPeakTracker: { tracking: boolean; peakEnergy: number; peakCoherence: number; stepsSincePeak: number; } | null;
+  adaptiveFitnessManager: AdaptiveFitnessManager;
+}
+
 
 export interface GeminiSafetyRating {
   category?: string;
@@ -282,22 +341,23 @@ export interface TextChunk {
 
 export interface ConfigFieldBase {
   labelKey: string; 
-  type: 'text' | 'number' | 'textarea' | 'select';
+  type: 'text' | 'number' | 'textarea' | 'select' | 'divider';
   options?: { value: string; labelKey: string }[]; 
   step?: number;
   min?: number;
   max?: number;
   rows?: number;
-  condition?: (config: MyraConfig) => boolean;
+  condition?: (config: MyraConfig, agentConfig?: ConfigurableAgentPersona) => boolean; 
   groupKey: string; 
   placeholderKey?: string;
 }
 
 type MyraSpecificSystemConfigKeys = Omit<MyraConfig,
   'language' | 'theme' |
-  'adaptiveFitnessConfig' |
+  'adaptiveFitnessConfig' | 
   'myraAIProviderConfig' |
   'caelumAIProviderConfig' |
+  'configurableAgents' | 
   'myraNameKey' | 'myraRoleDescriptionKey' | 'myraEthicsPrinciplesKey' | 'myraResponseInstructionKey' | 'userNameKey' |
   'caelumNameKey' | 'caelumRoleDescriptionKey' | 'caelumEthicsPrinciplesKey' | 'caelumResponseInstructionKey' |
   'myraName' | 'myraRoleDescription' | 'myraEthicsPrinciples' | 'myraResponseInstruction' | 'userName' |
@@ -307,7 +367,8 @@ type MyraSpecificSystemConfigKeys = Omit<MyraConfig,
   'caelumSubqgJumpCoherenceDropFactor' | 'caelumSubqgJumpEnergyDropFactorFromPeak' | 'caelumSubqgJumpMaxStepsToTrackPeak' |
   'caelumSubqgJumpActiveDuration' | 'caelumSubqgJumpQnsDirectModifierStrength' | 'caelumSubqgPhaseDiffusionFactor' |
   'caelumRngType' | 'caelumSubqgSeed' | 'caelumNodeActivationDecay' | 'caelumEmotionDecay' |
-  'caelumAdaptiveFitnessUpdateInterval' | 'maxPadHistorySize' | 'activeChatAgent' // Add activeChatAgent here too
+  'caelumAdaptiveFitnessUpdateInterval' |
+  'maxPadHistorySize' | 'activeChatAgent' 
 >;
 
 export interface MyraSystemConfigField extends ConfigFieldBase {
@@ -328,9 +389,8 @@ export interface LocalizationConfigField extends ConfigFieldBase {
 
 export interface GeneralSystemConfigField extends ConfigFieldBase {
   key: 'maxHistoryMessagesForPrompt' | 'temperatureLimbusInfluence' | 'temperatureCreativusInfluence' |
-       'ragChunkSize' | 'ragChunkOverlap' | 'ragMaxChunksToRetrieve' | 'maxPadHistorySize' | 'activeChatAgent'; // Added activeChatAgent
+       'ragChunkSize' | 'ragChunkOverlap' | 'ragMaxChunksToRetrieve' | 'maxPadHistorySize' | 'activeChatAgent';
 }
-
 
 export interface CaelumSystemConfigField extends ConfigFieldBase {
   key: 'caelumSubqgSize' | 'caelumSubqgBaseEnergy' | 'caelumSubqgCoupling' | 'caelumSubqgInitialEnergyNoiseStd' |
@@ -349,18 +409,39 @@ export interface CaelumAIProviderConfigField extends ConfigFieldBase {
     key: keyof AIProviderConfig;
     parentKey: 'caelumAIProviderConfig';
 }
-
-export interface AdaptiveFitnessBaseWeightsField extends ConfigFieldBase {
+export interface MyraAdaptiveFitnessBaseWeightsField extends ConfigFieldBase {
   key: keyof AdaptiveFitnessMetricWeights;
-  parentKey: 'adaptiveFitnessConfig';
+  parentKey: 'adaptiveFitnessConfig'; 
   subKey: 'baseMetricWeights';
 }
-export interface AdaptiveFitnessDimensionSubField extends ConfigFieldBase {
-    key: string; // Unique composite key, e.g., `${dimKey}_${originalMetricKey}`
-    originalMetricKey: string; // The actual data key, e.g., "explorationScore"
-    parentKey: 'adaptiveFitnessConfig';
-    subKey: keyof MyraConfig['adaptiveFitnessConfig']['dimensionContribWeights']; // This is dimKey
+export interface MyraAdaptiveFitnessDimensionSubField extends ConfigFieldBase {
+    key: string; 
+    originalMetricKey: string; 
+    parentKey: 'adaptiveFitnessConfig'; 
+    subKey: keyof MyraConfig['adaptiveFitnessConfig']['dimensionContribWeights']; 
     subSubKey: 'dimensionContribWeights'; 
+}
+
+export interface AgentSpecificPersonaField extends ConfigFieldBase {
+    agentId: string;
+    configPath: ['configurableAgents', number, keyof Omit<ConfigurableAgentPersona, 'id' | 'aiProviderConfig' | 'systemConfig' | 'adaptiveFitnessConfig'>];
+}
+export interface AgentSpecificAIProviderField extends ConfigFieldBase {
+    agentId: string;
+    configPath: ['configurableAgents', number, 'aiProviderConfig', keyof AIProviderConfig];
+}
+export interface AgentSpecificSystemConfigField extends ConfigFieldBase {
+    agentId: string;
+    configPath: ['configurableAgents', number, 'systemConfig', keyof AgentSystemCoreConfig];
+}
+export interface AgentSpecificAdaptiveFitnessBaseField extends ConfigFieldBase {
+    agentId: string;
+    configPath: ['configurableAgents', number, 'adaptiveFitnessConfig', 'baseMetricWeights', keyof AdaptiveFitnessMetricWeights];
+}
+export interface AgentSpecificAdaptiveFitnessDimensionField extends ConfigFieldBase {
+    agentId: string;
+    originalMetricKey: string; 
+    configPath: ['configurableAgents', number, 'adaptiveFitnessConfig', 'dimensionContribWeights', keyof AdaptiveFitnessDimensionWeights, keyof AdaptiveFitnessDimensionWeights[keyof AdaptiveFitnessDimensionWeights]];
 }
 
 export type ConfigField =
@@ -370,10 +451,15 @@ export type ConfigField =
   | CaelumSystemConfigField
   | MyraAIProviderConfigField
   | CaelumAIProviderConfigField
-  | AdaptiveFitnessBaseWeightsField
-  | AdaptiveFitnessDimensionSubField
+  | MyraAdaptiveFitnessBaseWeightsField
+  | MyraAdaptiveFitnessDimensionSubField
   | LocalizationConfigField
-  | GeneralSystemConfigField; 
+  | GeneralSystemConfigField
+  | AgentSpecificPersonaField
+  | AgentSpecificAIProviderField
+  | AgentSpecificSystemConfigField
+  | AgentSpecificAdaptiveFitnessBaseField
+  | AgentSpecificAdaptiveFitnessDimensionField;
 
 export interface PADRecord {
   pleasure: number;
@@ -386,4 +472,9 @@ export interface PADRecord {
 export type ActiveTab =
   | 'statusMyra' | 'nodesMyra' | 'subqgMyra'
   | 'statusCaelum' | 'nodesCaelum' | 'subqgCaelum'
-  | 'knowledge' | 'dualAI' | 'settings' | 'emotionTimeline' | 'documentation';
+  | 'knowledge' | 'dualAI' | 'settings' | 'emotionTimeline' | 'documentation'
+  | 'multiAgentConversation';
+  // Consider if an 'agentInspector' tab is needed or if existing tabs become agent-aware.
+  // For now, the inspectedAgentId will be a separate state.
+
+export type InspectedAgentID = 'myra' | 'caelum' | string; // string for configurable agent IDs

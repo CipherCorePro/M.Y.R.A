@@ -1,146 +1,84 @@
-# M.Y.R.A. & C.A.E.L.U.M. Konfiguration: SubQG Simulation
+# M.Y.R.A., C.A.E.L.U.M. & Konfigurierbare Agenten: SubQG Simulation
 
-Diese Datei erläutert die Konfigurationsparameter für das SubQuantenfeld-Grundfeld (SubQG) für M.Y.R.A. und C.A.E.L.U.M. Jede KI besitzt ihr eigenes, unabhängiges SubQG-System, das ihre internen Zustände beeinflusst. Diese Einstellungen finden Sie im `SettingsPanel` unter den Gruppen "M.Y.R.A. System" und "C.A.E.L.U.M. System" und sind Teil des `MyraConfig`-Objekts.
+Diese Datei erläutert die Konfigurationsparameter für das SubQuantenfeld-Grundfeld (SubQG). Jede KI-Entität (M.Y.R.A., C.A.E.L.U.M. und **jeder individuell konfigurierbare Agent**) besitzt ihr eigenes, unabhängiges SubQG-System, das ihre internen Zustände beeinflusst.
 
-## M.Y.R.A. SubQG-System (Parameter ohne `caelum`-Präfix in `myraConfig`)
+*   M.Y.R.A.s SubQG-Parameter sind direkt in `myraConfig` als Top-Level-Eigenschaften definiert (z.B. `myraConfig.subqgSize`).
+*   C.A.E.L.U.M.s SubQG-Parameter sind in `myraConfig` mit dem Präfix `caelum*` versehen (z.B. `myraConfig.caelumSubqgSize`).
+*   Für **jeden konfigurierbaren Agenten** sind diese Parameter Teil seines `systemConfig`-Objekts, das unter `myraConfig.configurableAgents[n].systemConfig` zu finden ist.
 
-### Allgemeine SubQG-Parameter (M.Y.R.A.)
+Alle im Folgenden beschriebenen Parameter existieren somit für jede dieser Entitäten (mit den entsprechenden Präfixen bzw. Pfaden) und können individuell im `SettingsPanel` konfiguriert werden.
 
-#### `subqgSize`
-*   **Bedeutung:** Größe der quadratischen SubQG-Matrix für M.Y.R.A.
-*   **Standardwert:** `16`
+## Allgemeine SubQG-Parameter (gelten pro Agent)
 
-#### `subqgBaseEnergy`
-*   **Bedeutung:** Initiale Basisenergie und minimale Energierückführung für M.Y.R.A.s SubQG-Zellen.
-*   **Standardwert:** `0.01`
+### `subqgSize`
+*   **Bedeutung:** Größe der quadratischen SubQG-Matrix (z.B. 16x16).
+*   **Standardwerte:** M.Y.R.A.: `16`, C.A.E.L.U.M.: `12`. Konfigurierbare Agenten übernehmen M.Y.R.A.s Standard (`16`) bei Erstellung, können aber individuell angepasst werden.
 
-#### `subqgCoupling`
-*   **Bedeutung:** Kopplungsstärke der Energieausbreitung zwischen benachbarten Zellen für M.Y.R.A.s SubQG.
-*   **Standardwert:** `0.015`
+### `subqgBaseEnergy`
+*   **Bedeutung:** Initiale Basisenergie und minimale Energierückführung für die Zellen des SubQG. Beeinflusst das Grundrauschen und die Stabilität.
+*   **Standardwerte:** M.Y.R.A.: `0.01`, C.A.E.L.U.M.: `0.005`.
 
-#### `subqgInitialEnergyNoiseStd`
-*   **Bedeutung:** Standardabweichung des initialen Energierauschens für M.Y.R.A.s SubQG.
-*   **Standardwert:** `0.001`
+### `subqgCoupling`
+*   **Bedeutung:** Kopplungsstärke der Energieausbreitung zwischen benachbarten Zellen im SubQG. Höhere Werte führen zu schnellerer Energieverteilung.
+*   **Standardwerte:** M.Y.R.A.: `0.015`, C.A.E.L.U.M.: `0.020`.
 
-#### `subqgPhaseEnergyCouplingFactor`
-*   **Bedeutung:** Faktor, wie stark Energieänderungen die Phasen in M.Y.R.A.s SubQG stochastisch beeinflussen.
-*   **Standardwert:** `0.1`
+### `subqgInitialEnergyNoiseStd`
+*   **Bedeutung:** Standardabweichung des initialen Energierauschens, das bei der Initialisierung jeder Zelle hinzugefügt wird, um Varianz zu erzeugen.
+*   **Standardwerte:** M.Y.R.A.: `0.001`, C.A.E.L.U.M.: `0.0005`.
 
-#### `subqgPhaseDiffusionFactor`
-*   **Bedeutung:** Faktor, wie stark sich Phasenunterschiede zwischen benachbarten Zellen in M.Y.R.A.s SubQG ausgleichen.
-*   **Standardwert:** `0.05`
+### `subqgPhaseEnergyCouplingFactor`
+*   **Bedeutung:** Faktor, wie stark Energieänderungen in einer Zelle die Phase dieser Zelle stochastisch beeinflussen.
+*   **Standardwerte:** M.Y.R.A.: `0.1`, C.A.E.L.U.M.: `0.05`.
 
-### SubQG Jump Parameter (M.Y.R.A.)
+### `subqgPhaseDiffusionFactor`
+*   **Bedeutung:** Faktor, wie stark sich Phasenunterschiede zwischen benachbarten Zellen im SubQG ausgleichen und zur Kohärenzbildung beitragen.
+*   **Standardwerte:** M.Y.R.A.: `0.05`, C.A.E.L.U.M.: `0.07`.
 
-#### `subqgJumpMinEnergyAtPeak`
-*   **Bedeutung:** Minimale Durchschnittsenergie im gesamten SubQG, die erreicht sein muss, um die Verfolgung eines potenziellen Jump-Peaks für M.Y.R.A. zu starten.
-*   **Standardwert:** `0.03`
+## SubQG Jump Parameter (gelten pro Agent)
 
-#### `subqgJumpMinCoherenceAtPeak`
-*   **Bedeutung:** Minimale Phasenkohärenz im gesamten SubQG, die erreicht sein muss, um die Verfolgung eines potenziellen Jump-Peaks für M.Y.R.A. zu starten.
-*   **Standardwert:** `0.75`
+"SubQG Jumps" sind signifikante, abrupte Veränderungen im SubQG, die als interne "Ereignisse" interpretiert werden können und die kognitiv-affektiven Prozesse des Agenten beeinflussen.
 
-#### `subqgJumpCoherenceDropFactor`
-*   **Bedeutung:** Relativer Abfallfaktor der Phasenkohärenz vom verfolgten Peak-Wert, der einen Jump in M.Y.R.A.s SubQG auslösen kann.
-*   **Standardwert:** `0.1` (d.h. 10% Abfall vom Peak)
+### `subqgJumpMinEnergyAtPeak`
+*   **Bedeutung:** Minimale Durchschnittsenergie, die im gesamten SubQG erreicht sein muss, damit das System beginnt, nach einem potenziellen Energie-Peak für einen Jump Ausschau zu halten.
+*   **Standardwerte:** M.Y.R.A.: `0.03`, C.A.E.L.U.M.: `0.025`.
 
-#### `subqgJumpEnergyDropFactorFromPeak`
-*   **Bedeutung:** Relativer Abfallfaktor der Durchschnittsenergie vom verfolgten Peak-Wert, der einen Jump in M.Y.R.A.s SubQG auslösen kann.
-*   **Standardwert:** `0.05` (d.h. 5% Abfall vom Peak-Energie)
+### `subqgJumpMinCoherenceAtPeak`
+*   **Bedeutung:** Minimale Phasenkohärenz, die im gesamten SubQG erreicht sein muss, damit das System beginnt, nach einem potenziellen Kohärenz-Peak für einen Jump Ausschau zu halten.
+*   **Standardwerte:** M.Y.R.A.: `0.75`, C.A.E.L.U.M.: `0.80`.
 
-#### `subqgJumpMaxStepsToTrackPeak`
-*   **Bedeutung:** Maximale Anzahl von Simulationsschritten, während derer ein potenzieller Peak in M.Y.R.A.s SubQG verfolgt wird, bevor das Tracking ohne Jump-Detektion zurückgesetzt wird.
-*   **Standardwert:** `5`
+### `subqgJumpCoherenceDropFactor`
+*   **Bedeutung:** Relativer Abfallfaktor der Phasenkohärenz vom zuvor verfolgten Peak-Wert. Unterschreitet die aktuelle Kohärenz diesen Wert (Peak * (1 - Faktor)), kann dies einen Jump auslösen.
+*   **Standardwerte:** M.Y.R.A.: `0.1` (d.h. 10% Abfall vom Peak), C.A.E.L.U.M.: `0.08`.
 
-#### `subqgJumpActiveDuration`
-*   **Bedeutung:** Dauer (in Simulationsschritten), für die ein detektierter Jump-Modifikator in M.Y.R.A. aktiv bleibt und ihre Knotendynamik beeinflusst.
-*   **Standardwert:** `3`
+### `subqgJumpEnergyDropFactorFromPeak`
+*   **Bedeutung:** Relativer Abfallfaktor der Durchschnittsenergie vom zuvor verfolgten Peak-Wert. Unterschreitet die aktuelle Energie diesen Wert, kann dies einen Jump auslösen.
+*   **Standardwerte:** M.Y.R.A.: `0.05` (d.h. 5% Abfall vom Peak), C.A.E.L.U.M.: `0.04`.
 
-#### `subqgJumpQnsDirectModifierStrength`
-*   **Bedeutung:** Skalierungsfaktor für die Stärke des Jump-Modifikators, der die Aktivierung von M.Y.R.A.s Knoten beeinflusst.
-*   **Standardwert:** `0.5`
+### `subqgJumpMaxStepsToTrackPeak`
+*   **Bedeutung:** Maximale Anzahl von Simulationsschritten, während derer ein potenzieller Peak (basierend auf `subqgJumpMinEnergyAtPeak` und `subqgJumpMinCoherenceAtPeak`) verfolgt wird. Wird in dieser Zeit kein Jump durch Abfallfaktoren detektiert, wird das Peak-Tracking zurückgesetzt.
+*   **Standardwerte:** M.Y.R.A.: `5`, C.A.E.L.U.M.: `4`.
 
-### RNG (Random Number Generator) Parameter (M.Y.R.A.)
+### `subqgJumpActiveDuration`
+*   **Bedeutung:** Dauer (in Simulationsschritten), für die ein detektierter Jump-Modifikator aktiv bleibt und die Knotendynamik des Agenten beeinflusst.
+*   **Standardwerte:** M.Y.R.A.: `3`, C.A.E.L.U.M.: `2`.
 
-#### `rngType`
-*   **Bedeutung:** Typ des Zufallszahlengenerators für M.Y.R.A.s Simulation.
-*   **Mögliche Werte:** `'subqg'` (deterministisch, seed-basiert), `'quantum'` (nicht-deterministisch, `Math.random()`).
-*   **Standardwert:** `'subqg'`
+### `subqgJumpQnsDirectModifierStrength`
+*   **Bedeutung:** Skalierungsfaktor für die Stärke des Jump-Modifikators, der die Aktivierung der Knoten des Agenten beeinflusst. Ein positiver Wert kann die Aktivierung erhöhen, ein negativer verringern.
+*   **Standardwerte:** M.Y.R.A.: `0.5`, C.A.E.L.U.M.: `0.3`.
 
-#### `subqgSeed`
-*   **Bedeutung:** Startwert (Seed) für M.Y.R.A.s deterministischen RNG.
+## RNG (Random Number Generator) Parameter (gelten pro Agent)
+
+### `rngType`
+*   **Bedeutung:** Typ des Zufallszahlengenerators, der für stochastische Prozesse in der Simulation des Agenten verwendet wird.
+*   **Mögliche Werte:**
+    *   `'subqg'`: Ein deterministischer Linear Congruential Generator (LCG), der bei gleichem Seed reproduzierbare Ergebnisse liefert.
+    *   `'quantum'`: Verwendet `Math.random()`, was zu nicht-deterministischem Verhalten führt.
+*   **Standardwert (für alle Agenten-Defaults):** `'subqg'`.
+
+### `subqgSeed`
+*   **Bedeutung:** Startwert (Seed) für den deterministischen RNG (`'subqg'`). Wenn `undefined` oder leer, wird ein zufälliger Seed beim Start generiert.
 *   **Bedingung:** Nur relevant, wenn `rngType` = `'subqg'`.
-*   **Standardwert:** `undefined` (führt zu zufälligem Seed bei Start, falls `'subqg'`)
-
-## C.A.E.L.U.M. SubQG-System (Parameter mit `caelum`-Präfix in `myraConfig`)
-
-### Allgemeine SubQG-Parameter (C.A.E.L.U.M.)
-
-#### `caelumSubqgSize`
-*   **Bedeutung:** Größe der quadratischen SubQG-Matrix für C.A.E.L.U.M.
-*   **Standardwert:** `12`
-
-#### `caelumSubqgBaseEnergy`
-*   **Bedeutung:** Initiale Basisenergie und minimale Energierückführung für C.A.E.L.U.M.s SubQG-Zellen.
-*   **Standardwert:** `0.005`
-
-#### `caelumSubqgCoupling`
-*   **Bedeutung:** Kopplungsstärke der Energieausbreitung zwischen benachbarten Zellen für C.A.E.L.U.M.s SubQG.
-*   **Standardwert:** `0.020`
-
-#### `caelumSubqgInitialEnergyNoiseStd`
-*   **Bedeutung:** Standardabweichung des initialen Energierauschens für C.A.E.L.U.M.s SubQG.
-*   **Standardwert:** `0.0005`
-
-#### `caelumSubqgPhaseEnergyCouplingFactor`
-*   **Bedeutung:** Faktor, wie stark Energieänderungen die Phasen in C.A.E.L.U.M.s SubQG stochastisch beeinflussen.
-*   **Standardwert:** `0.05`
-
-#### `caelumSubqgPhaseDiffusionFactor`
-*   **Bedeutung:** Faktor, wie stark sich Phasenunterschiede zwischen benachbarten Zellen in C.A.E.L.U.M.s SubQG ausgleichen.
-*   **Standardwert:** `0.07`
-
-### SubQG Jump Parameter (C.A.E.L.U.M.)
-
-#### `caelumSubqgJumpMinEnergyAtPeak`
-*   **Bedeutung:** Minimale Durchschnittsenergie im gesamten SubQG, die erreicht sein muss, um die Verfolgung eines potenziellen Jump-Peaks für C.A.E.L.U.M. zu starten.
-*   **Standardwert:** `0.025`
-
-#### `caelumSubqgJumpMinCoherenceAtPeak`
-*   **Bedeutung:** Minimale Phasenkohärenz im gesamten SubQG, die erreicht sein muss, um die Verfolgung eines potenziellen Jump-Peaks für C.A.E.L.U.M. zu starten.
-*   **Standardwert:** `0.80`
-
-#### `caelumSubqgJumpCoherenceDropFactor`
-*   **Bedeutung:** Relativer Abfallfaktor der Phasenkohärenz vom verfolgten Peak-Wert, der einen Jump in C.A.E.L.U.M.s SubQG auslösen kann.
-*   **Standardwert:** `0.08`
-
-#### `caelumSubqgJumpEnergyDropFactorFromPeak`
-*   **Bedeutung:** Relativer Abfallfaktor der Durchschnittsenergie vom verfolgten Peak-Wert, der einen Jump in C.A.E.L.U.M.s SubQG auslösen kann.
-*   **Standardwert:** `0.04`
-
-#### `caelumSubqgJumpMaxStepsToTrackPeak`
-*   **Bedeutung:** Maximale Anzahl von Simulationsschritten, während derer ein potenzieller Peak in C.A.E.L.U.M.s SubQG verfolgt wird.
-*   **Standardwert:** `4`
-
-#### `caelumSubqgJumpActiveDuration`
-*   **Bedeutung:** Dauer (in Simulationsschritten), für die ein detektierter Jump-Modifikator in C.A.E.L.U.M. aktiv bleibt.
-*   **Standardwert:** `2`
-
-#### `caelumSubqgJumpQnsDirectModifierStrength`
-*   **Bedeutung:** Skalierungsfaktor für die Stärke des Jump-Modifikators, der die Aktivierung von C.A.E.L.U.M.s Knoten beeinflusst.
-*   **Standardwert:** `0.3`
-
-### RNG (Random Number Generator) Parameter (C.A.E.L.U.M.)
-
-#### `caelumRngType`
-*   **Bedeutung:** Typ des Zufallszahlengenerators für C.A.E.L.U.M.s Simulation.
-*   **Mögliche Werte:** `'subqg'`, `'quantum'`.
-*   **Standardwert:** `'subqg'`
-
-#### `caelumSubqgSeed`
-*   **Bedeutung:** Startwert (Seed) für C.A.E.L.U.M.s deterministischen RNG.
-*   **Bedingung:** Nur relevant, wenn `caelumRngType` = `'subqg'`.
-*   **Standardwert:** `12345`
+*   **Standardwerte:** M.Y.R.A.: `undefined`, C.A.E.L.U.M.: `12345`. Konfigurierbare Agenten können individuelle Seeds haben oder `undefined` für einen zufälligen Start-Seed, falls ihr `rngType` `'subqg'` ist.
 
 ---
 
